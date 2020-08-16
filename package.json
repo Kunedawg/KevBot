@@ -1,0 +1,23 @@
+{
+  "name": "kev-bot",
+  "version": "1.0.0",
+  "description": "Custom discord bot for playing mp3 files and much more because I'm ballsy and I don't take no shit from anyone.",
+  "main": "kev-bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kunedawg/kev-bot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Kunedawg/kev-bot/issues"
+  },
+  "homepage": "https://github.com/Kunedawg/kev-bot#readme",
+  "dependencies": {
+    "discord.js": "^12.3.1"
+  }
+}
