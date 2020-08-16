@@ -50,4 +50,4 @@ client.on('message', message => {
     }
 });
 
-client.login(***REMOVED***);
+client.login("***REMOVED***");
