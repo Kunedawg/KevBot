@@ -4,7 +4,7 @@
   "description": "Custom discord bot for playing mp3 files and much more because I'm ballsy and I don't take no shit from anyone.",
   "main": "kev-bot.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start" : "node kev-bot.js"
   },
   "repository": {
     "type": "git",
