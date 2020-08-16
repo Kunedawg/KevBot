@@ -12,5 +12,5 @@ client.on('message', message => {
         return;
 
     if(message.content.toLowerCase() === 'hello')
-        message.channel.send("Hey!")
+        message.channel.send("Fuck off Evan!")
 });
