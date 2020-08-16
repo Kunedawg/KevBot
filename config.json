@@ -1,4 +1,9 @@
 {
 	"prefix": "k!",
-	"token": "***REMOVED***"
+	"token": "***REMOVED***",
+	"audio_path" : "./audio/",
+	"cmd_audio_dict" : {
+		"imback"        : "trex.mp3",
+		"bonanno"       : "bonanno.mp3"
+	}
 }
