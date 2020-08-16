@@ -4,7 +4,7 @@
   "description": "Custom discord bot for playing mp3 files and much more because I'm ballsy and I don't take no shit from anyone.",
   "main": "kev-bot.js",
   "scripts": {
-    "start" : "node kev-bot.js"
+    "start": "node kev-bot.js"
   },
   "repository": {
     "type": "git",
@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/Kunedawg/kev-bot#readme",
   "dependencies": {
-    "discord.js": "^12.3.1"
+    "discord.js": "^12.3.1",
+    "node-opus": "^0.3.3"
   }
 }
