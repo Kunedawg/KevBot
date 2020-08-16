@@ -3,7 +3,12 @@
 	"token": "***REMOVED***",
 	"audio_path" : "./audio/",
 	"cmd_audio_dict" : {
-		"imback"        : "trex.mp3",
-		"bonanno"       : "bonanno.mp3"
+		"birdup"       		: "bird_up.mp3",
+		"bonanno"       	: "bonanno.mp3",
+		"chrisup"      		: "chris_up.mp3",
+		"hankbust"      	: "hank_bust.mp3",
+		"kissinggoblins"   	: "kissing_goblins.mp3",
+		"imback"        	: "trex.mp3",
+		"yahboobay"       	: "yahboobay.mp3"
 	}
 }
