@@ -20,6 +20,7 @@ client.on('message', message => {
         dict_command = prefix + key;
         console.log(dict_command);
         if (user_command === dict_command) {
+            console.log("Command math with key: " + key);
             var VC = message.member.voice.channel;
             if (!VC)
                return message.reply("MESSAGE IF NOT IN A VOICE CHANNEL")
