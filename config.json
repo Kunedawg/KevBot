@@ -1,5 +1,5 @@
 {
-	"prefix": "k!",
+	"prefix": "mark!",
 	"token": "***REMOVED***",
 	"audio_path" : "./audio/",
 	"cmd_audio_dict" : {
@@ -9,6 +9,18 @@
 		"hankbust"      	: "hank_bust.mp3",
 		"kissinggoblins"   	: "kissing_goblins.mp3",
 		"imback"        	: "trex.mp3",
-		"yahboobay"       	: "yahboobay.mp3"
+		"yahboobay"       	: "yahboobay.mp3",
+		"pinyonga"       	: "pinyonga.mp3",
+		"bugleboy"       	: "bugleboy.mp3",
+		"gonnawork"       	: "gonnawork.mp3",
+		"duck"       		: "duck.mp3",
+		"demons"       		: "demons.mp3",
+		"molest"      	 	: "molest.mp3",
+		"lobsters"       	: "lobsters.mp3",
+		"literature"       	: "literature.mp3",
+		"inforee"       	: "inforee.mp3",
+		"idk"       		: "idk.mp3",
+		"debbie"       		: "debbie.mp3",
+		"poison"       		: "poison.mp3"
 	}
 }
