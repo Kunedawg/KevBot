@@ -1,4 +1,9 @@
 {
 	"prefix": "k!",
-	"token": "NzQ0MDMxNDY3OTMxNDM1MTA5.XzdTTQ.jmPutro7dQ2HWT56B7Y6MLD7Sok"
+	"token": "NzQ0MDMxNDY3OTMxNDM1MTA5.XzdTTQ.jmPutro7dQ2HWT56B7Y6MLD7Sok",
+	"audio_path" : "./audio/",
+	"cmd_audio_dict" : {
+		"imback"        : "trex.mp3",
+		"bonanno"       : "bonanno.mp3"
+	}
 }
