@@ -1,12 +1,33 @@
+// imports
 const Discord = require('discord.js');
-const { prefix, token, audio_path, cmd_audio_dict } = require('./config.json');
+const { deploy_prefix, test_prefix, deploy_token, test_token, audio_path, cmd_audio_dict } = require('./config.json');
 
+// First command line argument determines the token/prefix to use
+var token = '';
+var prefix = '';
+var login_message = '';
+if (process.argv[2] === 'deploy') {
+    token = deploy_token;
+    prefix = deploy_prefix;
+    login_message = 'kev-bot is ready and logged in!';
+} else if (process.argv[2] === 'test'){
+    token = test_token;
+    prefix = test_prefix;
+    login_message = 'kev-bot-test is ready and logged in!';
+} else {
+    console.log("Not a valid command line arg");
+    process.exit(1);    // end program
+}
+
+// Creating client
 const client = new Discord.Client();
 
+// On log in
 client.once('ready', () => {
-	console.log('kev-bot is ready and logged in!');
+	console.log(login_message);
 });
 
+// On a text message in a text channel
 client.on('message', message => {
     // Getting the user command
     var user_command = message.content.toLowerCase();
@@ -32,4 +53,5 @@ client.on('message', message => {
     }
 });
 
+// Login
 client.login(token);

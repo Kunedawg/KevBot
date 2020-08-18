@@ -1,6 +1,8 @@
 {
-	"prefix": "k!",
-	"token": "***REMOVED***",
+	"deploy_prefix"	: "k!",
+	"test_prefix"	: "tk!",
+	"deploy_token"	: "***REMOVED***",
+	"test_token" 	: "***REMOVED***",
 	"audio_path" : "./audio/",
 	"cmd_audio_dict" : {
 		"birdup"       		: "bird_up.mp3",
