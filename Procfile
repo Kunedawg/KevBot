@@ -1,1 +1,1 @@
-worker: node kev-bot.js
+worker: npm start
