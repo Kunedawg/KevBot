@@ -1,6 +1,6 @@
 {
-	"deploy_prefix"	: "k!",
-	"test_prefix"	: "tk!",
+	"deploy_prefix"	: "",
+	"test_prefix"	: "t",
 	"deploy_token"	: "***REMOVED***",
 	"test_token" 	: "***REMOVED***",
 	"audio_path" : "./audio/"
