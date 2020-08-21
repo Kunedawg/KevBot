@@ -29,8 +29,14 @@ for(var folder in audio_folders){
     audio_dict[command] = audio_path + audio_folders[folder];
 }
 
-// Creating client
+// Creating client and reading in command functions from the command folder
 const client = new Discord.Client();
+client.commands = new Discord.Collection();
+const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+for (const file of commandFiles) {
+    const command = require(`./commands/${file}`);
+    client.commands.set(command.name, command);
+}
 
 // On log in
 var ready = false;
@@ -39,33 +45,31 @@ client.once('ready', () => {
     ready = true;
 });
 
-// On a text message in a text channel
+// Command Handler
 client.on('message', message => {
-    if (ready) {
-        // Getting the user command
-        var user_command = message.content.toLowerCase();
-        for(var key in audio_dict){
-            // Generating dictionary command with prefix and key  
-            dict_command = prefix + key;
-            if (user_command === dict_command) {
-                // Getting the voice channel that the member was in when the message was went
-                var VC = message.member.voice.channel;
-                // Verify voice channel is actually a voice channel
-                if (!VC)
-                return message.reply("YOU ARE NOT IN A VOICE CHANNEL")
-                // Retrieve audio path from the dictionary
-                var audio_full_path = audio_dict[key]; 
-                // Join channel, play mp3 from the dictionary, leave when completed.
-                VC.join()
-                .then(connection => {
-                    const dispatcher = connection.play(audio_full_path);
-                    dispatcher.on("finish", end => {VC.leave()});
-                })
-                .catch(console.error);
-            }
-        }
+    // Make sure message starts with prefix
+    if (!message.content.startsWith(prefix) || message.author.bot) return;
+
+    // Get args and commands name. Format of every command should follow "[prefix][command]!arg1 arg2 arg3 arg4"
+    const prefix_removed = message.content.slice(prefix.length).trim().split('!'); // ["command", "arg1 arg2 arg3 arg4"]
+    const commandName = prefix_removed[0]; // "command"
+    const args = prefix_removed[1].split(/ +/); // array of the args ["arg1", "arg2", "arg3", "arg4"]
+
+    // Check that command exists
+    if (!client.commands.has(commandName)) return;
+    const command = client.commands.get(commandName);
+
+    // Execute command
+    try {
+        command.execute(message, args);
+    } catch (error) {
+        console.error(error);
+        message.reply('There was an issue executing that command!')
     }
 });
+
+// Export the audio_dict for other modules to use
+module.exports = {audio_dict};
 
 // Login
 client.login(token);

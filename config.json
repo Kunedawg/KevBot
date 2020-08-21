@@ -1,6 +1,6 @@
 {
-	"deploy_prefix"	: "k!",
-	"test_prefix"	: "tk!",
+	"deploy_prefix"	: "",
+	"test_prefix"	: "t",
 	"deploy_token"	: "NzQ0MDMxNDY3OTMxNDM1MTA5.XzdTTQ.jmPutro7dQ2HWT56B7Y6MLD7Sok",
 	"test_token" 	: "NzQ1MDk4MTkwMjE0MTM1OTAx.Xzs0ww.ycvrMVpaR-kCsdhwaCmJOd45c1I",
 	"audio_path" : "./audio/"
