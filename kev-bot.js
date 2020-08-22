@@ -53,7 +53,7 @@ client.on('message', message => {
     // Get args and commands name. Format of every command should follow "[prefix][command]!arg1 arg2 arg3 arg4"
     const prefix_removed = message.content.slice(prefix.length).trim().split('!'); // ["command", "arg1 arg2 arg3 arg4"]
     const commandName = prefix_removed[0]; // "command"
-    const args;
+    var args;
     if (typeof prefix_removed[1] === 'undefined') {
         return;
     } else {
