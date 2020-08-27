@@ -74,7 +74,7 @@ client.on('message', message => {
 });
 
 // Export the audio_dict for other modules to use
-module.exports = {audio_dict};
+module.exports = {audio_dict, client};
 
 // Login
 client.login(token);

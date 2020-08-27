@@ -1,4 +1,3 @@
-
 module.exports = {
     name: 'p',
     description: 'play an audio file by name',
