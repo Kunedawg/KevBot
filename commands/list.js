@@ -19,7 +19,6 @@ module.exports = {
                     largetNumOfChars = command.length;
                 }
             }
-            console.log('largetNumOfChars: ', largetNumOfChars)
 
             // Generating the response message
             var response = '';
@@ -34,7 +33,6 @@ module.exports = {
 
             // Sending response
             message.author.send('```' + response + '```'); // Note ``` turns the message into a code block
-
         }
     }
 };
