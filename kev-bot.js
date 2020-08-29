@@ -67,6 +67,7 @@ client.on('message', message => {
     // Execute command
     try {
         command.execute(message, args);
+        if (message.deletable) message.delete({timeout: 100});
     } catch (error) {
         console.error(error);
         message.reply('There was an issue executing that command!')
