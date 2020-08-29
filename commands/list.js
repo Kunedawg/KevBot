@@ -20,15 +20,40 @@ module.exports = {
                 }
             }
 
-            // Generating the response message
-            var response = '';
-            var i = 1;
-            var num_columns = 4;
-            var space_str = '';
+            // Generating the response message (by row)
+            // var response = '';
+            // var i = 1;
+            // var num_columns = 4;
+            // var space_str = '';
+            // for (var command in kev_bot.audio_dict) {
+            //     space_str = ' '.repeat(largetNumOfChars - command.length);
+            //     response = response + command + space_str + (i >= num_columns ? '\n' : '  ');
+            //     i = (i >= num_columns) ? 1 : i + 1;              
+            // }
+
+            // Creating array of keys
+            var i = 0;
+            var command_array = [];
             for (var command in kev_bot.audio_dict) {
-                space_str = ' '.repeat(largetNumOfChars - command.length);
-                response = response + command + space_str + (i >= num_columns ? '\n' : '  ');
-                i = (i >= num_columns) ? 1 : i + 1;              
+                command_array[i] = command;
+                i++;
+            }
+
+            // Generating the response message (by column)
+            var response = '';
+            var space_str = '';
+            var command = ''; 
+            var num_columns = 4;
+            var num_rows = Math.ceil(command_array.length / num_columns);
+            for (var i = 0; i < num_rows; i++) {
+                for (var j = 0; j < num_columns; j++) {
+                    if (i +j*num_rows < command_array.length) {
+                        command = command_array[i +j*num_rows];
+                        space_str = ' '.repeat(largetNumOfChars - command.length);
+                        response = response + command + space_str + '  ';
+                    }    
+                }
+                response = response + '\n';
             }
 
             // Sending response
