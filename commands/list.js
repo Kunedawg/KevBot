@@ -1,6 +1,7 @@
 module.exports = {
     name: 'list',
-    description: 'List all commands',
+    description: 'List all commands of the given category.',
+    usage: 'list!all',
     args: true,
     execute(message, args) {
         // import the audio dict
@@ -9,7 +10,7 @@ module.exports = {
         // Getting category
         var category = args[0];
 
-        // Logging all commands
+        // Listing all commands
         if (category === 'all') {
 
             // Finding the command with the largest number of characters

@@ -1,6 +1,7 @@
 module.exports = {
     name: 'p',
-    description: 'play an audio file by name',
+    description: 'Play an audio file by name.',
+    usage: 'p!imback',
     args: true,
     execute(message, args) {
         // import the audio dict
