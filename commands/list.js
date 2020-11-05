@@ -21,17 +21,6 @@ module.exports = {
                 }
             }
 
-            // Generating the response message (by row)
-            // var response = '';
-            // var i = 1;
-            // var num_columns = 4;
-            // var space_str = '';
-            // for (var command in kev_bot.audio_dict) {
-            //     space_str = ' '.repeat(largetNumOfChars - command.length);
-            //     response = response + command + space_str + (i >= num_columns ? '\n' : '  ');
-            //     i = (i >= num_columns) ? 1 : i + 1;              
-            // }
-
             // Creating array of keys
             var i = 0;
             var command_array = [];
@@ -56,9 +45,22 @@ module.exports = {
                 }
                 response = response + '\n';
             }
-
-            // Sending response
-            message.author.send('```' + response + '```'); // Note ``` turns the message into a code block
+            
+            // Need to split response into 2000 char chunks
+            const MAX_CHAR_LENGTH = 2000;
+            var responseSplit = '';
+            var responseLines = response.split('\n');
+            for(var i = 0;i < responseLines.length;i++){
+                if ((responseSplit.length + responseLines[i].length + 6) > MAX_CHAR_LENGTH) {
+                    message.author.send('```' + responseSplit + '```');
+                    responseSplit = responseLines[i] + '\n';
+                } else {
+                    responseSplit += responseLines[i] + '\n';
+                }
+            }
+            if (responseSplit.length > 0) {
+                message.author.send('```' + responseSplit + '```');
+            }  
         }
     }
 };

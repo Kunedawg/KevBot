@@ -47,10 +47,10 @@ client.once('ready', () => {
 
 // Command Handler
 client.on('message', message => {
-    // Make sure message starts with prefix
+    // Return if the message does not start with the prefix or if the message was from a bot
     if (!message.content.startsWith(prefix) || message.author.bot) return;
 
-    // Get args and commands name. Format of every command should follow "[prefix][command]!arg1 arg2 arg3 arg4"
+    // Get args and commands name. Format of every command should follow "prefixcommand!arg1 arg2 arg3 arg4"
     const prefix_removed = message.content.slice(prefix.length).trim().split('!'); // ["command", "arg1 arg2 arg3 arg4"]
     const commandName = prefix_removed[0]; // "command"
     var args;
@@ -60,9 +60,9 @@ client.on('message', message => {
         args = prefix_removed[1].split(/ +/); // array of the args ["arg1", "arg2", "arg3", "arg4"]  
     }
 
-    // Check that command exists
+    // Retreive command if it exists
     if (!client.commands.has(commandName)) return;
-    const command = client.commands.get(commandName);
+    const command = client.commands.get(commandName);  
 
     // Execute command
     try {
