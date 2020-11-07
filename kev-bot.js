@@ -7,11 +7,12 @@ const fs = require('fs');
 var token = '';
 var prefix = '';
 var login_message = '';
-if (process.argv[2] === 'deploy') {
+var environment = process.argv[2];
+if (environment === 'deploy') {
     token = deploy_token;
     prefix = deploy_prefix;
     login_message = 'kev-bot is ready and logged in!';
-} else if (process.argv[2] === 'test'){
+} else if (environment === 'test'){
     token = test_token;
     prefix = test_prefix;
     login_message = 'kev-bot-test is ready and logged in!';
@@ -34,7 +35,11 @@ var category_dict = {};
 category_dict["all"] = Object.keys(audio_dict);     // adding all the files to category "all"
 var category_data_str = fs.readFileSync(categories_path,'utf8');
 var category_data_str = category_data_str.split(' ').join('');  // removes all spaces
-var category_data_rows = category_data_str.split("\r\n"); // windows uses \r\n, linux uses \n, apple uses \r
+if (environment === 'deploy') { // windows uses \r\n, linux uses \n, apple uses \r
+    var category_data_rows = category_data_str.split("\n"); 
+} else if (environment === 'test'){
+    var category_data_rows = category_data_str.split("\r\n"); 
+}
 for (const row of category_data_rows) {
     var categories = row.split(",");
     var audio_file = categories.shift();  // first item of row is the audio_file, the rest will be categories
