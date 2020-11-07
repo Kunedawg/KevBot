@@ -1,6 +1,6 @@
 // imports
 const Discord = require('discord.js');
-const { deploy_prefix, test_prefix, deploy_token, test_token, audio_path } = require('./config.json');
+const { deploy_prefix, test_prefix, deploy_token, test_token, audio_path, categories_path } = require('./config.json');
 const fs = require('fs');
 
 // First command line argument determines the token/prefix to use
@@ -20,13 +20,31 @@ if (process.argv[2] === 'deploy') {
     process.exit(1);    // end program
 }
 
-// Creating dictionary for audio file paths
+// Creating dictionary for command to audio file path. yes -> ./audio/yes.mp3
 var audio_dict = {};
-var audio_folders = fs.readdirSync(audio_path);
-var command = '';
-for(var folder in audio_folders){
-    command = audio_folders[folder].split('.')[0];
-    audio_dict[command] = audio_path + audio_folders[folder];
+var audio_file_names = fs.readdirSync(audio_path);   // generates array of file names
+for(var file_name of audio_file_names){
+    var command = file_name.split('.')[0];  // remove .mp3 from end of file
+    audio_dict[command] = audio_path + file_name;
+}
+
+// Creating dictionary of dictionaries for the categories
+// catergories.csv has format of audio_file,category1,category2,category3,...
+var category_dict = {};
+category_dict["all"] = Object.keys(audio_dict);     // adding all the files to category "all"
+var category_data_str = fs.readFileSync(categories_path,'utf8');
+var category_data_str = category_data_str.split(' ').join('');  // removes all spaces
+var category_data_rows = category_data_str.split("\r\n"); // windows uses \r\n, linux uses \n, apple uses \r
+for (const row of category_data_rows) {
+    var categories = row.split(",");
+    var audio_file = categories.shift();  // first item of row is the audio_file, the rest will be categories
+    for (const category of categories) {
+        if (category in category_dict) {
+            category_dict[category].push(audio_file);
+        } else {
+            category_dict[category] = [audio_file];
+        }
+    }
 }
 
 // Creating client and reading in command functions from the command folder
@@ -75,7 +93,7 @@ client.on('message', message => {
 });
 
 // Export the audio_dict for other modules to use
-module.exports = {audio_dict, client};
+module.exports = {audio_dict, client, category_dict};
 
 // Login
 client.login(token);

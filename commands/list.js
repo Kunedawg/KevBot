@@ -1,7 +1,7 @@
 module.exports = {
     name: 'list',
-    description: 'List all commands of the given category.',
-    usage: 'list!all',
+    description: 'List all commands of the given category or list all categories.',
+    usage: 'list!all, list!categories, list!arnold',
     args: true,
     execute(message, args) {
         // import the audio dict
@@ -10,40 +10,39 @@ module.exports = {
         // Getting category
         var category = args[0];
 
-        // Listing all commands
-        if (category === 'all') {
-
-            // Finding the command with the largest number of characters
-            var largetNumOfChars = 0;
-            for (var command in kev_bot.audio_dict) {
-                if (command.length > largetNumOfChars) {
-                    largetNumOfChars = command.length;
-                }
+        // Listing all commands of a given category, or listing all 
+        if (category in kev_bot.category_dict || category === "categories") {
+            // Getting the relevant array that needs to be listed
+            if (category === "categories") {
+                list_array = Object.keys(kev_bot.category_dict);
+            } else {
+                list_array = kev_bot.category_dict[category];
             }
 
-            // Creating array of keys
-            var i = 0;
-            var command_array = [];
-            for (var command in kev_bot.audio_dict) {
-                command_array[i] = command;
-                i++;
+            // Sort list
+            list_array.sort();
+
+            // Finding the item with the largest number of characters
+            var largetNumOfChars = 0;
+            for (var item of list_array) {
+                if (item.length > largetNumOfChars) {
+                    largetNumOfChars = item.length;
+                }
             }
 
             // Generating the response message (by column)
             var response = '';
-            var space_str = '';
-            var command = ''; 
             var num_columns = 4;
-            var num_rows = Math.ceil(command_array.length / num_columns);
+            var num_rows = Math.ceil(list_array.length / num_columns);
             for (var i = 0; i < num_rows; i++) {
                 for (var j = 0; j < num_columns; j++) {
-                    if (i +j*num_rows < command_array.length) {
-                        command = command_array[i +j*num_rows];
-                        space_str = ' '.repeat(largetNumOfChars - command.length);
-                        response = response + command + space_str + '  ';
+                    if (i +j*num_rows < list_array.length) {
+                        var item = list_array[i +j*num_rows];
+                        var space_str = ' '.repeat(largetNumOfChars - item.length);
+                        response += item + space_str + '  ';
                     }    
                 }
-                response = response + '\n';
+                response += '\n';
             }
             
             // Need to split response into 2000 char chunks

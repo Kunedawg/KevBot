@@ -1,7 +1,8 @@
 {
-	"deploy_prefix"	: "",
-	"test_prefix"	: "t",
-	"deploy_token"	: "***REMOVED***",
-	"test_token" 	: "***REMOVED***",
-	"audio_path" : "./audio/"
+	"deploy_prefix"		: "",
+	"test_prefix"		: "t",
+	"deploy_token"		: "***REMOVED***",
+	"test_token" 		: "***REMOVED***",
+	"audio_path" 		: "./audio/",
+	"categories_path"	: "./data/categories.csv"
 }
