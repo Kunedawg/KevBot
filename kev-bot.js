@@ -61,14 +61,52 @@ for (const file of commandFiles) {
     client.commands.set(command.name, command);
 }
 
-// On log in
+// Ready Event
 var ready = false;
 client.once('ready', () => {
     console.log(login_message);
     ready = true;
 });
 
-// Command Handler
+// User joins channel event
+const KEVIN_KUNEY_ID = '***REMOVED***';
+const EVAN_FUMOSO_ID = '145361690328825857';
+const CHRIS_WEBSTER_ID = '144335985373741056';
+const ETHAN_MEDLER_ID = '189927294968659968';
+client.on('voiceStateUpdate', (oldMember, newMember) => {
+    let newUserChannel = newMember.channel;
+    let oldUserChannel = oldMember.channel
+    if(oldUserChannel === null && newUserChannel !== null && !newMember.member.user.bot) { // User Joins a voice channel
+        let file_to_play;
+        switch (newMember.member.user.id) {
+            case KEVIN_KUNEY_ID:
+                file_to_play = "rockbody";
+                break;
+            case EVAN_FUMOSO_ID:
+                file_to_play = "trumpcum";
+                break;
+            case CHRIS_WEBSTER_ID:
+                file_to_play = "chrisup";
+                break;
+            case ETHAN_MEDLER_ID:
+                file_to_play = "triple";
+                break;
+            default:
+                file_to_play = "DO_NOT_PLAY";
+                return;
+        }
+        newUserChannel.join()
+        .then(connection => {
+            const dispatcher = connection.play(audio_dict[file_to_play]);
+            dispatcher.on("finish", end => {newUserChannel.leave()});
+        })
+        .catch(console.error);
+    } else if(newUserChannel === null && !newMember.member.user.bot){ 
+        // User leaves a voice channel
+    }
+})
+
+// User sends text message in channel event
 client.on('message', message => {
     // Return if the message does not start with the prefix or if the message was from a bot
     if (!message.content.startsWith(prefix) || message.author.bot) return;
