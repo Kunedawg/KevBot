@@ -73,9 +73,12 @@ const KEVIN_KUNEY_ID = '***REMOVED***';
 const EVAN_FUMOSO_ID = '145361690328825857';
 const CHRIS_WEBSTER_ID = '144335985373741056';
 const ETHAN_MEDLER_ID = '189927294968659968';
+const MATT_ARMSTRONG_ID ='153385888917749760';
+const RICK_ID ='144206566801801225';
 client.on('voiceStateUpdate', (oldMember, newMember) => {
     let newUserChannel = newMember.channel;
     let oldUserChannel = oldMember.channel
+    console.log(newMember.member.user);
     if(oldUserChannel === null && newUserChannel !== null && !newMember.member.user.bot) { // User Joins a voice channel
         let file_to_play;
         switch (newMember.member.user.id) {
@@ -83,7 +86,7 @@ client.on('voiceStateUpdate', (oldMember, newMember) => {
                 file_to_play = "rockbody";
                 break;
             case EVAN_FUMOSO_ID:
-                file_to_play = "trumpcum";
+                file_to_play = "lordbust";
                 break;
             case CHRIS_WEBSTER_ID:
                 file_to_play = "chrisup";
@@ -91,6 +94,9 @@ client.on('voiceStateUpdate', (oldMember, newMember) => {
             case ETHAN_MEDLER_ID:
                 file_to_play = "triple";
                 break;
+            case MATT_ARMSTRONG_ID:
+                file_to_play = "hankbust";
+                break;              
             default:
                 file_to_play = "DO_NOT_PLAY";
                 return;
