@@ -74,7 +74,7 @@ const EVAN_FUMOSO_ID = '145361690328825857';
 const CHRIS_WEBSTER_ID = '144335985373741056';
 const ETHAN_MEDLER_ID = '189927294968659968';
 const MATT_ARMSTRONG_ID ='153385888917749760';
-const RICK_ID ='144206566801801225';
+const RICK_MICHAEL_ID ='144206566801801225';
 client.on('voiceStateUpdate', (oldMember, newMember) => {
     let newUserChannel = newMember.channel;
     let oldUserChannel = oldMember.channel
@@ -89,14 +89,17 @@ client.on('voiceStateUpdate', (oldMember, newMember) => {
                 file_to_play = "lordbust";
                 break;
             case CHRIS_WEBSTER_ID:
-                file_to_play = "chrisup";
+                file_to_play = "waitjay";
                 break;
             case ETHAN_MEDLER_ID:
                 file_to_play = "triple";
                 break;
             case MATT_ARMSTRONG_ID:
                 file_to_play = "hankbust";
-                break;              
+                break;
+            case RICK_MICHAEL_ID:
+                file_to_play = "yeet";
+                break;         
             default:
                 file_to_play = "DO_NOT_PLAY";
                 return;
