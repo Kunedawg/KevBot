@@ -78,7 +78,6 @@ const RICK_MICHAEL_ID ='144206566801801225';
 client.on('voiceStateUpdate', (oldMember, newMember) => {
     let newUserChannel = newMember.channel;
     let oldUserChannel = oldMember.channel
-    console.log(newMember.member.user);
     if(oldUserChannel === null && newUserChannel !== null && !newMember.member.user.bot) { // User Joins a voice channel
         let file_to_play;
         switch (newMember.member.user.id) {
