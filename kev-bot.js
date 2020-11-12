@@ -77,7 +77,7 @@ const MATT_ARMSTRONG_ID ='153385888917749760';
 const RICK_MICHAEL_ID ='144206566801801225';
 client.on('voiceStateUpdate', (oldMember, newMember) => {
     let newUserChannel = newMember.channel;
-    let oldUserChannel = oldMember.channel
+    let oldUserChannel = oldMember.channel;
     if(oldUserChannel === null && newUserChannel !== null && !newMember.member.user.bot) { // User Joins a voice channel
         let file_to_play;
         switch (newMember.member.user.id) {
