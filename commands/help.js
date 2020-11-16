@@ -3,7 +3,7 @@ module.exports = {
     description: 'Help with kev-bot commands.',
     usage: 'help!kevbot',
     args: true,
-    execute(message, args) {
+    execute({message, args}) {
         // import the audio dict
         const kev_bot = require('../kev-bot');
 

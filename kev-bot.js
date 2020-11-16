@@ -2,6 +2,17 @@
 const Discord = require('discord.js');
 const { deploy_prefix, test_prefix, deploy_token, test_token, audio_path, categories_path } = require('./config.json');
 const fs = require('fs');
+var mysql = require('mysql');
+
+// Sql pool connection info
+var sqlconnection = mysql.createPool({
+    connectionLimit     : 10,
+    host                : '***REMOVED***',
+    user                : '***REMOVED***',
+    password            : '***REMOVED***',
+    database            : '***REMOVED***',
+    multipleStatements  : true
+});
 
 // First command line argument determines the token/prefix to use
 var token = '';
@@ -68,49 +79,19 @@ client.once('ready', () => {
     ready = true;
 });
 
-// User joins channel event
-const KEVIN_KUNEY_ID = '***REMOVED***';
-const EVAN_FUMOSO_ID = '145361690328825857';
-const CHRIS_WEBSTER_ID = '144335985373741056';
-const ETHAN_MEDLER_ID = '189927294968659968';
-const MATT_ARMSTRONG_ID ='153385888917749760';
-const RICK_MICHAEL_ID ='144206566801801225';
+// User joins or exits the channel event
 client.on('voiceStateUpdate', (oldMember, newMember) => {
     let newUserChannel = newMember.channel;
     let oldUserChannel = oldMember.channel;
     if(oldUserChannel === null && newUserChannel !== null && !newMember.member.user.bot) { // User Joins a voice channel
-        let file_to_play;
-        switch (newMember.member.user.id) {
-            case KEVIN_KUNEY_ID:
-                file_to_play = "rockbody";
-                break;
-            case EVAN_FUMOSO_ID:
-                file_to_play = "lordbust";
-                break;
-            case CHRIS_WEBSTER_ID:
-                file_to_play = "waitjay";
-                break;
-            case ETHAN_MEDLER_ID:
-                file_to_play = "triple";
-                break;
-            case MATT_ARMSTRONG_ID:
-                file_to_play = "hankbust";
-                break;
-            case RICK_MICHAEL_ID:
-                file_to_play = "yeet";
-                break;         
-            default:
-                file_to_play = "DO_NOT_PLAY";
-                return;
-        }
-        newUserChannel.join()
-        .then(connection => {
-            const dispatcher = connection.play(audio_dict[file_to_play]);
-            dispatcher.on("finish", end => {newUserChannel.leave()});
-        })
-        .catch(console.error);
-    } else if(newUserChannel === null && !newMember.member.user.bot){ 
-        // User leaves a voice channel
+        const get_greeting_command = client.commands.get('getgreeting').execute; 
+        get_greeting_command({member : newMember.member})
+            .then((greeting) => {
+                const play_command = client.commands.get('p').execute; 
+                play_command({member : newMember.member, command_name : greeting, voice_channel : newUserChannel});
+            });
+
+    } else if(newUserChannel === null && !newMember.member.user.bot){ // User leaves a voice channel
     }
 })
 
@@ -122,11 +103,10 @@ client.on('message', message => {
     // Get args and commands name. Format of every command should follow "prefixcommand!arg1 arg2 arg3 arg4"
     const prefix_removed = message.content.slice(prefix.length).trim().split('!'); // ["command", "arg1 arg2 arg3 arg4"]
     const commandName = prefix_removed[0]; // "command"
-    var args;
     if (typeof prefix_removed[1] === 'undefined') {
         return;
     } else {
-        args = prefix_removed[1].split(/ +/); // array of the args ["arg1", "arg2", "arg3", "arg4"]  
+        var args = prefix_removed[1].split(/ +/); // array of the args ["arg1", "arg2", "arg3", "arg4"]  
     }
 
     // Retreive command if it exists
@@ -134,17 +114,23 @@ client.on('message', message => {
     const command = client.commands.get(commandName);  
 
     // Execute command
-    try {
-        command.execute(message, args);
-        // if (message.deletable) message.delete({timeout: 100}); This works, just don't like it anymore.
-    } catch (error) {
-        console.error(error);
-        message.reply('There was an issue executing that command!')
-    }
+    (async function () {
+        try {
+            await command.execute({message : message, args : args});
+        } catch (err) {
+            console.error(err);
+            if (typeof err.userResponse === 'undefined') {
+                message.member.send('There was an issue executing that command!');
+            } else {
+                message.member.send(err.userResponse);
+            }
+        }
+    })();
+
 });
 
-// Export the audio_dict for other modules to use
-module.exports = {audio_dict, client, category_dict};
+// Export important data for commands
+module.exports = {audio_dict, client, category_dict, sqlconnection};
 
 // Login
 client.login(token);
