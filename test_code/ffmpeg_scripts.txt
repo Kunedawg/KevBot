@@ -1,0 +1,3 @@
+ffmpeg -i 4d3d.mp3 -af "volumedetect" -vn -sn -dn -f null NUL
+ffmpeg -i 4d3d.mp3 -af "volume=12dB" 4d3d_norm.mp3
+use the loud norm filter
