@@ -2,7 +2,6 @@ module.exports = {
     name: 'delgreeting',
     description: 'Deletes and removes your greeting.',
     usage: 'delgreeting!',
-    args: true,
     execute({message, args}) {
         return new Promise((resolve,reject) => {
             // import data from kev-bot.js

@@ -2,7 +2,6 @@ module.exports = {
     name: 'getgreeting',
     description: 'Returns the current greeting you have set.',
     usage: 'getgreeting!',
-    args: true,
     execute({message, args, member}) {
         return new Promise((resolve,reject) => {
             // import data from kev-bot.js

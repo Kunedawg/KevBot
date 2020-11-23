@@ -2,7 +2,6 @@ module.exports = {
     name: 'list',
     description: 'List all commands of the given category or list all categories.',
     usage: 'list!all, list!categories, list!arnold',
-    args: true,
     execute({message, args}) {
         // import the audio dict
         const kev_bot = require('../kev-bot');

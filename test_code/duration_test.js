@@ -1,7 +1,7 @@
 const {getAudioDurationInSeconds} = require('get-audio-duration');
  
 // From a local path...
-getAudioDurationInSeconds('C:/maindir/kev-bot/test_code/4d3d.mp3').then((duration) => {
+getAudioDurationInSeconds('./4d3d.mp3').then((duration) => {
   console.log(duration);
 });
  

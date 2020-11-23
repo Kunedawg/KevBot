@@ -2,7 +2,6 @@ module.exports = {
     name: 'p',
     description: 'Play an audio file by name.',
     usage: 'p!imback',
-    args: true,
     execute({message, args, member, command_name, voice_channel}) {
         // import the audio dict
         const kev_bot = require('../kev-bot');

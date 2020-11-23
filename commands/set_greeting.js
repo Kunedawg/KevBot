@@ -2,7 +2,6 @@ module.exports = {
     name: 'setgreeting',
     description: 'Used for updating or setting your greeting. Use delgreeting to remove greeting entirely.',
     usage: 'setgreeting!greeting',
-    args: true,
     execute({message, args}) {
         return new Promise((resolve,reject) => {
             // import data from kev-bot.js
