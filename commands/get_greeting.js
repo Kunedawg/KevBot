@@ -1,9 +1,17 @@
+const { Message, GuildMember } = require('discord.js');
+
 module.exports = {
     name: 'getgreeting',
     description: 'Returns the current greeting you have set.',
     usage: 'getgreeting!',
+    /**
+     * @param {Object} methodargs
+     * @param {Message} methodargs.message
+     * @param {Array.<string>} methodargs.args
+     * @param {GuildMember} methodargs.member
+     */
     execute({message, args, member}) {
-        return new Promise((resolve,reject) => {
+        return new Promise(async(resolve,reject) => {
             // import data from kev-bot.js
             const kevbot = require('../kev-bot.js');
 

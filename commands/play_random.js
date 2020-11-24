@@ -1,7 +1,14 @@
+const { Message } = require('discord.js');
+
 module.exports = {
     name: 'pr',
     description: 'Play a random file from the given category.',
     usage: 'pr!all',
+    /**
+     * @param {Object} methodargs
+     * @param {Message} methodargs.message
+     * @param {Array.<string>} methodargs.args
+     */
     execute({message, args}) {
         // import the audio dict
         const kev_bot = require('../kev-bot');

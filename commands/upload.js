@@ -1,8 +1,15 @@
+const { Message } = require('discord.js');
+
 module.exports = {
     name: 'upload',
     description: 'Upload an mp3 file to the bot. Make sure to attach the mp3 file to the message.',
     usage: 'upload!',
-    async execute({message, args}) {
+    /**
+     * @param {Object} methodargs
+     * @param {Message} methodargs.message
+     * @param {Array.<string>} methodargs.args
+     */
+    execute({message, args}) {
         return new Promise(async(resolve,reject) => {
             // Importing all the required modules
             const {Storage} = require('@google-cloud/storage');
@@ -60,7 +67,7 @@ module.exports = {
             // Check the duration of file
             
             // async function for normalizing the audio
-            async function normalizeAudio(inputPath,outputPath) {
+            function normalizeAudio(inputPath,outputPath) {
                 return new Promise((resolve,reject) => {
                     ffmpeg(inputPath)
                         .audioFilters('loudnorm=I=-16:LRA=11:TP=-1.5')

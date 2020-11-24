@@ -1,8 +1,17 @@
+const { Message, GuildMember, VoiceChannel } = require('discord.js');
+
 module.exports = {
     name: 'pmp3',
     description: 'Play the attached audio file.',
     usage: 'pmp3!',
-    execute({message, args, member, command_name, voice_channel}) {
+    /**
+     * @param {Object} methodargs
+     * @param {Message} methodargs.message
+     * @param {Array.<string>} methodargs.args
+     * @param {GuildMember} methodargs.member
+     * @param {VoiceChannel} methodargs.voice_channel
+     */
+    execute({message, args, member, voice_channel}) {
         // import the audio dict
         const kev_bot = require('../kev-bot');
         var ffmpeg = require('fluent-ffmpeg');

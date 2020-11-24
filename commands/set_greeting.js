@@ -1,9 +1,16 @@
+const { Message } = require('discord.js');
+
 module.exports = {
     name: 'setgreeting',
     description: 'Used for updating or setting your greeting. Use delgreeting to remove greeting entirely.',
     usage: 'setgreeting!greeting',
+    /**
+     * @param {Object} methodargs
+     * @param {Message} methodargs.message
+     * @param {Array.<string>} methodargs.args
+     */
     execute({message, args}) {
-        return new Promise((resolve,reject) => {
+        return new Promise(async(resolve,reject) => {
             // import data from kev-bot.js
             const kevbot = require('../kev-bot.js');
 

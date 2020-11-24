@@ -88,7 +88,7 @@ client.on('voiceStateUpdate', (oldMember, newMember) => {
         get_greeting_command({member : newMember.member})
             .then((greeting) => {
                 const play_command = client.commands.get('p').execute; 
-                play_command({member : newMember.member, command_name : greeting, voice_channel : newUserChannel});
+                play_command({command_name : greeting, voice_channel : newUserChannel});
             });
 
     } else if(newUserChannel === null && !newMember.member.user.bot){ // User leaves a voice channel

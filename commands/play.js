@@ -1,8 +1,17 @@
+const { Message, VoiceChannel } = require('discord.js');
+
 module.exports = {
     name: 'p',
     description: 'Play an audio file by name.',
     usage: 'p!imback',
-    async execute({message, args, member, command_name, voice_channel}) {
+    /**
+     * @param {Object} methodargs
+     * @param {Message} methodargs.message
+     * @param {Array.<string>} methodargs.args
+     * @param {string} methodargs.command_name
+     * @param {VoiceChannel} methodargs.voice_channel
+     */
+    execute({message, args, command_name, voice_channel}) {
         return new Promise(async(resolve,reject) => {
             // import the audio dict
             const kev_bot = require('../kev-bot');
