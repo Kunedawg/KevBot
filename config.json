@@ -4,5 +4,19 @@
 	"deploy_token"		: "***REMOVED***",
 	"test_token" 		: "***REMOVED***",
 	"audio_path" 		: "./audio/",
-	"categories_path"	: "./data/categories.csv"
+	"categories_path"	: "./data/categories.csv",
+	"cloud_credentials" : {
+		"type": "***REMOVED***",
+		"project_id": "***REMOVED***",
+		"private_key_id": "***REMOVED***",
+		"private_key": "***REMOVED***",
+		"client_email": "***REMOVED***",
+		"client_id": "***REMOVED***",
+		"auth_uri": "***REMOVED***",
+		"token_uri": "***REMOVED***",
+		"auth_provider_x509_cert_url": "***REMOVED***",
+		"client_x509_cert_url": "***REMOVED***"
+	},
+	"bucket_name"		: "***REMOVED***"
+	
 }

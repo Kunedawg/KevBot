@@ -1,16 +1,21 @@
 const {Storage} = require('@google-cloud/storage');
 const path = require('path');
 const fs = require('fs');
+// const { config } = require('process');
+const config = require('../config.json');
 
 const gc = new Storage({
-    keyFilename: path.join(__dirname, '***REMOVED***-c11be83afb83.json'),
-    projectId: '***REMOVED***'
+    // keyFilename: path.join(__dirname, '***REMOVED***-c11be83afb83.json'),
+    projectId: '***REMOVED***',
+    credentials: config.cloud_credentials
 });
 
 // to test if everything is working
-//gc.getBuckets().then(x => console.log(x));
+// gc.getBuckets().then(x => console.log(x));
+
+
 const bucketName = '***REMOVED***';
-const audio_bucket = gc.bucket(bucketName);
+const audio_bucket = gc.bucket(config.bucket_name);
 
 const filename = path.join(__dirname, 'awwhell.mp3');
 

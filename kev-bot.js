@@ -1,6 +1,6 @@
 // imports
 const Discord = require('discord.js');
-const { deploy_prefix, test_prefix, deploy_token, test_token, audio_path, categories_path } = require('./config.json');
+const config = require('./config.json');
 const fs = require('fs');
 var mysql = require('mysql');
 
@@ -20,12 +20,12 @@ var prefix = '';
 var login_message = '';
 var environment = process.argv[2];
 if (environment === 'deploy') {
-    token = deploy_token;
-    prefix = deploy_prefix;
+    token = config.deploy_token;
+    prefix = config.deploy_prefix;
     login_message = 'kev-bot is ready and logged in!';
 } else if (environment === 'test'){
-    token = test_token;
-    prefix = test_prefix;
+    token = config.test_token;
+    prefix = config.test_prefix;
     login_message = 'kev-bot-test is ready and logged in!';
 } else {
     console.log("Not a valid command line arg");
@@ -34,17 +34,17 @@ if (environment === 'deploy') {
 
 // Creating dictionary for command to audio file path. yes -> ./audio/yes.mp3
 var audio_dict = {};
-var audio_file_names = fs.readdirSync(audio_path);   // generates array of file names
+var audio_file_names = fs.readdirSync(config.audio_path);   // generates array of file names
 for(var file_name of audio_file_names){
     var command = file_name.split('.')[0];  // remove .mp3 from end of file
-    audio_dict[command] = audio_path + file_name;
+    audio_dict[command] = config.audio_path + file_name;
 }
 
 // Creating dictionary of dictionaries for the categories
 // catergories.csv has format of audio_file,category1,category2,category3,...
 var category_dict = {};
 category_dict["all"] = Object.keys(audio_dict);     // adding all the files to category "all"
-var category_data_str = fs.readFileSync(categories_path,'utf8');
+var category_data_str = fs.readFileSync(config.categories_path,'utf8');
 var category_data_str = category_data_str.split(' ').join('');  // removes all spaces
 if (environment === 'deploy') { // windows uses \r\n, linux uses \n, apple uses \r
     var category_data_rows = category_data_str.split("\n"); 

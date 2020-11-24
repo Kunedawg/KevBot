@@ -26,6 +26,7 @@
     "get-audio-duration": "^2.0.3",
     "googleapis": "^65.0.0",
     "mysql": "^2.18.1",
+    "node-fetch": "^2.6.1",
     "request": "^2.88.2"
   }
 }
