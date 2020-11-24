@@ -16,13 +16,26 @@ module.exports = {
 
             // Defining path to save temporary data to
             var tempDataPath = path.join(__dirname, '../temp_data');
-                
+            
+            // Check if a file was actually attached
+            if (!(message.attachments.size !== 0)) {
+                console.log("Made it here!");
+                return reject({
+                    userResponse: "You did not attach a file ya dingus!",
+                    err: 'upload: No file attached.'
+                });
+            }
+
+            console.log("Made it here!2");
+
             // Determining the url, filename, and extension of the attached file
             const messageAttachment = message.attachments.values().next().value;
             const discordFileUrl = messageAttachment.url;
             const fileName = messageAttachment.name;
             const fileExtension = fileName.split('.').pop();
             const filePath = path.join(tempDataPath, fileName);
+
+            // Check that the file name meets kevbot requirements
 
             // Check that the file is actually an mp3
             if (fileExtension !== "mp3") {
@@ -42,7 +55,9 @@ module.exports = {
                     userResponse: "The file failed to download from discord! Try again later.",
                     err: err
                 });
-            } 
+            }
+
+            // Check the duration of file
             
             // async function for normalizing the audio
             async function normalizeAudio(inputPath,outputPath) {
@@ -87,7 +102,6 @@ module.exports = {
             }
             message.author.send(`"${fileName}" has been uploaded to kev-bot!`);
             
-
             // Add to audio dictionary and audio folder
 
             // clean up the temporary data

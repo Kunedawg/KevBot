@@ -118,15 +118,14 @@ client.on('message', message => {
         try {
             await command.execute({message : message, args : args});
         } catch (err) {
-            console.error(err);
+            console.error(`command "${commandName}" has failed: `, err);
             if (typeof err.userResponse === 'undefined') {
-                message.member.send('There was an issue executing that command!');
+                message.author.send('There was an issue executing that command!');
             } else {
-                message.member.send(err.userResponse);
+                message.author.send(err.userResponse);
             }
         }
     })();
-
 });
 
 // Export important data for commands
