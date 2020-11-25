@@ -45,11 +45,9 @@ module.exports = {
                     response += '\n';
                 }
                 
-                // Send the response in chuncks to the author of the message
+                // Send the response in chunks to the author of the message
                 try {
-                    for (let responseChunck of breakUpResponse(response)) {
-                        await message.author.send(responseChunck);
-                    }
+                    for (let responseChunk of breakUpResponse(response)) await message.author.send(responseChunk);
                 } catch (err) {
                     return reject({
                         userResponse: "Failed to send the requested list! Talk to Kevin.",

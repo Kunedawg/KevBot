@@ -35,27 +35,18 @@ module.exports = {
             try {
                 // Header
                 var response = 'Thanks for using kev-bot! This bot is for people who are ballsy and dont take shit from anyone.\n\n';
-                response += 'General command format: "command!arg1 arg2 arg3".\n\n';
+                response += 'General command format: "command!arg1 arg2 arg3".\n\n' + '!@#';
 
-                // Command text
-                const MAX_CHAR_LENGTH = 2000;
+                // Loop over commands
                 for (let command of kevbot.client.commands.values()) {
-                    var commandText = '';
-                    commandText += 'command:     ' + command.name + '\n';
-                    commandText += 'usage:       ' + command.usage + '\n';
-                    commandText += 'description: ' + command.description + '\n\n';
-                    if ((response.length + commandText.length) <= (MAX_CHAR_LENGTH - 6)) {  // Check to make sure we do not exceed character limit
-                        response += commandText;
-                    } else {
-                        response = '```' + response + '```'; // Wrapping the response with ``` to turn it into a code block
-                        await message.author.send(response);
-                        response = commandText;
-                    }
+                    response += `command:     ${command.name}\n`;
+                    response += `usage:       ${command.usage}\n`;
+                    response += `description: ${command.description}\n\n!@#`;
                 }
-                if (response.length > 0){
-                    response = '```' + response + '```'; 
-                    await message.author.send(response);
-                }
+
+                // send the reponse in chunks
+                for (let responseChunk of breakUpResponse(response)) await message.author.send(responseChunk);
+
             } catch (err) {
                 return reject({
                     userResponse: "Failed to generate the help file. Talk to Kevin.",
