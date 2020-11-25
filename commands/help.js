@@ -11,8 +11,9 @@ module.exports = {
      */
     execute({message, args}) {
         return new Promise(async(resolve,reject) => {
-            // import the audio dict
+            // imports
             const kevbot = require('../kev-bot');
+            const {breakUpResponse} = require("../helper_functions/helperfcns.js")
 
             // Getting category
             var helpCategory = args[0];

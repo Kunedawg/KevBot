@@ -80,52 +80,53 @@ client.once('ready', () => {
 });
 
 // User joins or exits the channel event
-client.on('voiceStateUpdate', (oldMember, newMember) => {
-    let newUserChannel = newMember.channel;
-    let oldUserChannel = oldMember.channel;
-    if(oldUserChannel === null && newUserChannel !== null && !newMember.member.user.bot) { // User Joins a voice channel
-        const get_greeting_command = client.commands.get('getgreeting').execute; 
-        get_greeting_command({member : newMember.member})
-            .then((greeting) => {
-                const play_command = client.commands.get('p').execute; 
-                play_command({command_name : greeting, voice_channel : newUserChannel});
-            });
-
-    } else if(newUserChannel === null && !newMember.member.user.bot){ // User leaves a voice channel
+client.on('voiceStateUpdate', (oldUserVoiceState, newUserVoiceState) => {
+    async function onVoiceStateUpdate(){
+        let newUserChannel = newUserVoiceState.channel;
+        let oldUserChannel = oldUserVoiceState.channel;
+        let newMember = newUserVoiceState.member;
+        let oldMember = oldUserVoiceState.member;
+        if(oldUserChannel === null && newUserChannel !== null && !newMember.user.bot) { // User Joins a voice channel
+            var greeting = await client.commands.get('getgreeting').execute({user : newMember.user});
+            client.commands.get('p').execute({command_name : greeting, voice_channel : newUserChannel});
+        } else if(newUserChannel === null && oldUserChannel !== null && !oldMember.user.bot){ // User leaves a voice channel
+        }
     }
+    onVoiceStateUpdate();
 })
 
 // User sends text message in channel event
 client.on('message', message => {
-    // Return if the message does not start with the prefix or if the message was from a bot
-    if (!message.content.startsWith(prefix) || message.author.bot) return;
+    async function onMessage(){
+        // Return if the message does not start with the prefix or if the message was from a bot
+        if (!message.content.startsWith(prefix) || message.author.bot) return;
 
-    // Get args and commands name. Format of every command should follow "prefixcommand!arg1 arg2 arg3 arg4"
-    const prefix_removed = message.content.toLowerCase().slice(prefix.length).trim().split('!'); // ["command", "arg1 arg2 arg3 arg4"]
-    const commandName = prefix_removed[0]; // "command"
-    if (typeof prefix_removed[1] === 'undefined') {
-        return;
-    } else {
-        var args = prefix_removed[1].split(/ +/); // array of the args ["arg1", "arg2", "arg3", "arg4"]  
-    }
+        // Get args and commands name. Format of every command should follow "prefixcommand!arg1 arg2 arg3 arg4"
+        const prefix_removed = message.content.toLowerCase().slice(prefix.length).trim().split('!'); // ["command", "arg1 arg2 arg3 arg4"]
+        const commandName = prefix_removed[0]; // "command"
+        if (typeof prefix_removed[1] === 'undefined') {
+            return;
+        } else {
+            var args = prefix_removed[1].split(/ +/); // array of the args ["arg1", "arg2", "arg3", "arg4"]  
+        }
 
-    // Retreive command if it exists
-    if (!client.commands.has(commandName)) return;
-    const command = client.commands.get(commandName);  
+        // Retreive command if it exists
+        if (!client.commands.has(commandName)) return;
+        const command = client.commands.get(commandName);  
 
-    // Execute command
-    (async function () {
+        // Execute command
         try {
             await command.execute({message : message, args : args});
         } catch (err) {
             console.error(`command "${commandName}" has failed: `, err);
             if (typeof err.userResponse === 'undefined') {
-                message.author.send('There was an issue executing that command!');
+                message.author.send(`There was an issue executing command "${commandName}"! Talk to Kevin.`);
             } else {
                 message.author.send(err.userResponse);
             }
         }
-    })();
+    }
+    onMessage();
 });
 
 // Export important data for commands

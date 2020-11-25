@@ -1,4 +1,4 @@
-const { Message, GuildMember } = require('discord.js');
+const { Message, User } = require('discord.js');
 
 module.exports = {
     name: 'getgreeting',
@@ -8,19 +8,15 @@ module.exports = {
      * @param {Object} methodargs
      * @param {Message} methodargs.message
      * @param {Array.<string>} methodargs.args
-     * @param {GuildMember} methodargs.member
+     * @param {User} methodargs.user
      */
-    execute({message, args, member}) {
+    execute({message, args, user}) {
         return new Promise(async(resolve,reject) => {
             // import data from kev-bot.js
             const kevbot = require('../kev-bot.js');
 
-            // Get discord id
-            if (member === undefined) {
-                var discord_id = message.author.id;
-            } else {
-                var discord_id = member.user.id;
-            }
+            // Use the discord id from the user if the user is defined
+            var discord_id = user ? user.id : message.author.id;
 
             // Call get_greeting stored procedure
             let queryStr = `CALL get_greeting('${discord_id}', @greeting); SELECT @greeting;`;
@@ -32,6 +28,7 @@ module.exports = {
                     });
                 } else {
                     let greeting = results[1][0]['@greeting'];
+                    // If the mesage exists, then respond to the user, otherwise do not respond.
                     if (message) {
                         if (greeting !== null) {
                             message.author.send(`Your current greeting is set to "${greeting}"!`);

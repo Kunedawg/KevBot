@@ -8,46 +8,28 @@ module.exports = {
      * @param {Object} methodargs
      * @param {Message} methodargs.message
      * @param {Array.<string>} methodargs.args
-     * @param {string} methodargs.command_name
-     * @param {VoiceChannel} methodargs.voice_channel
+     * @param {string} methodargs.commandName
+     * @param {VoiceChannel} methodargs.voiceChannel
      */
-    execute({message, args, command_name, voice_channel}) {
+    execute({message, args, commandName, voiceChannel}) {
         return new Promise(async(resolve,reject) => {
             // import the audio dict
-            const kev_bot = require('../kev-bot');
+            const kevbot = require('../kev-bot');
 
             // Getting the user command
-            var file_to_play = command_name || args[0];
+            var fileToPlay = commandName || args[0];
 
             // Check that file is in the dictionary
-            if (!(file_to_play in kev_bot.audio_dict)) {
-                return reject({
-                    userResponse: "Not a valid file name, ya dingus!",
-                    err: 'not a valid file name.'
-                });
-            }
+            if (!(fileToPlay in kevbot.audio_dict)) return reject({userResponse: "Not a valid file name, ya dingus!"});
 
             // Get voice channel and verify voice channel is actually a voice channel
-            var VC = voice_channel || message.member.voice.channel;
-            if (!VC) {
-                return reject({
-                    userResponse: "You are not in a voice channel, ya dingus!",
-                    err: 'not in a voice channel.'
-                });
-            }
-
-            // Join channel, play mp3 from the dictionary, leave when completed.
-            // VC.join()
-            //     .then(connection => {
-            //         const dispatcher = connection.play(kev_bot.audio_dict[file_to_play]);
-            //         dispatcher.on("finish", end => {VC.leave()});
-            //     })
-            //     .catch(console.error);
+            var VC = voiceChannel || message?.member?.voice?.channel;
+            if (!VC) return reject({userResponse: "You are not in a voice channel, ya dingus!"});
 
             // Join channel, play mp3 from the dictionary, leave when completed.
             try {
                 const connection = await VC.join()
-                const dispatcher = connection.play(kev_bot.audio_dict[file_to_play]);
+                const dispatcher = connection.play(kevbot.audio_dict[fileToPlay]);
                 dispatcher.on("finish", end => {VC.leave()});
             } catch(err) {
                 return reject({
