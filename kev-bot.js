@@ -15,18 +15,15 @@ var sqlconnection = mysql.createPool({
 });
 
 // First command line argument determines the token/prefix to use
-var token = '';
-var prefix = '';
-var login_message = '';
 var environment = process.argv[2];
 if (environment === 'deploy') {
-    token = config.deploy_token;
-    prefix = config.deploy_prefix;
-    login_message = 'kev-bot is ready and logged in!';
+    var token = config.deploy_token;
+    var prefix = config.deploy_prefix;
+    var login_message = 'kev-bot is ready and logged in!';
 } else if (environment === 'test'){
-    token = config.test_token;
-    prefix = config.test_prefix;
-    login_message = 'kev-bot-test is ready and logged in!';
+    var token = config.test_token;
+    var prefix = config.test_prefix;
+    var login_message = 'kev-bot-test is ready and logged in!';
 } else {
     console.log("Not a valid command line arg");
     process.exit(1);    // end program
@@ -34,8 +31,7 @@ if (environment === 'deploy') {
 
 // Creating dictionary for command to audio file path. yes -> ./audio/yes.mp3
 var audio_dict = {};
-var audio_file_names = fs.readdirSync(config.audio_path);   // generates array of file names
-for(var file_name of audio_file_names){
+for(var file_name of fs.readdirSync(config.audio_path)){
     var command = file_name.split('.')[0];  // remove .mp3 from end of file
     audio_dict[command] = config.audio_path + file_name;
 }

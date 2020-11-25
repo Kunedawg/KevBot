@@ -13,7 +13,7 @@ module.exports = {
         return new Promise(async(resolve,reject) => {
             // imports
             const kevbot = require('../kev-bot');
-            const {breakUpResponse} = require("../helper_functions/helperfcns.js")
+            const {breakUpResponse} = require("../helperfcns.js")
 
             // Getting category
             var helpCategory = args[0];
