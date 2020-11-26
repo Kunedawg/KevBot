@@ -12,14 +12,14 @@ module.exports = {
     execute({message, args}) {
         return new Promise(async(resolve,reject) => {
             // import data from kev-bot.js
-            const kevbot = require('../kev-bot.js');
+            var gd = require('../globaldata.js');
 
             // Get discord id
             let discord_id = message.author.id;
             
             // Call get_greeting stored procedure
             let queryStr = `CALL del_greeting('${discord_id}', @message); SELECT @message;`;
-            kevbot.sqlconnection.query(queryStr, (err, results) => {
+            gd.sqlconnection.query(queryStr, (err, results) => {
                 if (err) {
                     return reject({
                         userResponse: "Failed to delete greeting. Try again later or talk to Kevin.",

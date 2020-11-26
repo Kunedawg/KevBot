@@ -14,13 +14,13 @@ module.exports = {
     execute({message, args, commandName, voiceChannel}) {
         return new Promise(async(resolve,reject) => {
             // import the audio dict
-            const kevbot = require('../kev-bot');
+            var gd = require('../globaldata.js');
 
             // Getting the user command
             var fileToPlay = commandName || args[0];
 
             // Check that file is in the dictionary
-            if (!(fileToPlay in kevbot.audio_dict)) return reject({userResponse: "Not a valid file name, ya dingus!"});
+            if (!(fileToPlay in gd.getAudioDict())) return reject({userResponse: "Not a valid file name, ya dingus!"});
 
             // Get voice channel and verify voice channel is actually a voice channel
             var VC = voiceChannel || message?.member?.voice?.channel;
@@ -29,7 +29,7 @@ module.exports = {
             // Join channel, play mp3 from the dictionary, leave when completed.
             try {
                 const connection = await VC.join()
-                const dispatcher = connection.play(kevbot.audio_dict[fileToPlay]);
+                const dispatcher = connection.play(gd.getAudioDict()[fileToPlay]);
                 dispatcher.on("finish", end => {VC.leave()});
             } catch(err) {
                 return reject({

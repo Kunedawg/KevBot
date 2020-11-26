@@ -2,25 +2,15 @@
 const Discord = require('discord.js');
 const config = require('./config.json');
 const fs = require('fs');
-var mysql = require('mysql');
-
-// Sql pool connection info
-var sqlconnection = mysql.createPool({
-    connectionLimit     : 10,
-    host                : '***REMOVED***',
-    user                : '***REMOVED***',
-    password            : '***REMOVED***',
-    database            : '***REMOVED***',
-    multipleStatements  : true
-});
+var gd = require('./globaldata.js');
 
 // First command line argument determines the token/prefix to use
-var environment = process.argv[2];
-if (environment === 'deploy') {
+var env = process.argv[2];
+if (env === 'deploy') {
     var token = config.deploy_token;
     var prefix = config.deploy_prefix;
     var login_message = 'kev-bot is ready and logged in!';
-} else if (environment === 'test'){
+} else if (env === 'test'){
     var token = config.test_token;
     var prefix = config.test_prefix;
     var login_message = 'kev-bot-test is ready and logged in!';
@@ -30,61 +20,56 @@ if (environment === 'deploy') {
 }
 
 // Creating dictionary for command to audio file path. yes -> ./audio/yes.mp3
-var audio_dict = {};
 for(var file_name of fs.readdirSync(config.audio_path)){
     var command = file_name.split('.')[0];  // remove .mp3 from end of file
-    audio_dict[command] = config.audio_path + file_name;
+    gd.pushAudioDict(command,(config.audio_path + file_name));
 }
 
-// Creating dictionary of dictionaries for the categories
+// Creating dictionary of arrays for the categories
 // catergories.csv has format of audio_file,category1,category2,category3,...
-var category_dict = {};
-category_dict["all"] = Object.keys(audio_dict);     // adding all the files to category "all"
-var category_data_str = fs.readFileSync(config.categories_path,'utf8');
-var category_data_str = category_data_str.split(' ').join('');  // removes all spaces
-if (environment === 'deploy') { // windows uses \r\n, linux uses \n, apple uses \r
-    var category_data_rows = category_data_str.split("\n"); 
-} else if (environment === 'test'){
-    var category_data_rows = category_data_str.split("\r\n"); 
-}
-for (const row of category_data_rows) {
+gd.pushCategoryDict("all", Object.keys(gd.getAudioDict()));
+var catData = fs.readFileSync(config.categories_path,'utf8').split(' ').join(''); // read categories string and remove spaces.
+if (env === 'deploy')  // windows uses \r\n, linux uses \n, apple uses \r
+    var catRows = catData.split("\n"); 
+if (env === 'test')
+    var catRows = catData.split("\r\n"); 
+for (const row of catRows) {
     var categories = row.split(",");
-    var audio_file = categories.shift();  // first item of row is the audio_file, the rest will be categories
+    var audioFile = categories.shift();  // first item of row is the audioFile, the rest will be categories
     for (const category of categories) {
-        if (category in category_dict) {
-            category_dict[category].push(audio_file);
+        let catergoryDict = gd.getCategoryDict();
+        if (category in catergoryDict) {
+            catergoryDict[category].push(audioFile);
+            gd.setCategoryDict(catergoryDict);
         } else {
-            category_dict[category] = [audio_file];
+            gd.pushCategoryDict(category, [audioFile]);
         }
     }
 }
 
-// Creating client and reading in command functions from the command folder
-const client = new Discord.Client();
-client.commands = new Discord.Collection();
+// Storing the commands in a collection
+var tempClient = gd.getClient();
+tempClient.commands = new Discord.Collection();
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
-    client.commands.set(command.name, command);
+    tempClient.commands.set(command.name, command);
 }
+gd.setClient(tempClient);
 
 // Ready Event
-var ready = false;
-client.once('ready', () => {
-    console.log(login_message);
-    ready = true;
-});
+gd.getClient().once('ready', () => console.log(login_message));
 
 // User joins or exits the channel event
-client.on('voiceStateUpdate', (oldUserVoiceState, newUserVoiceState) => {
+gd.getClient().on('voiceStateUpdate', (oldUserVoiceState, newUserVoiceState) => {
     async function onVoiceStateUpdate(){
         let newUserChannel = newUserVoiceState.channel;
         let oldUserChannel = oldUserVoiceState.channel;
         let newMember = newUserVoiceState.member;
         let oldMember = oldUserVoiceState.member;
         if(oldUserChannel === null && newUserChannel !== null && !newMember.user.bot) { // User Joins a voice channel
-            var greeting = await client.commands.get('getgreeting').execute({user : newMember.user});
-            client.commands.get('p').execute({command_name : greeting, voice_channel : newUserChannel});
+            var greeting = await gd.getClient().commands.get('getgreeting').execute({user : newMember.user});
+            gd.getClient().commands.get('p').execute({command_name : greeting, voice_channel : newUserChannel});
         } else if(newUserChannel === null && oldUserChannel !== null && !oldMember.user.bot){ // User leaves a voice channel
         }
     }
@@ -92,7 +77,7 @@ client.on('voiceStateUpdate', (oldUserVoiceState, newUserVoiceState) => {
 })
 
 // User sends text message in channel event
-client.on('message', message => {
+gd.getClient().on('message', message => {
     async function onMessage(){
         // Return if the message does not start with the prefix or if the message was from a bot
         if (!message.content.startsWith(prefix) || message.author.bot) return;
@@ -107,8 +92,8 @@ client.on('message', message => {
         }
 
         // Retreive command if it exists
-        if (!client.commands.has(commandName)) return;
-        const command = client.commands.get(commandName);  
+        if (!gd.getClient().commands.has(commandName)) return;
+        const command = gd.getClient().commands.get(commandName);  
 
         // Execute command
         try {
@@ -125,8 +110,5 @@ client.on('message', message => {
     onMessage();
 });
 
-// Export important data for commands
-module.exports = {audio_dict, client, category_dict, sqlconnection};
-
 // Login
-client.login(token);
+gd.getClient().login(token);

@@ -12,7 +12,7 @@ module.exports = {
     execute({message, args}) {
         return new Promise(async(resolve,reject) => {
             // import data from kev-bot.js
-            const kevbot = require('../kev-bot.js');
+            var gd = require('../globaldata.js');
 
             // Get discord id
             let discord_id = message.author.id;
@@ -21,14 +21,14 @@ module.exports = {
             var greeting = args[0];
 
             // Check if greeting is in audio dict
-            if(!(greeting in kevbot.audio_dict)) {
+            if(!(greeting in gd.getAudioDict())) {
                 message.author.send(`"${greeting}" is not a valid command. Check your spelling.`);
                 return resolve("Set greeting succeeded.");
             }
             
             // Call get_greeting stored procedure
             let queryStr = `CALL set_greeting('${discord_id}','${greeting}', @message); SELECT @message;`;
-            kevbot.sqlconnection.query(queryStr, (err, results) => {
+            gd.sqlconnection.query(queryStr, (err, results) => {
                 if (err) {
                     return reject({
                         userResponse: "Failed to set greeting. Try again later or talk to Kevin.",

@@ -12,18 +12,19 @@ module.exports = {
     execute({message, args}) {
         return new Promise(async(resolve,reject) => {
             // import the audio dict
-            const kevbot = require('../kev-bot');
+
+            var gd = require('../globaldata.js');
 
             // Getting category from args
             var category = args[0];
 
             try {
-                if (category in kevbot.category_dict) {
+                if (category in gd.getCategoryDict()) {
                     // Determining random file to play
-                    const categoryCommands = kevbot.category_dict[category];
+                    const categoryCommands = gd.getCategoryDict()[category];
                     const indexToPlay = Math.floor(Math.random() * categoryCommands.length);     // returns a random integer from 0 to amount of commands
                     const commandToPlay = categoryCommands[indexToPlay];
-                    await kevbot.client.commands.get('p').execute({
+                    await gd.getClient().commands.get('p').execute({
                         commandName  : commandToPlay, 
                         voiceChannel : message?.member?.voice?.channel});
                 } else {

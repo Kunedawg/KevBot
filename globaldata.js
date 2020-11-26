@@ -1,13 +1,25 @@
 // imports
 const Discord = require('discord.js');
+var mysql = require('mysql');
 
 // Audio dictionary
-function setAudioDict(dict) { audioDict = dict; }
-function getAudioDict() { return audioDict;}
-
 var audioDict = {};
-const client = new Discord.Client();
-var categoryDict = {}
+function getAudioDict() {return audioDict;}
+function setAudioDict(dict) {audioDict = dict;}
+function pushAudioDict(key,value){audioDict[key] = value;}
+
+// catergory dictionary
+var categoryDict = {};
+function getCategoryDict() {return categoryDict;}
+function setCategoryDict(dict) {categoryDict = dict;}
+function pushCategoryDict(key,value){categoryDict[key] = value;}
+
+// discord client
+var client = new Discord.Client();
+function getClient() {return client;}
+function setClient(cln) {client = cln;}
+
+// sql connection
 const sqlconnection = mysql.createPool({
     connectionLimit     : 10,
     host                : '***REMOVED***',
@@ -17,8 +29,14 @@ const sqlconnection = mysql.createPool({
     multipleStatements  : true
 });
 
-function setAudioDict(dict) { audioDict = dict; }
-function getAudioDict() { return audioDict;}
-
-
-module.exports = {audio_dict, client, category_dict, sqlconnection};
+module.exports = {
+    getAudioDict, 
+    setAudioDict, 
+    pushAudioDict, 
+    getCategoryDict, 
+    setCategoryDict, 
+    pushCategoryDict, 
+    getClient, 
+    setClient,
+    sqlconnection
+};

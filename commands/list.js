@@ -12,16 +12,17 @@ module.exports = {
     execute({message, args}) {
         return new Promise(async(resolve,reject) => {
             // imports
-            const kevbot = require('../kev-bot.js');
+            var gd = require('../globaldata.js');
             const {breakUpResponse} = require("../helperfcns.js")
 
-            // Getting category
+            // Getting category and category dict
             var category = args[0];
+            var categoryDict = gd.getCategoryDict();
 
             // Listing all commands of a given category, or listing all 
-            if (category in kevbot.category_dict || category === "categories") {
+            if (category in categoryDict || category === "categories") {
                 // Getting the relevant array that needs to be listed and sorting it
-                let listArray = category === "categories" ? Object.keys(kevbot.category_dict) : kevbot.category_dict[category];
+                let listArray = category === "categories" ? Object.keys(categoryDict) : categoryDict[category];
                 listArray.sort();
 
                 // Finding the item with the largest number of characters

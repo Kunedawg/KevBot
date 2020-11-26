@@ -13,14 +13,14 @@ module.exports = {
     execute({message, args, user}) {
         return new Promise(async(resolve,reject) => {
             // import data from kev-bot.js
-            const kevbot = require('../kev-bot.js');
+            var gd = require('../globaldata.js');
 
             // Use the discord id from the user if the user is defined
             var discord_id = user ? user.id : message.author.id;
 
             // Call get_greeting stored procedure
             let queryStr = `CALL get_greeting('${discord_id}', @greeting); SELECT @greeting;`;
-            kevbot.sqlconnection.query(queryStr, (err, results) => {
+            gd.sqlconnection.query(queryStr, (err, results) => {
                 if (err) {
                     return reject({
                         userResponse: "Failed to retrieve greeting. Try again later or talk to Kevin.",
@@ -32,7 +32,7 @@ module.exports = {
                     if (message) {
                         if (greeting !== null) {
                             message.author.send(`Your current greeting is set to "${greeting}"!`);
-                            if (!(greeting in kevbot.audio_dict)) message.author.send(`"${greeting}" is not a valid command. Consider changing it.`);
+                            if (!(greeting in gd.getAudioDict())) message.author.send(`"${greeting}" is not a valid command. Consider changing it.`);
                         } else {
                             message.author.send("You do not have a greeting configured.");
                         }
