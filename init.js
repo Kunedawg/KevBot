@@ -40,6 +40,7 @@ module.exports = {
     // Creating dictionary of arrays for the categories
     // catergories.csv has format of audio_file,category1,category2,category3,...
     Categories() {
+        gd.pushCategoryDict("all", []); // just an empty array
         var catData = fs.readFileSync(gd.categoriesCsvPath,'utf8').split(' ').join(''); // read categories string and remove spaces.
         if (gd.getEnv() === 'deploy')  // windows uses \r\n, linux uses \n, apple uses \r
             var catRows = catData.split("\n"); 

@@ -8,7 +8,8 @@
   },
   "scripts": {
     "start": "node kev-bot.js deploy",
-    "test": "node kev-bot.js test"
+    "test": "node kev-bot.js test",
+    "test dl": "node kev-bot.js test dl"
   },
   "repository": {
     "type": "git",

@@ -20,7 +20,10 @@ if (gd.getEnv() === 'deploy') {
 
 // Initialization
 if (gd.getEnv() === 'deploy') var downloadAudio = true;
-if (gd.getEnv() === 'test') var downloadAudio = false;
+var downloadFlag = process.argv[3];
+if (gd.getEnv() === 'test') {
+    var downloadAudio = (downloadFlag === 'dl');
+};
 async function initialize() {
     console.log(await init.Audio(downloadAudio));;
     init.Categories();
