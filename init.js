@@ -28,8 +28,10 @@ module.exports = {
                 }
 
                 // Store all of the file paths in a dictionary
-                for(var f of fs.readdirSync(gd.audioPath))
-                    gd.pushAudioDict( f.split('.')[0] , path.join(gd.audioPath, f));
+                for(var f of fs.readdirSync(gd.audioPath)) {
+                    if (f.split(".")[1] === "mp3")
+                        gd.pushAudioDict( f.split('.')[0] , path.join(gd.audioPath, f));
+                }
     
                 return resolve("Audio inited!");
             } catch(err) {

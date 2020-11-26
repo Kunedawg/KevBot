@@ -3,7 +3,7 @@ const { Message } = require('discord.js');
 module.exports = {
     name: 'list',
     description: 'List all commands of the given category or list all categories.',
-    usage: 'list!all, list!categories, list!arnold',
+    usage: 'list!all, list!cat, list!categories, list!arnold',
     /**
      * @param {Object} methodargs
      * @param {Message} methodargs.message
@@ -20,9 +20,12 @@ module.exports = {
             var categoryDict = gd.getCategoryDict();
 
             // Listing all commands of a given category, or listing all 
-            if (category in categoryDict || category === "categories" || category === "all") {
+            if (category in categoryDict || category === "categories" || category === "cat" || category === "all") {
                 switch(category) {
                     case "categories":
+                        var listArray = Object.keys(categoryDict);
+                        break;
+                    case "cat":
                         var listArray = Object.keys(categoryDict);
                         break;
                     case "all":

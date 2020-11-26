@@ -49,5 +49,9 @@ module.exports = {
                 return resolve(fileNameArray);
             });
         });
+    },
+    kevbotStringOkay(string){
+        const lowercaseOnly = /^[a-z\d]+$/g;
+        return lowercaseOnly.test(string);
     }
 }

@@ -43,14 +43,10 @@ module.exports = {
             // Check that the file name is not too long
             const MAX_COMMAND_NAME_LENGTH = 15;
             if (commandName.length > (MAX_COMMAND_NAME_LENGTH))
-                return reject({userResponse: `The file name can only be ${MAX_COMMAND_NAME_LENGTH} characters long. Not including the .mp3.`});
+                return reject({userResponse: `The file name can only be ${MAX_COMMAND_NAME_LENGTH} characters long, not including the .mp3.`});
 
             // check that the filename contains on lowercase letters  
-            function isLowercaseOnly(string){
-                const lowercaseOnly = /^[a-z]+$/g;
-                return lowercaseOnly.test(string);
-            }
-            if (!isLowercaseOnly(commandName))
+            if (!hf.kevbotStringOkay(commandName))
                 return reject({userResponse: `The file name can only contain lower case letters.`});
 
             // Check that the file is actually an mp3
@@ -100,7 +96,7 @@ module.exports = {
             const MAX_DURATION = 15.0; // sec
             const duration = await getAudioDurationInSeconds(downloadFilePath);
             if(duration > MAX_DURATION)
-                return reject({userResponse: `${fileName} has duration of ${duration} sec. Max duration is ${MAX_DURATION} sec. Talk to Kevin for exceptions to this rule`});
+                return reject({userResponse: `${fileName} has a duration of ${duration} sec. Max duration is ${MAX_DURATION} sec. Talk to Kevin for exceptions to this rule`});
 
             // async function for normalizing the audio
             function normalizeAudio(inputPath,outputPath) {

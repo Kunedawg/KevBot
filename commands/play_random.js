@@ -19,9 +19,9 @@ module.exports = {
             var category = args[0];
 
             try {
-                if (category in gd.getCategoryDict()) {
+                if (category in gd.getCategoryDict() || category === 'all') {
                     // Determining random file to play
-                    const categoryCommands = gd.getCategoryDict()[category];
+                    const categoryCommands = (category === 'all') ? Object.keys(gd.getAudioDict()) : gd.getCategoryDict()[category];
                     const indexToPlay = Math.floor(Math.random() * categoryCommands.length);     // returns a random integer from 0 to amount of commands
                     const commandToPlay = categoryCommands[indexToPlay];
                     await gd.getClient().commands.get('p').execute({
