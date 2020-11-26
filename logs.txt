@@ -1,0 +1,8 @@
+2020-11-26T04:02:00.233268+00:00 app[worker.1]: (node:23) UnhandledPromiseRejectionWarning: Error: Command failed with exit code 1: /app/node_modules/@ffprobe-installer/linux-x64/ffprobe -v error -select_streams a:0 -show_format -show_streams /app/temp_data/downloaded_file.mp3
+2020-11-26T04:02:00.233285+00:00 app[worker.1]: [mp3 @ 0x6991b00] Failed to read frame size: Could not seek to 1026.
+2020-11-26T04:02:00.233287+00:00 app[worker.1]: /app/temp_data/downloaded_file.mp3: Invalid argument
+2020-11-26T04:02:00.233288+00:00 app[worker.1]:     at makeError (/app/node_modules/execa/lib/error.js:59:11)
+2020-11-26T04:02:00.233288+00:00 app[worker.1]:     at handlePromise (/app/node_modules/execa/index.js:114:26)
+2020-11-26T04:02:00.233289+00:00 app[worker.1]:     at processTicksAndRejections (internal/process/task_queues.js:93:5)
+2020-11-26T04:02:00.233289+00:00 app[worker.1]: (Use `node --trace-warnings ...` to show where the warning was created)
+2020-11-26T04:02:00.233331+00:00 app[worker.1]: (node:23) UnhandledPromiseRejectionWarning: Unhandled promise rejection. This error originated either by throwing inside of an

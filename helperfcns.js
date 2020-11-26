@@ -1,3 +1,7 @@
+// imports
+const {Storage, Bucket} = require('@google-cloud/storage');
+var ffmpeg = require('fluent-ffmpeg');
+
 module.exports = {
     breakUpResponse(response, splitChar = '!@#', wrapChar = '```') {
         const MAX_NO_WRAP_LENGTH = 2000 - 2 * wrapChar.length; // Largest message discord can send
@@ -53,5 +57,18 @@ module.exports = {
     kevbotStringOkay(string){
         const lowercaseOnly = /^[a-z\d]+$/g;
         return lowercaseOnly.test(string);
+    },
+    normalizeAudio(inputPath,outputPath) {
+        return new Promise((resolve,reject) => {
+            ffmpeg(inputPath)
+                .audioFilters('loudnorm=I=-16:LRA=11:TP=-1.5')
+                .on('error', function(err) {
+                    return reject(err);
+                })
+                .on('end', function() {
+                    return resolve('Normalizing finished!');
+                })
+                .save(outputPath);
+        });
     }
 }

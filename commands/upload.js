@@ -23,8 +23,8 @@ module.exports = {
             const hf = require('../helperfcns.js');
             
             // Check if a file was actually attached
+            console.log("Checking that a file was attached...");
             if (!(message.attachments.size !== 0)) {
-                console.log("Made it here!");
                 return reject({
                     userResponse: "You did not attach a file ya dingus!",
                     err: 'upload: No file attached.'
@@ -41,19 +41,23 @@ module.exports = {
             const downloadFilePath = path.join(gd.tempDataPath, 'downloaded_file.mp3');
 
             // Check that the file name is not too long
+            console.log("Checking filename length...");
             const MAX_COMMAND_NAME_LENGTH = 15;
             if (commandName.length > (MAX_COMMAND_NAME_LENGTH))
                 return reject({userResponse: `The file name can only be ${MAX_COMMAND_NAME_LENGTH} characters long, not including the .mp3.`});
 
-            // check that the filename contains on lowercase letters  
+            // check that the filename format
+            console.log("Checking filename format...");
             if (!hf.kevbotStringOkay(commandName))
                 return reject({userResponse: `The file name can only contain lower case letters and numbers.`});
 
             // Check that the file is actually an mp3
+            console.log("Checking filename is a mp3...");
             if (fileExtension !== "mp3") 
                 return reject({userResponse: "The file you are trying to upload is not an mp3 file! You can only upload mp3 files."});
 
             // Try to make a connection to the cloud server bucket
+            console.log("Checking connection to cloud server...");
             try {
                 const gc = new Storage({
                     projectId: config.cloudCredentials.project_id,
@@ -68,6 +72,7 @@ module.exports = {
             }
 
             // Getting list of files from cloud server
+            console.log("getting cloud server files...");
             try {
                 var cloudFiles = await hf.getFiles(audioBucket);
             } catch (err) {
@@ -78,10 +83,12 @@ module.exports = {
             }
 
             // Check if the file is already on the server
+            console.log("Check if file is already on server...");
             if (cloudFiles.includes(fileName))
                 return reject({userResponse: `"${fileName}" is already on the cloud server, please pick a new name.`});
 
             // Download file from discord to a local file path
+            console.log("Downloading from discord...");
             try {
                 var response = await fetch(discordFileUrl);
                 await response.body.pipe(fs.createWriteStream(downloadFilePath));
@@ -93,29 +100,16 @@ module.exports = {
             }
 
             // Check the duration of file does not exceed the max duration
+            console.log("Checking audio duration...");
             const MAX_DURATION = 15.0; // sec
             const duration = await getAudioDurationInSeconds(downloadFilePath);
             if(duration > MAX_DURATION)
                 return reject({userResponse: `${fileName} has a duration of ${duration} sec. Max duration is ${MAX_DURATION} sec. Talk to Kevin for exceptions to this rule`});
 
-            // async function for normalizing the audio
-            function normalizeAudio(inputPath,outputPath) {
-                return new Promise((resolve,reject) => {
-                    ffmpeg(inputPath)
-                        .audioFilters('loudnorm=I=-16:LRA=11:TP=-1.5')
-                        .on('error', function(err) {
-                            return reject(err);
-                        })
-                        .on('end', function() {
-                            return resolve('Normalizing finished!');
-                        })
-                        .save(outputPath);
-                });
-            }
-
             // Call the normalize audio function
+            console.log("Normalizing audio...");
             try {
-                await normalizeAudio(downloadFilePath,filePath);
+                await hf.normalizeAudio(downloadFilePath,filePath);
             } catch (err) {
                 return reject({
                     userResponse: "The file failed to normalize! Talk to Kevin.",
@@ -124,6 +118,7 @@ module.exports = {
             } 
 
             // Upload file to google cloud server
+            console.log("Uploading file to cloud server...");
             try {
                 await audioBucket.upload(filePath, { gzip: true});
             } catch (err) {
@@ -135,6 +130,7 @@ module.exports = {
             message.author.send(`"${fileName}" has been uploaded to kev-bot!`);
             
             // Add to audio dictionary and audio folder
+            console.log("Adding file to audio dictionary...");
             try {
                 gd.pushAudioDict(commandName,filePath);
             } catch (err) {
@@ -145,6 +141,7 @@ module.exports = {
             }
 
             // Clean up the temporary data
+            console.log("Emptying temp data...");
             try {
                 await fs.emptyDir(gd.tempDataPath);
             } catch (err) {
