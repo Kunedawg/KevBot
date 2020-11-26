@@ -91,7 +91,10 @@ module.exports = {
             console.log("Downloading from discord...");
             try {
                 var response = await fetch(discordFileUrl);
-                await response.body.pipe(fs.createWriteStream(downloadFilePath));
+                var readStream = response.body;
+                var writeSteam = fs.createWriteStream(downloadFilePath);
+                await hf.asyncPipe(readStream,writeSteam);
+                //await readStream.pipe(fs.createWriteStream(downloadFilePath));
             } catch (err) {
                 return reject({
                     userResponse: "The file failed to download from discord! Try again later.",
@@ -101,10 +104,20 @@ module.exports = {
 
             // Check the duration of file does not exceed the max duration
             console.log("Checking audio duration...");
-            const MAX_DURATION = 15.0; // sec
-            const duration = await getAudioDurationInSeconds(downloadFilePath);
-            if(duration > MAX_DURATION)
-                return reject({userResponse: `${fileName} has a duration of ${duration} sec. Max duration is ${MAX_DURATION} sec. Talk to Kevin for exceptions to this rule`});
+            try {
+                const MAX_DURATION = 15.0; // sec
+                const duration = await getAudioDurationInSeconds(downloadFilePath);
+                if(duration > MAX_DURATION) {
+                    return reject({
+                        userResponse: `${fileName} has a duration of ${duration} sec. Max duration is ${MAX_DURATION} sec. Talk to Kevin for exceptions to this rule`
+                    });
+                }
+            } catch(err) {
+                return reject({
+                    userResponse: "Failed to get audio duration! Try again later.",
+                    err: err
+                }); 
+            }
 
             // Call the normalize audio function
             console.log("Normalizing audio...");

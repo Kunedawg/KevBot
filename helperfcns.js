@@ -70,5 +70,12 @@ module.exports = {
                 })
                 .save(outputPath);
         });
+    },
+    asyncPipe(reader,writer) {
+        return new Promise((resolve,reject) => {
+            reader.pipe(writer);
+            reader.on('end', () => {return resolve("pipe done!")});
+            setTimeout(()=>{return reject("pipe timed out after 20 sec!")}, 20000);
+        });        
     }
 }
