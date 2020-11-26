@@ -7,7 +7,7 @@ const config = require('../config.json');
 const gc = new Storage({
     // keyFilename: path.join(__dirname, '***REMOVED***-c11be83afb83.json'),
     projectId: '***REMOVED***',
-    credentials: config.cloud_credentials
+    credentials: config.cloudCredentials
 });
 
 // to test if everything is working

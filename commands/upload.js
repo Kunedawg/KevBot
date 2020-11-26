@@ -60,8 +60,8 @@ module.exports = {
             // Try to make a connection to the cloud server bucket
             try {
                 const gc = new Storage({
-                    projectId: config.cloud_credentials.project_id,
-                    credentials: config.cloud_credentials
+                    projectId: config.cloudCredentials.project_id,
+                    credentials: config.cloudCredentials
                 });
                 var audio_bucket = gc.bucket(config.bucket_name);
             } catch (err) {

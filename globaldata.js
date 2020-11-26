@@ -1,6 +1,7 @@
 // imports
 const Discord = require('discord.js');
 var mysql = require('mysql');
+const path = require('path');
 
 // Audio dictionary
 var audioDict = {};
@@ -29,6 +30,10 @@ const sqlconnection = mysql.createPool({
     multipleStatements  : true
 });
 
+// paths
+const audioPath = path.join(__dirname, './audio/');
+const categoriesCsvPath = path.join(__dirname, './data/categories.csv');
+
 module.exports = {
     getAudioDict, 
     setAudioDict, 
@@ -38,5 +43,7 @@ module.exports = {
     pushCategoryDict, 
     getClient, 
     setClient,
-    sqlconnection
+    sqlconnection,
+    audioPath,
+    categoriesCsvPath
 };

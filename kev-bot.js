@@ -7,12 +7,12 @@ var gd = require('./globaldata.js');
 // First command line argument determines the token/prefix to use
 var env = process.argv[2];
 if (env === 'deploy') {
-    var token = config.deploy_token;
-    var prefix = config.deploy_prefix;
+    var token = config.deployToken;
+    var prefix = config.deployPrefix;
     var login_message = 'kev-bot is ready and logged in!';
 } else if (env === 'test'){
-    var token = config.test_token;
-    var prefix = config.test_prefix;
+    var token = config.testToken;
+    var prefix = config.testPrefix;
     var login_message = 'kev-bot-test is ready and logged in!';
 } else {
     console.log("Not a valid command line arg");
@@ -20,15 +20,15 @@ if (env === 'deploy') {
 }
 
 // Creating dictionary for command to audio file path. yes -> ./audio/yes.mp3
-for(var file_name of fs.readdirSync(config.audio_path)){
+for(var file_name of fs.readdirSync(gd.audioPath)){
     var command = file_name.split('.')[0];  // remove .mp3 from end of file
-    gd.pushAudioDict(command,(config.audio_path + file_name));
+    gd.pushAudioDict(command,(gd.audioPath + file_name));
 }
 
 // Creating dictionary of arrays for the categories
 // catergories.csv has format of audio_file,category1,category2,category3,...
 gd.pushCategoryDict("all", Object.keys(gd.getAudioDict()));
-var catData = fs.readFileSync(config.categories_path,'utf8').split(' ').join(''); // read categories string and remove spaces.
+var catData = fs.readFileSync(gd.categoriesCsvPath,'utf8').split(' ').join(''); // read categories string and remove spaces.
 if (env === 'deploy')  // windows uses \r\n, linux uses \n, apple uses \r
     var catRows = catData.split("\n"); 
 if (env === 'test')

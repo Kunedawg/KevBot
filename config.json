@@ -1,11 +1,9 @@
 {
-	"deploy_prefix"		: "",
-	"test_prefix"		: "t",
-	"deploy_token"		: "***REMOVED***",
-	"test_token" 		: "***REMOVED***",
-	"audio_path" 		: "./audio/",
-	"categories_path"	: "./data/categories.csv",
-	"cloud_credentials" : {
+	"deployPrefix"		: "",
+	"testPrefix"		: "t",
+	"deployToken"		: "***REMOVED***",
+	"testToken" 		: "***REMOVED***",
+	"cloudCredentials" : {
 		"type": "***REMOVED***",
 		"project_id": "***REMOVED***",
 		"private_key_id": "***REMOVED***",
