@@ -20,9 +20,17 @@ module.exports = {
             var categoryDict = gd.getCategoryDict();
 
             // Listing all commands of a given category, or listing all 
-            if (category in categoryDict || category === "categories") {
-                // Getting the relevant array that needs to be listed and sorting it
-                let listArray = category === "categories" ? Object.keys(categoryDict) : categoryDict[category];
+            if (category in categoryDict || category === "categories" || category === "all") {
+                switch(category) {
+                    case "categories":
+                        var listArray = Object.keys(categoryDict);
+                        break;
+                    case "all":
+                        var listArray = Object.keys(gd.getAudioDict())
+                    break;
+                    default:
+                        var listArray = categoryDict[category];
+                }
                 listArray.sort();
 
                 // Finding the item with the largest number of characters

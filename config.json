@@ -15,6 +15,6 @@
 		"auth_provider_x509_cert_url": "***REMOVED***",
 		"client_x509_cert_url": "***REMOVED***"
 	},
-	"bucket_name"		: "***REMOVED***"
+	"bucketName"		: "***REMOVED***"
 	
 }

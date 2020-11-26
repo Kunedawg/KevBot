@@ -20,7 +20,7 @@ module.exports = {
             var fileToPlay = commandName || args[0];
 
             // Check that file is in the dictionary
-            if (!(fileToPlay in gd.getAudioDict())) return reject({userResponse: "Not a valid file name, ya dingus!"});
+            if (!(fileToPlay in gd.getAudioDict())) return reject({userResponse: `"${fileToPlay}" does not exist, ya dingus!`});
 
             // Get voice channel and verify voice channel is actually a voice channel
             var VC = voiceChannel || message?.member?.voice?.channel;

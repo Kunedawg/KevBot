@@ -1,16 +1,15 @@
 // imports
-const Discord = require('discord.js');
 const config = require('./config.json');
-const fs = require('fs');
-var gd = require('./globaldata.js');
+const gd = require('./globaldata.js');
+const init = require('./init.js');
 
 // First command line argument determines the token/prefix to use
-var env = process.argv[2];
-if (env === 'deploy') {
+gd.setEnv(process.argv[2]);
+if (gd.getEnv() === 'deploy') {
     var token = config.deployToken;
     var prefix = config.deployPrefix;
     var login_message = 'kev-bot is ready and logged in!';
-} else if (env === 'test'){
+} else if (gd.getEnv() === 'test'){
     var token = config.testToken;
     var prefix = config.testPrefix;
     var login_message = 'kev-bot-test is ready and logged in!';
@@ -19,43 +18,20 @@ if (env === 'deploy') {
     process.exit(1);    // end program
 }
 
-// Creating dictionary for command to audio file path. yes -> ./audio/yes.mp3
-for(var file_name of fs.readdirSync(gd.audioPath)){
-    var command = file_name.split('.')[0];  // remove .mp3 from end of file
-    gd.pushAudioDict(command,(gd.audioPath + file_name));
+// Initialization
+if (gd.getEnv() === 'deploy') var downloadAudio = true;
+if (gd.getEnv() === 'test') var downloadAudio = false;
+async function initialize() {
+    console.log(await init.Audio(downloadAudio));;
+    init.Categories();
+    init.Commands();
+    gd.getClient().login(token);
 }
-
-// Creating dictionary of arrays for the categories
-// catergories.csv has format of audio_file,category1,category2,category3,...
-gd.pushCategoryDict("all", Object.keys(gd.getAudioDict()));
-var catData = fs.readFileSync(gd.categoriesCsvPath,'utf8').split(' ').join(''); // read categories string and remove spaces.
-if (env === 'deploy')  // windows uses \r\n, linux uses \n, apple uses \r
-    var catRows = catData.split("\n"); 
-if (env === 'test')
-    var catRows = catData.split("\r\n"); 
-for (const row of catRows) {
-    var categories = row.split(",");
-    var audioFile = categories.shift();  // first item of row is the audioFile, the rest will be categories
-    for (const category of categories) {
-        let catergoryDict = gd.getCategoryDict();
-        if (category in catergoryDict) {
-            catergoryDict[category].push(audioFile);
-            gd.setCategoryDict(catergoryDict);
-        } else {
-            gd.pushCategoryDict(category, [audioFile]);
-        }
-    }
+try {
+    initialize();
+} catch(err) {
+    console.log(err);
 }
-
-// Storing the commands in a collection
-var tempClient = gd.getClient();
-tempClient.commands = new Discord.Collection();
-const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
-for (const file of commandFiles) {
-    const command = require(`./commands/${file}`);
-    tempClient.commands.set(command.name, command);
-}
-gd.setClient(tempClient);
 
 // Ready Event
 gd.getClient().once('ready', () => console.log(login_message));
@@ -109,6 +85,3 @@ gd.getClient().on('message', message => {
     }
     onMessage();
 });
-
-// Login
-gd.getClient().login(token);

@@ -3,6 +3,11 @@ const Discord = require('discord.js');
 var mysql = require('mysql');
 const path = require('path');
 
+// current environment
+var env = '';
+function getEnv() {return env;}
+function setEnv(e) {env = e;}
+
 // Audio dictionary
 var audioDict = {};
 function getAudioDict() {return audioDict;}
@@ -33,8 +38,11 @@ const sqlconnection = mysql.createPool({
 // paths
 const audioPath = path.join(__dirname, './audio/');
 const categoriesCsvPath = path.join(__dirname, './data/categories.csv');
+var tempDataPath = path.join(__dirname, './temp_data/');
 
 module.exports = {
+    getEnv,
+    setEnv,
     getAudioDict, 
     setAudioDict, 
     pushAudioDict, 
@@ -45,5 +53,6 @@ module.exports = {
     setClient,
     sqlconnection,
     audioPath,
-    categoriesCsvPath
+    categoriesCsvPath,
+    tempDataPath
 };

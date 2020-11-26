@@ -36,5 +36,18 @@ module.exports = {
         if (strBuild.length > 0 && strBuild.length <= MAX_NO_WRAP_LENGTH) responseArray.push(wrapChar + strBuild + wrapChar);
 
         return responseArray;
+    },
+    /**
+     * @param {Bucket} bucket
+     */
+    getFiles(bucket) {
+        return new Promise((resolve,reject) => {
+            bucket.getFiles((err,files)=>{
+                if (err) return reject(err);
+                let fileNameArray = [];
+                for (var file of files) fileNameArray.push(file.name);
+                return resolve(fileNameArray);
+            });
+        });
     }
 }
