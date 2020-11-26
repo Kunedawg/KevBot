@@ -47,7 +47,7 @@ module.exports = {
 
             // check that the filename contains on lowercase letters  
             if (!hf.kevbotStringOkay(commandName))
-                return reject({userResponse: `The file name can only contain lower case letters.`});
+                return reject({userResponse: `The file name can only contain lower case letters and numbers.`});
 
             // Check that the file is actually an mp3
             if (fileExtension !== "mp3") 
