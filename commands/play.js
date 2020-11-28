@@ -1,3 +1,5 @@
+// import the audio dict
+var gd = require('../globaldata.js');
 const { Message, VoiceChannel } = require('discord.js');
 
 module.exports = {
@@ -13,13 +15,8 @@ module.exports = {
      */
     execute({message, args, commandName, voiceChannel}) {
         return new Promise(async(resolve,reject) => {
-            // import the audio dict
-            var gd = require('../globaldata.js');
-
-            // Getting the user command
-            var fileToPlay = commandName || args[0];
-
-            // Check that file is in the dictionary
+            // Getting file to play and checking that it exists
+            var fileToPlay = commandName || args?.[0];
             if (!(fileToPlay in gd.getAudioDict())) return reject({userResponse: `"${fileToPlay}" does not exist, ya dingus!`});
 
             // Get voice channel and verify voice channel is actually a voice channel

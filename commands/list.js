@@ -1,3 +1,6 @@
+// imports
+var gd = require('../globaldata.js');
+const {breakUpResponse} = require("../helperfcns.js")
 const { Message } = require('discord.js');
 
 module.exports = {
@@ -11,16 +14,12 @@ module.exports = {
      */
     execute({message, args}) {
         return new Promise(async(resolve,reject) => {
-            // imports
-            var gd = require('../globaldata.js');
-            const {breakUpResponse} = require("../helperfcns.js")
-
             // Getting category and category dict
-            var category = args[0];
+            var category = args?.[0];
             var categoryDict = gd.getCategoryDict();
 
             // Listing all commands of a given category, or listing all 
-            if (category in categoryDict || category === "categories" || category === "cat" || category === "all") {
+            if (category in categoryDict || category === "categories" || category === "cat" || category === "all" || category === undefined) {
                 switch(category) {
                     case "categories":
                         var listArray = Object.keys(categoryDict);
@@ -30,7 +29,10 @@ module.exports = {
                         break;
                     case "all":
                         var listArray = Object.keys(gd.getAudioDict())
-                    break;
+                        break;
+                    case undefined:
+                        var listArray = Object.keys(gd.getAudioDict())
+                        break;
                     default:
                         var listArray = categoryDict[category];
                 }
@@ -67,7 +69,7 @@ module.exports = {
                     });
                 }
             } else {
-                if (category != '') return reject({userResponse: `"${category}" is not a valid argument for the list command!`})
+                return reject({userResponse: `"${category}" is not a valid argument for the list command!`})
             }
 
             // return the resolve

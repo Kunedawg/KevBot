@@ -1,3 +1,5 @@
+// import data from kev-bot.js
+var gd = require('../globaldata.js');
 const { Message } = require('discord.js');
 
 module.exports = {
@@ -11,23 +13,20 @@ module.exports = {
      */
     execute({message, args}) {
         return new Promise(async(resolve,reject) => {
-            // import data from kev-bot.js
-            var gd = require('../globaldata.js');
-
             // Get discord id
-            let discord_id = message.author.id;
+            let discordId = message?.author?.id;
+            if(!discordId) { return reject({ userResponse: `Failed to retrieve discord id!`}); }
 
             // Get greeting from args
-            var greeting = args[0];
+            var greeting = args?.[0];
 
             // Check if greeting is in audio dict
             if(!(greeting in gd.getAudioDict())) {
-                message.author.send(`"${greeting}" is not a valid command. Check your spelling.`);
-                return resolve("Set greeting succeeded.");
+                return reject({ userResponse: `"${greeting}" is not a valid greeting name. Check your spelling.`});
             }
             
             // Call get_greeting stored procedure
-            let queryStr = `CALL set_greeting('${discord_id}','${greeting}', @message); SELECT @message;`;
+            let queryStr = `CALL set_greeting('${discordId}','${greeting}', @message); SELECT @message;`;
             gd.sqlconnection.query(queryStr, (err, results) => {
                 if (err) {
                     return reject({

@@ -1,3 +1,5 @@
+// imports
+var gd = require('../globaldata.js');
 const { Message } = require('discord.js');
 
 module.exports = {
@@ -11,21 +13,16 @@ module.exports = {
      */
     execute({message, args}) {
         return new Promise(async(resolve,reject) => {
-            // import the audio dict
-
-            var gd = require('../globaldata.js');
-
             // Getting category from args
-            var category = args[0];
+            var category = args?.[0];
 
             try {
                 if (category in gd.getCategoryDict() || category === 'all') {
                     // Determining random file to play
                     const categoryCommands = (category === 'all') ? Object.keys(gd.getAudioDict()) : gd.getCategoryDict()[category];
                     const indexToPlay = Math.floor(Math.random() * categoryCommands.length);     // returns a random integer from 0 to amount of commands
-                    const commandToPlay = categoryCommands[indexToPlay];
                     await gd.getClient().commands.get('p').execute({
-                        commandName  : commandToPlay, 
+                        commandName  : categoryCommands[indexToPlay], 
                         voiceChannel : message?.member?.voice?.channel});
                 } else {
                     return reject({userResponse: `"${category}" is not a valid category, ya dingus!`});

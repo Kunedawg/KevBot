@@ -1,9 +1,12 @@
+// imports
+var gd = require('../globaldata.js');
+const {breakUpResponse} = require("../helperfcns.js")
 const { Message } = require('discord.js');
 
 module.exports = {
     name: 'help',
     description: 'Help with kev-bot commands.',
-    usage: 'help!kevbot',
+    usage: 'help!kevbot, help!kb',
     /**
      * @param {Object} methodargs
      * @param {Message} methodargs.message
@@ -11,29 +14,23 @@ module.exports = {
      */
     execute({message, args}) {
         return new Promise(async(resolve,reject) => {
-            // imports
-            var gd = require('../globaldata.js');
-            const {breakUpResponse} = require("../helperfcns.js")
-
-            // Getting category
-            var helpCategory = args[0];
-
-            // Determine if help command was called by accident
-            if (helpCategory === '') {
-                return resolve("Accidental help call, no help sent!");
-            }
-
-            // Return if the help category is not kevbot
-            if (helpCategory !== 'kevbot') {
-                return reject({
-                    userResponse: `Please use the command "help!kevbot" for help with kev-bot.`,
-                    err: "help: invalid arg"
-                });
-            }
-
-            // Listing all commands and how to use them
             try {
-                // Header
+                // Getting category
+                var helpCategory = args?.[0];
+
+                // Determine if help command was called by accident
+                if (!helpCategory) {
+                    return resolve("Accidental help call, no help sent!");
+                }
+
+                // Return if the help category is not kevbot
+                if (helpCategory !== 'kevbot' && helpCategory !== 'kb') {
+                    return reject({
+                        userResponse: `Please use the command "help!kb" for help with kev-bot.`
+                    });
+                }
+
+                // Header of response
                 var response = 'Thanks for using kev-bot! This bot is for people who are ballsy and dont take shit from anyone.\n\n';
                 response += 'General command format: "command!arg1 arg2 arg3".\n\n' + '!@#';
 

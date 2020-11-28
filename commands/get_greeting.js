@@ -1,3 +1,5 @@
+// import data from kev-bot.js
+var gd = require('../globaldata.js');
 const { Message, User } = require('discord.js');
 
 module.exports = {
@@ -12,14 +14,12 @@ module.exports = {
      */
     execute({message, args, user}) {
         return new Promise(async(resolve,reject) => {
-            // import data from kev-bot.js
-            var gd = require('../globaldata.js');
-
             // Use the discord id from the user if the user is defined
-            var discord_id = user ? user.id : message.author.id;
+            var discordId = user?.id || message?.author?.id;
+            if(!discordId) { return reject({ userResponse: `Failed to retrieve discord id!`}); }
 
             // Call get_greeting stored procedure
-            let queryStr = `CALL get_greeting('${discord_id}', @greeting); SELECT @greeting;`;
+            let queryStr = `CALL get_greeting('${discordId}', @greeting); SELECT @greeting;`;
             gd.sqlconnection.query(queryStr, (err, results) => {
                 if (err) {
                     return reject({
