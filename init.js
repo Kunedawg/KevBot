@@ -1,14 +1,33 @@
 // imports
 const gd = require('./globaldata.js');
-const fs = require('fs');
+var fs = require('fs-extra');
 const Discord = require('discord.js');
-const hf = require('./helperfcns.js');
 const config = require('./config.json');
 const {Storage} = require('@google-cloud/storage');
 const path = require('path');
 
+
+// Creates some directories on startup
+function directories(){
+    return new Promise(async(resolve,reject) => {
+        try {
+            // Create directories
+            fs.mkdirSync(gd.audioPath);
+            fs.mkdirSync(gd.tempDataPath);
+
+            // Emptry temp data
+            fs.emptyDirSync(gd.tempDataPath);
+
+            // Return promise
+            return resolve("Directories inited!");
+        } catch (err) {
+            return reject("Directories failed to init!" + err);
+        }
+    });
+}
+
 // Creating dictionary for command to audio file path. yes -> ./audio/yes.mp3
-function Audio(download = true){
+function audio(download = true){
     return new Promise(async(resolve,reject) => {
         try {
             // download all of the audio stored on the cloud server
@@ -44,7 +63,7 @@ function Audio(download = true){
 
 // Creating dictionary of arrays for the categories
 // catergories.csv has format of audio_file,category1,category2,category3,...
-function Categories(){
+function categories(){
     return new Promise(async(resolve,reject) => {
         try {
             gd.categoryDict["all"] = Object.keys(gd.audioDict);     // adding all the files to category "all"
@@ -74,7 +93,7 @@ function Categories(){
 }
 
 // Storing the commands in a collection
-function Commands(){
+function commands(){
     return new Promise(async(resolve,reject) => {
         try {
             // Loop over the commands
@@ -94,7 +113,8 @@ function Commands(){
 }
 
 module.exports = {
-    Audio,
-    Categories,
-    Commands
+    directories,
+    audio,
+    categories,
+    commands
 }

@@ -30,9 +30,10 @@ switch(gd.env) {
 // Initialization
 try {
     (async function initialize() {
-        console.log(await init.Audio(downloadAudio));
-        console.log(await init.Categories());;
-        console.log(await init.Commands());;
+        console.log(await init.directories());
+        console.log(await init.audio(downloadAudio));
+        console.log(await init.categories());;
+        console.log(await init.commands());;
         await gd.client.login(token);
     })();
 } catch(err) {

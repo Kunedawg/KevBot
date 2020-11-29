@@ -4,5 +4,3 @@ node_modules
 # exclude all files except for .gitkeep
 audio/*
 temp_data/*
-!audio/.gitkeep
-!temp_data/.gitkeep 
