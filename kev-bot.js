@@ -37,6 +37,8 @@ try {
     })();
 } catch(err) {
     console.error(err);
+    console.error("Initialization failed! Exiting program!");
+    process.exit(1);    // end program
 }
 
 // Events
