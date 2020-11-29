@@ -11,11 +11,15 @@ const path = require('path');
 function directories(){
     return new Promise(async(resolve,reject) => {
         try {
-            // Create directories
-            fs.mkdirSync(gd.audioPath);
-            fs.mkdirSync(gd.tempDataPath);
+            // Create directories if they do not exist
+            if (!fs.existsSync(gd.audioPath)) {
+               fs.mkdirSync(gd.audioPath); 
+            }
+            if (!fs.existsSync(gd.tempDataPath)) {
+                fs.mkdirSync(gd.tempDataPath); 
+            }            
 
-            // Emptry temp data
+            // empty the temp data directory
             fs.emptyDirSync(gd.tempDataPath);
 
             // Return promise
