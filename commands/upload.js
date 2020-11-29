@@ -16,9 +16,8 @@ module.exports = {
     /**
      * @param {Object} methodargs
      * @param {Message} methodargs.message
-     * @param {Array.<string>} methodargs.args
      */
-    execute({message, args}) {
+    execute({message}) {
         return new Promise(async(resolve,reject) => {  
             // Check if a file was actually attached
             if (!(message.attachments.size !== 0)) {

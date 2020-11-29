@@ -9,9 +9,8 @@ module.exports = {
     /**
      * @param {Object} methodargs
      * @param {Message} methodargs.message
-     * @param {Array.<string>} methodargs.args
      */
-    execute({message, args}) {
+    execute({message}) {
         return new Promise(async(resolve,reject) => {
             // Get discord id
             let discordId = message?.author?.id;

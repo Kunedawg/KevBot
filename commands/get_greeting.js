@@ -9,10 +9,9 @@ module.exports = {
     /**
      * @param {Object} methodargs
      * @param {Message} methodargs.message
-     * @param {Array.<string>} methodargs.args
      * @param {User} methodargs.user
      */
-    execute({message, args, user}) {
+    execute({message, user}) {
         return new Promise(async(resolve,reject) => {
             // Use the discord id from the user if the user is defined
             var discordId = user?.id || message?.author?.id;
