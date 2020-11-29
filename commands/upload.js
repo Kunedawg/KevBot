@@ -126,14 +126,13 @@ module.exports = {
                     err: err
                 });
             }
-            message.author.send(`"${fileName}" has been uploaded to kev-bot!`);
             
             // Add to audio dictionary and audio folder
             try {
-                gd.pushAudioDict(commandName,filePath);
+                gd.audioDict[commandName] = filePath;
             } catch (err) {
                 return reject({
-                    userMess: "Audio dictionary failed to update. Talk to kevin.",
+                    userMess: "File uploaded, but audio dictionary failed to update. Talk to Kevin.",
                     err: err
                 });                
             }
@@ -143,13 +142,13 @@ module.exports = {
                 await fs.emptyDir(gd.tempDataPath);
             } catch (err) {
                 return reject({
-                    userMess: "Cleanup failed. You're file should be uploaded though.",
+                    userMess: "File uploaded, but cleanup failed. Talk to Kevin.",
                     err: err
                 });                
             }
 
             // return resolve promise
-            return resolve();
+            return resolve({userMess: `"${fileName}" has been uploaded to kev-bot!`});
         });
     }
 };

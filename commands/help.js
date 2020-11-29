@@ -11,7 +11,7 @@ module.exports = {
      */
     execute({args}) {
         return new Promise(async(resolve,reject) => {
-            // Validate inputs.
+            // Validate inputs
             var helpCategory = args?.[0];
 
             // Determine if help command was called by accident (will be undefined)
@@ -27,7 +27,7 @@ module.exports = {
             response += 'General command format: "command!arg1 arg2 arg3".\n\n' + '!@#';
 
             // Loop over commands
-            for (let command of gd.getClient().commands.values()) {
+            for (let command of gd.client.commands.values()) {
                 response += `command:     ${command.name}\n`;
                 response += `usage:       ${command.usage}\n`;
                 response += `description: ${command.description}\n\n!@#`;

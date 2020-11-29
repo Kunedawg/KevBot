@@ -13,13 +13,13 @@ module.exports = {
         return new Promise(async (resolve, reject) => {
             // Validate inputs
             var category = args?.[0];
-            var categoryDict = gd.getCategoryDict();
+            var categoryDict = gd.categoryDict;
 
             // Determine the array that should be listed
             if (["categories", "cat"].includes(category)) {
                 var listArr = Object.keys(categoryDict);
             } else if (["all", undefined].includes(category)) {
-                var listArr = Object.keys(gd.getAudioDict());
+                var listArr = Object.keys(gd.audioDict);
             } else if (category in categoryDict) {
                 var listArr = categoryDict[category];
             } else {

@@ -23,9 +23,9 @@ async function onVoiceStateUpdate(oldUserVoiceState, newUserVoiceState){
         var newMember = newUserVoiceState.member;
         var oldMember = oldUserVoiceState.member;
         if(oldUserChannel === null && newUserChannel !== null && !newMember.user.bot) { // User Joins a voice channel
-            var greeting = await gd.getClient().commands.get('getgreeting').execute({user : newMember.user});
+            var greeting = await gd.client.commands.get('getgreeting').execute({user : newMember.user});
             if (!greeting) {return;}
-            await gd.getClient().commands.get('p').execute({commandName : greeting, voiceChannel : newUserChannel});
+            await gd.client.commands.get('p').execute({commandName : greeting, voiceChannel : newUserChannel});
         } else if(newUserChannel === null && oldUserChannel !== null && !oldMember.user.bot){ // User leaves a voice channel
         }
     } catch (err) {
@@ -56,12 +56,10 @@ async function onMessage(message, prefix){
         var args = messageSplit[1] ? messageSplit[1].split(/ +/) : undefined; // array of the args ["arg1", "arg2", "arg3", "arg4"]  
 
         // Execute command if it exists
-        if (gd.getClient().commands.has(commandName)) {
-            let response = await gd.getClient().commands.get(commandName).execute({message : message, args : args});
-            if (response.userMess) {
-                console.log(response.userMess);
-                let wrapChar = response.wrapChar || '';
-                for (res of hf.breakUpResponse(response.userMess, '!@#', wrapChar)) {
+        if (gd.client.commands.has(commandName)) {
+            let response = await gd.client.commands.get(commandName).execute({message : message, args : args});
+            if (response?.userMess) {
+                for (res of hf.breakUpResponse(response.userMess, '!@#', response.wrapChar || '')) {
                     await message.author.send(res);
                 }
             }

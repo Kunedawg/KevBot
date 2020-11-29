@@ -5,11 +5,11 @@ const init = require('./init.js');
 const event = require('./eventhandlers.js');
 
 // Get command line arguments
-gd.setEnv(process.argv[2]);             // environment
+gd.env = process.argv[2];             // environment
 var downloadFlag = process.argv[3];     // download flag
 
 // Determine some key variables based on the run environment
-switch(gd.getEnv()) {
+switch(gd.env) {
     case 'deploy':
         var downloadAudio = true;       // always download
         var token = config.deployToken;
@@ -33,7 +33,7 @@ try {
         console.log(await init.Audio(downloadAudio));
         console.log(await init.Categories());;
         console.log(await init.Commands());;
-        await gd.getClient().login(token);
+        await gd.client.login(token);
     })();
 } catch(err) {
     console.error(err);
@@ -43,9 +43,9 @@ try {
 
 // Events
 try {
-    gd.getClient().once('ready', () => {event.onReady(loginMessage)});
-    gd.getClient().on('voiceStateUpdate', (a,b) => {event.onVoiceStateUpdate(a,b)});
-    gd.getClient().on('message', (message) => {event.onMessage(message,prefix)});
+    gd.client.once('ready', () => {event.onReady(loginMessage)});
+    gd.client.on('voiceStateUpdate', (a,b) => {event.onVoiceStateUpdate(a,b)});
+    gd.client.on('message', (message) => {event.onMessage(message,prefix)});
 } catch(err) {
     console.error(err);
 }

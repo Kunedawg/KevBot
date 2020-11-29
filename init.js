@@ -27,8 +27,11 @@ function Audio(download = true){
 
             // Store all of the file paths in a dictionary
             for(var f of fs.readdirSync(gd.audioPath)) {
-                if (f.split(".")[1] === "mp3")
-                    gd.pushAudioDict( f.split('.')[0] , path.join(gd.audioPath, f));
+                if (f.split(".")[1] === "mp3") {
+                    let commandName = f.split('.')[0];
+                    let filePath = path.join(gd.audioPath, f);
+                    gd.audioDict[commandName] = filePath;
+                }
             }
 
             // Return promise
@@ -44,25 +47,23 @@ function Audio(download = true){
 function Categories(){
     return new Promise(async(resolve,reject) => {
         try {
-            gd.pushCategoryDict("all", []); // just an empty array
-            var catData = fs.readFileSync(gd.categoriesCsvPath,'utf8').split(' ').join(''); // read categories string and remove spaces.
-            if (gd.getEnv() === 'deploy')  // windows uses \r\n, linux uses \n, apple uses \r
-                var catRows = catData.split("\n"); 
-            if (gd.getEnv() === 'test')
-                var catRows = catData.split("\r\n"); 
-            for (const row of catRows) {
+            gd.categoryDict["all"] = Object.keys(gd.audioDict);     // adding all the files to category "all"
+            var categoryData = fs.readFileSync(gd.categoriesCsvPath,'utf8').split(' ').join(''); // read categories string and remove spaces.
+            if (gd.env === 'deploy')  // windows uses \r\n, linux uses \n, apple uses \r
+                var categoryRows = categoryData.split("\n"); 
+            if (gd.env === 'test')
+                var categoryRows = categoryData.split("\r\n"); 
+            for (const row of categoryRows) {
                 var categories = row.split(",");
                 var audioFile = categories.shift();  // first item of row is the audioFile, the rest will be categories
                 for (const category of categories) {
-                    let catergoryDict = gd.getCategoryDict();
-                    if (category in catergoryDict) {
-                        catergoryDict[category].push(audioFile);
-                        gd.setCategoryDict(catergoryDict);
+                    if (category in gd.categoryDict) {
+                        gd.categoryDict[category].push(audioFile);
                     } else {
-                        gd.pushCategoryDict(category, [audioFile]);
+                        gd.categoryDict[category] = [audioFile];
                     }
                 }
-            }
+            }            
             
             // Return promise
             return resolve("Categories inited!");
@@ -77,14 +78,12 @@ function Commands(){
     return new Promise(async(resolve,reject) => {
         try {
             // Loop over the commands
-            var tempClient = gd.getClient();
-            tempClient.commands = new Discord.Collection();
+            gd.client.commands = new Discord.Collection();
             const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
             for (const file of commandFiles) {
                 const command = require(`./commands/${file}`);
-                tempClient.commands.set(command.name, command);
+                gd.client.commands.set(command.name, command);
             }
-            gd.setClient(tempClient);
 
             // Return promise
             return resolve("Commands inited!");

@@ -19,7 +19,7 @@ module.exports = {
 
             // Get greeting from args and check that it is valid
             var greeting = args?.[0];
-            if(!(greeting in gd.getAudioDict())) {
+            if(!(greeting in gd.audioDict)) {
                 return reject({ userMess: `"${greeting}" is not a valid greeting name. Check your spelling.`});
             }
             

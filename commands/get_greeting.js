@@ -27,7 +27,7 @@ module.exports = {
                     let greeting = results[1][0]['@greeting'];
                     if (greeting !== null) {
                         var response = `Your current greeting is set to "${greeting}"!`;
-                        if (!(greeting in gd.getAudioDict())) {
+                        if (!(greeting in gd.audioDict)) {
                             response += `\n"${greeting}" is not a valid command. Consider changing it.`;
                         }
                     } else {
