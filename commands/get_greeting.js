@@ -13,30 +13,27 @@ module.exports = {
      */
     execute({message, user}) {
         return new Promise(async(resolve,reject) => {
-            // Use the discord id from the user if the user is defined
+            // Validate inputs. There are two ways to call this fcn: 
+            // Either by providing a discord message or discord user, and then the discord id can be obtained.
             var discordId = user?.id || message?.author?.id;
-            if(!discordId) { return reject({ userResponse: `Failed to retrieve discord id!`}); }
+            if(!discordId) { return reject({ userMess: `Failed to retrieve discord id!`}); }
 
             // Call get_greeting stored procedure
             let queryStr = `CALL get_greeting('${discordId}', @greeting); SELECT @greeting;`;
             gd.sqlconnection.query(queryStr, (err, results) => {
                 if (err) {
-                    return reject({
-                        userResponse: "Failed to retrieve greeting. Try again later or talk to Kevin.",
-                        err: err
-                    });
+                    return reject({userMess: "Failed to retrieve greeting. Try again later or talk to Kevin.", err: err});
                 } else {
                     let greeting = results[1][0]['@greeting'];
-                    // If the mesage exists, then respond to the user, otherwise do not respond.
-                    if (message) {
-                        if (greeting !== null) {
-                            message.author.send(`Your current greeting is set to "${greeting}"!`);
-                            if (!(greeting in gd.getAudioDict())) message.author.send(`"${greeting}" is not a valid command. Consider changing it.`);
-                        } else {
-                            message.author.send("You do not have a greeting configured.");
+                    if (greeting !== null) {
+                        var response = `Your current greeting is set to "${greeting}"!`;
+                        if (!(greeting in gd.getAudioDict())) {
+                            response += `\n"${greeting}" is not a valid command. Consider changing it.`;
                         }
+                    } else {
+                        var response = "You do not have a greeting configured.";
                     }
-                    return resolve(greeting);
+                    return resolve({greeting : greeting, userMess : response});
                 }
             });
         });

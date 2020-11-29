@@ -13,16 +13,14 @@ module.exports = {
      */
     execute({message, args}) {
         return new Promise(async(resolve,reject) => {
-            // Get discord id
+            // Get discord id and check that it is valid
             let discordId = message?.author?.id;
-            if(!discordId) { return reject({ userResponse: `Failed to retrieve discord id!`}); }
+            if(!discordId) { return reject({ userMess: `Failed to retrieve discord id!`}); }
 
-            // Get greeting from args
+            // Get greeting from args and check that it is valid
             var greeting = args?.[0];
-
-            // Check if greeting is in audio dict
             if(!(greeting in gd.getAudioDict())) {
-                return reject({ userResponse: `"${greeting}" is not a valid greeting name. Check your spelling.`});
+                return reject({ userMess: `"${greeting}" is not a valid greeting name. Check your spelling.`});
             }
             
             // Call get_greeting stored procedure
@@ -30,18 +28,17 @@ module.exports = {
             gd.sqlconnection.query(queryStr, (err, results) => {
                 if (err) {
                     return reject({
-                        userResponse: "Failed to set greeting. Try again later or talk to Kevin.",
+                        userMess: "Failed to set greeting. Try again later or talk to Kevin.",
                         err: err
                     });
                 } else {
-                    let ret_message = results[1][0]['@message'];
-                    if (ret_message === 'Success') {
-                        message.author.send(`Your greeting has been set to "${greeting}"!`);
-                        return resolve("Set greeting succeeded.");
+                    let rtnMess = results[1][0]['@message'];
+                    if (rtnMess === 'Success') {
+                        return resolve({userMess: `Your greeting has been set to "${greeting}"!`});
                     } else {
                         return reject({
-                            userResponse: "Failed to set greeting. Try again later or talk to Kevin.",
-                            err: ret_message
+                            userMess: "Failed to set greeting. Try again later or talk to Kevin.",
+                            err: rtnMess
                         });
                     }
                 }

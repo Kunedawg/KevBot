@@ -17,26 +17,19 @@ module.exports = {
         return new Promise(async(resolve,reject) => {
             // Getting file to play and checking that it exists
             var fileToPlay = commandName || args?.[0];
-            if (!(fileToPlay in gd.getAudioDict())) return reject({userResponse: `"${fileToPlay}" does not exist, ya dingus!`});
+            if (!(fileToPlay in gd.getAudioDict())) return reject({userMess: `"${fileToPlay}" does not exist, ya dingus!`});
 
             // Get voice channel and verify voice channel is actually a voice channel
             var VC = voiceChannel || message?.member?.voice?.channel;
-            if (!VC) return reject({userResponse: "You are not in a voice channel, ya dingus!"});
+            if (!VC) return reject({userMess: "You are not in a voice channel, ya dingus!"});
 
             // Join channel, play mp3 from the dictionary, leave when completed.
-            try {
-                const connection = await VC.join()
-                const dispatcher = connection.play(gd.getAudioDict()[fileToPlay]);
-                dispatcher.on("finish", end => {VC.leave()});
-            } catch(err) {
-                return reject({
-                    userResponse: "The file failed to play. Try again or talk to Kevin.",
-                    err: err
-                });
-            }
+            const connection = await VC.join()
+            const dispatcher = connection.play(gd.getAudioDict()[fileToPlay]);
+            dispatcher.on("finish", end => {VC.leave()});
             
             // return resolve promise
-            return resolve("File played!");
+            return resolve();
         });
     }
 };

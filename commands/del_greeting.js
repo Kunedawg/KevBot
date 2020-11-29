@@ -12,27 +12,26 @@ module.exports = {
      */
     execute({message}) {
         return new Promise(async(resolve,reject) => {
-            // Get discord id
+            // Validate inputs 
             let discordId = message?.author?.id;
-            if(!discordId) { return reject({ userResponse: `Failed to retrieve discord id!`}); }
+            if(!discordId) {return reject({userMess: `Failed to retrieve discord id!`});}
             
             // Call get_greeting stored procedure
             let queryStr = `CALL del_greeting('${discordId}', @message); SELECT @message;`;
             gd.sqlconnection.query(queryStr, (err, results) => {
                 if (err) {
                     return reject({
-                        userResponse: "Failed to delete greeting. Try again later or talk to Kevin.",
+                        userMess: "Failed to delete greeting. Try again later or talk to Kevin.",
                         err: err
                     });
                 } else {
-                    let ret_message = results[1][0]['@message'];
-                    if (ret_message === 'Success') {
-                        message.author.send(`Your greeting has been deleted!`);
-                        return resolve("Delete greeting succeeded.");
+                    let rtnMess = results[1][0]['@message'];
+                    if (rtnMess === 'Success') {
+                        return resolve({userMess: `Your greeting has been deleted!`});
                     } else {
                         return reject({
-                            userResponse: "Failed to delete greeting. Try again later or talk to Kevin.",
-                            err: ret_message
+                            userMess: "Failed to delete greeting. Try again later or talk to Kevin.",
+                            err: rtnMess
                         });
                     }
                 }

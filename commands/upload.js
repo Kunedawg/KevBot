@@ -1,5 +1,5 @@
 // Imports
-const {Storage, Bucket} = require('@google-cloud/storage');
+const {Storage} = require('@google-cloud/storage');
 var fs = require('fs-extra');
 const config = require('../config.json');
 const path = require('path');
@@ -21,10 +21,7 @@ module.exports = {
         return new Promise(async(resolve,reject) => {  
             // Check if a file was actually attached
             if (!(message.attachments.size !== 0)) {
-                return reject({
-                    userResponse: "You did not attach a file ya dingus!",
-                    err: 'upload: No file attached.'
-                });
+                return reject({userMess: "You did not attach a file ya dingus!"});
             }
 
             // Determining the url, filename, and extension of the attached file
@@ -38,16 +35,19 @@ module.exports = {
 
             // Check that the file name is not too long
             const MAX_COMMAND_NAME_LENGTH = 15;
-            if (commandName.length > (MAX_COMMAND_NAME_LENGTH))
-                return reject({userResponse: `The file name can only be ${MAX_COMMAND_NAME_LENGTH} characters long, not including the .mp3.`});
+            if (commandName.length > (MAX_COMMAND_NAME_LENGTH)){
+                return reject({userMess: `The file name can only be ${MAX_COMMAND_NAME_LENGTH} characters long, not including the .mp3.`});
+            }
 
             // check that the filename format
-            if (!hf.kevbotStringOkay(commandName))
-                return reject({userResponse: `The file name can only contain lower case letters and numbers.`});
+            if (!hf.kevbotStringOkay(commandName)){
+                return reject({userMess: `The file name can only contain lower case letters and numbers.`});
+            }
 
             // Check that the file is actually an mp3
-            if (fileExtension !== "mp3") 
-                return reject({userResponse: "The file you are trying to upload is not an mp3 file! You can only upload mp3 files."});
+            if (fileExtension !== "mp3"){
+                return reject({userMess: "The file you are trying to upload is not an mp3 file! You can only upload mp3 files."});
+            }
 
             // Try to make a connection to the cloud server bucket
             try {
@@ -58,7 +58,7 @@ module.exports = {
                 var audioBucket = gc.bucket(config.bucketName);
             } catch (err) {
                 return reject({
-                    userResponse: "Failed to connect to cloud server. Try again later.",
+                    userMess: "Failed to connect to cloud server. Try again later.",
                     err: err
                 });
             }
@@ -68,14 +68,14 @@ module.exports = {
                 var cloudFiles = await hf.getFiles(audioBucket);
             } catch (err) {
                 return reject({
-                    userResponse: "Failed to retrieve files from the cloud server! Talk to Kevin.",
+                    userMess: "Failed to retrieve files from the cloud server! Talk to Kevin.",
                     err: err
                 });                
             }
 
             // Check if the file is already on the server
             if (cloudFiles.includes(fileName))
-                return reject({userResponse: `"${fileName}" is already on the cloud server, please pick a new name.`});
+                return reject({userMess: `"${fileName}" is already on the cloud server, please pick a new name.`});
 
             // Download file from discord to a local file path
             try {
@@ -86,7 +86,7 @@ module.exports = {
                 //await readStream.pipe(fs.createWriteStream(downloadFilePath));
             } catch (err) {
                 return reject({
-                    userResponse: "The file failed to download from discord! Try again later.",
+                    userMess: "The file failed to download from discord! Try again later.",
                     err: err
                 });
             }
@@ -97,12 +97,12 @@ module.exports = {
                 const duration = await getAudioDurationInSeconds(downloadFilePath);
                 if(duration > MAX_DURATION) {
                     return reject({
-                        userResponse: `${fileName} has a duration of ${duration} sec. Max duration is ${MAX_DURATION} sec. Talk to Kevin for exceptions to this rule`
+                        userMess: `${fileName} has a duration of ${duration} sec. Max duration is ${MAX_DURATION} sec. Talk to Kevin for exceptions to this rule`
                     });
                 }
             } catch(err) {
                 return reject({
-                    userResponse: "Failed to get audio duration! Try again later.",
+                    userMess: "Failed to get audio duration! Try again later.",
                     err: err
                 }); 
             }
@@ -112,7 +112,7 @@ module.exports = {
                 await hf.normalizeAudio(downloadFilePath,filePath);
             } catch (err) {
                 return reject({
-                    userResponse: "The file failed to normalize! Talk to Kevin.",
+                    userMess: "The file failed to normalize! Talk to Kevin.",
                     err: err
                 });
             } 
@@ -122,7 +122,7 @@ module.exports = {
                 await audioBucket.upload(filePath, { gzip: true});
             } catch (err) {
                 return reject({
-                    userResponse: "The file failed to upload to the cloud server. Try again later.",
+                    userMess: "The file failed to upload to the cloud server. Try again later.",
                     err: err
                 });
             }
@@ -133,7 +133,7 @@ module.exports = {
                 gd.pushAudioDict(commandName,filePath);
             } catch (err) {
                 return reject({
-                    userResponse: "Audio dictionary failed to update. Talk to kevin.",
+                    userMess: "Audio dictionary failed to update. Talk to kevin.",
                     err: err
                 });                
             }
@@ -143,13 +143,13 @@ module.exports = {
                 await fs.emptyDir(gd.tempDataPath);
             } catch (err) {
                 return reject({
-                    userResponse: "Cleanup failed. You're file should be uploaded though.",
+                    userMess: "Cleanup failed. You're file should be uploaded though.",
                     err: err
                 });                
             }
 
             // return resolve promise
-            return resolve("The file was uploaded!");
+            return resolve();
         });
     }
 };
