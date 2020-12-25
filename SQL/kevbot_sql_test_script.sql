@@ -23,6 +23,7 @@ SELECT * FROM categories;
 
 /*audio_category calls*/
 CALL add_audio_category('1124', 'kindfawn', 'animals', @mess); SELECT @mess;
+CALL add_audio_category('1124', 'arnoldcum', 'arnold', @mess); SELECT @mess;
 CALL del_audio_category('kindfawn', 'animals', @mess); SELECT @mess;
 SELECT * FROM audio_category;
 

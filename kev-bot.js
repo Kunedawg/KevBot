@@ -28,19 +28,19 @@ switch(gd.env) {
 }
 
 // Initialization
-try {
-    (async function initialize() {
-        console.log(await init.directories());
-        console.log(await init.audio(downloadAudio));
-        console.log(await init.categories());;
-        console.log(await init.commands());;
-        await gd.client.login(token);
-    })();
-} catch(err) {
+async function initialize(){
+    console.log(await init.directories());
+    console.log(await init.audio(downloadAudio));
+    console.log(await init.categories());
+    console.log(await init.commands());
+    await gd.client.login(token);
+}
+initialize().catch((err) => {
     console.error(err);
     console.error("Initialization failed! Exiting program!");
-    process.exit(1);    // end program
-}
+    process.exit(1);    // end program 
+});
+
 
 // Events
 try {

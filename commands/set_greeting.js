@@ -1,4 +1,4 @@
-// import data from kev-bot.js
+// imports
 var gd = require('../globaldata.js');
 const { Message } = require('discord.js');
 

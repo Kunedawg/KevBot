@@ -5,7 +5,7 @@ const Discord = require('discord.js');
 const config = require('./config.json');
 const {Storage} = require('@google-cloud/storage');
 const path = require('path');
-
+const hf = require('./helperfcns.js');
 
 // Creates some directories on startup
 function directories(){
@@ -25,7 +25,7 @@ function directories(){
             // Return promise
             return resolve("Directories inited!");
         } catch (err) {
-            return reject("Directories failed to init!" + err);
+            return reject("Directories failed to init!\n" + err);
         }
     });
 }
@@ -60,38 +60,92 @@ function audio(download = true){
             // Return promise
             return resolve("Audio inited!");
         } catch(err) {
-            return reject("Audio failed to init!" + err);
+            return reject("Audio failed to init!\n" + err);
         }
     });
 }
 
 // Creating dictionary of arrays for the categories
 // catergories.csv has format of audio_file,category1,category2,category3,...
+// function categories(){
+//     return new Promise(async(resolve,reject) => {
+//         try {
+//             gd.categoryDict["all"] = Object.keys(gd.audioDict);     // adding all the files to category "all"
+//             var categoryData = fs.readFileSync(gd.categoriesCsvPath,'utf8').split(' ').join(''); // read categories string and remove spaces.
+//             if (gd.env === 'deploy')  // windows uses \r\n, linux uses \n, apple uses \r
+//                 var categoryRows = categoryData.split("\n"); 
+//             if (gd.env === 'test')
+//                 var categoryRows = categoryData.split("\r\n"); 
+//             for (const row of categoryRows) {
+//                 var categories = row.split(",");
+//                 var audioFile = categories.shift();  // first item of row is the audioFile, the rest will be categories
+//                 for (const category of categories) {
+//                     if (category in gd.categoryDict) {
+//                         gd.categoryDict[category].push(audioFile);
+//                     } else {
+//                         gd.categoryDict[category] = [audioFile];
+//                     }
+//                 }
+//             }            
+            
+//             // Return promise
+//             return resolve("Categories inited!");
+//         } catch (err) {
+//             return reject("Categories failed to init!" + err);
+//         }
+//     });
+// }
+
+// Creating dictionary of arrays for the categories
 function categories(){
     return new Promise(async(resolve,reject) => {
         try {
+            // category of all by definition contains all of the audio
             gd.categoryDict["all"] = Object.keys(gd.audioDict);     // adding all the files to category "all"
-            var categoryData = fs.readFileSync(gd.categoriesCsvPath,'utf8').split(' ').join(''); // read categories string and remove spaces.
-            if (gd.env === 'deploy')  // windows uses \r\n, linux uses \n, apple uses \r
-                var categoryRows = categoryData.split("\n"); 
-            if (gd.env === 'test')
-                var categoryRows = categoryData.split("\r\n"); 
-            for (const row of categoryRows) {
-                var categories = row.split(",");
-                var audioFile = categories.shift();  // first item of row is the audioFile, the rest will be categories
-                for (const category of categories) {
-                    if (category in gd.categoryDict) {
-                        gd.categoryDict[category].push(audioFile);
-                    } else {
-                        gd.categoryDict[category] = [audioFile];
-                    }
-                }
-            }            
+
+            // Creating data structures that will be filled in
+            let categoryIdMap = {};
+            let audioIdMap = {};
+            let audioCategoryPairs = [];
+            
+            // Getting all of the categories from SQL
+            let queryStr = `SELECT category_id, category_name FROM categories;`;
+            let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
+            for (const result of results) {
+                categoryIdMap[result['category_id']] = result['category_name'];
+                gd.categoryList.push(result['category_name']);
+            }
+
+            // Getting all of the audio from SQL
+            queryStr = `SELECT audio_id, audio_name FROM audio;`;
+            results = await hf.asyncQuery(gd.sqlconnection, queryStr);
+            for (const result of results) {
+                audioIdMap[result['audio_id']] = result['audio_name'];
+            }
+
+            // Getting all of the audio_category pairs from SQL
+            queryStr = `SELECT audio_id, category_id FROM audio_category;`;
+            results = await hf.asyncQuery(gd.sqlconnection, queryStr);
+            for (const result of results) {
+                audioCategoryPairs.push([audioIdMap[result['audio_id']], categoryIdMap[result['category_id']]]);
+            }
+
+            // Package the audio category pairs into a dictionary
+            for (const audioCategory of audioCategoryPairs) {
+                let audio = audioCategory[0];
+                let category = audioCategory[1];
+                if (category in gd.categoryDict) {
+                    gd.categoryDict[category].push(audio);
+                } else {
+                    gd.categoryDict[category] = [audio];
+                }                
+            }
             
             // Return promise
             return resolve("Categories inited!");
         } catch (err) {
-            return reject("Categories failed to init!" + err);
+            console.log("hello i am here!");
+            return reject("Categories failed to init!\n" + err);
         }
     });
 }
@@ -111,7 +165,7 @@ function commands(){
             // Return promise
             return resolve("Commands inited!");
         } catch (err) {
-            return reject("Commands failed to init!" + err);
+            return reject("Commands failed to init!\n"  + err);
         }
     });
 }

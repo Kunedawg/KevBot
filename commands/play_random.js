@@ -22,12 +22,17 @@ module.exports = {
             } else {
                 return reject({userMess: `"${category}" is not a valid category, ya dingus!`});
             }
-
-            const indexToPlay = Math.floor(Math.random() * categoryCommands.length);     // returns a random integer from 0 to amount of commands
-            await gd.client.commands.get('p').execute({
-                commandName  : categoryCommands[indexToPlay], 
-                voiceChannel : message?.member?.voice?.channel
-            });
+            
+            // Play a random file that category
+            try {
+                const indexToPlay = Math.floor(Math.random() * categoryCommands.length);     // returns a random integer from 0 to amount of commands
+                await gd.client.commands.get('p').execute({
+                    commandName  : categoryCommands[indexToPlay], 
+                    voiceChannel : message?.member?.voice?.channel
+                });
+            } catch (err) {
+                return reject(err);
+            }
 
             // return promise, no user message is needed
             return resolve();

@@ -1,4 +1,4 @@
-// import the audio dict
+// imports
 var gd = require('../globaldata.js');
 const { Message, VoiceChannel } = require('discord.js');
 

@@ -1,4 +1,4 @@
-// Imports
+// imports
 const {Storage} = require('@google-cloud/storage');
 var fs = require('fs-extra');
 const config = require('../config.json');

@@ -6,11 +6,12 @@ const path = require('path');
 // current environment
 var env = '';
 
-// Audio dictionary
+// Audio dictionary, just maps names to filepaths. filepath = audioDict[name]
 var audioDict = {};
 
-// catergory dictionary
+// catergory dictionary, maps category names to sets of audio [name1, name2, name3, ...] = categoryDict[category_name]
 var categoryDict = {};
+var categoryList = [];
 
 // discord client
 var client = new Discord.Client();
@@ -38,5 +39,6 @@ module.exports = {
     sqlconnection,
     audioPath,
     categoriesCsvPath,
-    tempDataPath
+    tempDataPath,
+    categoryList
 };
