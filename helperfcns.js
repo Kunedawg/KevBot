@@ -100,11 +100,23 @@ function asyncQuery(connection,queryStr) {
     });        
 }
 
+// Removes the element from the array
+function removeElementFromArray(array, element) {
+    for (let index in array) {
+        if ( array[index] === element) {
+            var savedIndex = index;
+            break;
+        }
+    }
+    if (savedIndex) { array.splice(savedIndex,1); } 
+}
+
 module.exports = {
     breakUpResponse,
     getFiles,
     kevbotStringOkay,
     normalizeAudio,
     asyncPipe,
-    asyncQuery
+    asyncQuery,
+    removeElementFromArray
 }
