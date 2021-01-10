@@ -111,6 +111,16 @@ function removeElementFromArray(array, element) {
     if (savedIndex) { array.splice(savedIndex,1); } 
 }
 
+// Removes the element from the array
+function updateCategoryDict(categoryDict, category, audio) {
+    if (category in categoryDict) {
+        categoryDict[category].push(audio);
+    } else {
+        categoryDict[category] = [audio];
+    }   
+}
+
+
 module.exports = {
     breakUpResponse,
     getFiles,
@@ -118,5 +128,6 @@ module.exports = {
     normalizeAudio,
     asyncPipe,
     asyncQuery,
-    removeElementFromArray
+    removeElementFromArray,
+    updateCategoryDict
 }

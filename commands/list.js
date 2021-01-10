@@ -55,7 +55,9 @@ module.exports = {
             // Loop over the rows and concat the columns together
             let response = '';
             for (let row = 0; row < numRows; row++) {
-                response += colArr[0][row] + colArr[1][row] + colArr[2][row];
+                response += (colArr[0]?.[row] || "");
+                response += (colArr[1]?.[row] || "");
+                response += (colArr[2]?.[row] || "");
                 response += (colArr[3]?.[row] || "") + "\n";  // last row might be undefined
             }           
 
@@ -64,19 +66,3 @@ module.exports = {
         });
     }
 };
-
-
-            // // Generating the response message (by column)
-            // let response = '';
-            // const num_columns = 4;
-            // const num_rows = Math.ceil(listArr.length / num_columns);
-            // for (let i = 0; i < num_rows; i++) {
-            //     for (let j = 0; j < num_columns; j++) {
-            //         if (i +j*num_rows < listArr.length) {
-            //             let item = listArr[i +j*num_rows];
-            //             let space_str = ' '.repeat(largetNumOfChars - item.length);
-            //             response += item + space_str + '  ';
-            //         }    
-            //     }
-            //     response += '\n';
-            // }

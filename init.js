@@ -103,11 +103,7 @@ function categories(){
             for (const audioCategory of audioCategoryPairs) {
                 let audio = audioCategory[0];
                 let category = audioCategory[1];
-                if (category in gd.categoryDict) {
-                    gd.categoryDict[category].push(audio);
-                } else {
-                    gd.categoryDict[category] = [audio];
-                }                
+                hf.updateCategoryDict(gd.categoryDict, category, audio);
             }
             
             // Return promise

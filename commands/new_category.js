@@ -38,10 +38,10 @@ module.exports = {
                 let rtnMess = results[1][0]['@message'];
                 if (rtnMess === 'Success') {
                     gd.categoryList.push(category);
-                    return resolve({userMess: `You have created the following category: "${category}"!`});
+                    return resolve({userMess: `You have created the category "${category}"!`});
                 } else {
                     return reject({
-                        userMess: "Failed to add new category. Try again later or talk to Kevin.",
+                        userMess: `Failed to add new category  "${category}". Try again later or talk to Kevin.`,
                         err: rtnMess
                     });
                 }
