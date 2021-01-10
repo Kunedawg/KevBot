@@ -20,6 +20,7 @@ CALL add_category('1124', 'animals', @mess); SELECT @mess;
 CALL del_category('animals', @mess); SELECT @mess;
 CALL get_category_id('animals', @category_id, @mess); SELECT @category_id, @mess;
 SELECT * FROM categories;
+SELECT discord_id FROM categories INNER JOIN player_info ON player_info.player_id = categories.player_id WHERE category_name = 'bingo';
 
 /*audio_category calls*/
 CALL add_audio_category('1124', 'kindfawn', 'animals', @mess); SELECT @mess;

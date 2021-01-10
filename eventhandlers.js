@@ -18,6 +18,7 @@ async function onReady(loginMessage){
  */
 async function onVoiceStateUpdate(oldUserVoiceState, newUserVoiceState){
     try {
+        if (gd.env === 'test') { return; } // do not run a command if the test environment is being used
         var newUserChannel = newUserVoiceState.channel;
         var oldUserChannel = oldUserVoiceState.channel;
         var newMember = newUserVoiceState.member;
