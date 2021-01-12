@@ -13,15 +13,14 @@ module.exports = {
         return new Promise(async (resolve, reject) => {
             // Validate inputs
             var category = args?.[0];
-            var categoryDict = gd.categoryDict;
 
             // Determine the array that should be listed
             if (["categories", "cat"].includes(category)) {
-                var listArr = Object.keys(categoryDict);
+                var listArr = Object.keys(gd.categoryDict);
             } else if (["all", undefined].includes(category)) {
                 var listArr = Object.keys(gd.audioDict);
-            } else if (category in categoryDict) {
-                var listArr = categoryDict[category];
+            } else if (category in gd.categoryDict) {
+                var listArr = Array.from(gd.categoryDict[category]);
             } else {
                 return reject({ userResponse: `"${category}" is not a valid argument for the list command!` })
             }
@@ -60,7 +59,7 @@ module.exports = {
                 response += (colArr[2]?.[row] || "");
                 response += (colArr[3]?.[row] || "") + "\n";  // last row might be undefined
             }           
-
+            
             // return promise
             return resolve({ userMess: response, wrapChar: "```" });
         });

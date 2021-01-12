@@ -112,12 +112,30 @@ function removeElementFromArray(array, element) {
 }
 
 // Removes the element from the array
-function updateCategoryDict(categoryDict, category, audio) {
-    if (category in categoryDict) {
-        categoryDict[category].push(audio);
-    } else {
-        categoryDict[category] = [audio];
-    }   
+function updateCategoryDict(categoryDict, category, audio, type) {
+    switch(type) {
+        case "add":
+            if (category in categoryDict) {
+                categoryDict[category].push(audio);
+            } else {
+                categoryDict[category] = [audio];
+            }
+            break;
+
+        case "remove":
+            removeElementFromArray(categoryDict[category], audio);
+            if (categoryDict[category].length === 0) {
+                delete categoryDict[category];
+            }
+            break;
+
+        default:
+            if (category in categoryDict) {
+                categoryDict[category].push(audio);
+            } else {
+                categoryDict[category] = [audio];
+            }
+    }
 }
 
 

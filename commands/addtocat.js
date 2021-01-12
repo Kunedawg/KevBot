@@ -19,7 +19,7 @@ module.exports = {
             if (!discordId) { return reject({ userMess: `Failed to retrieve discord id!`}); }
 
             // Check that the args length is at least 2 (category and audio)
-            if (args.length < 2) { return reject({userMess: `Please provide at least two arguments, category followed by as many audio names as you would like.`}); }          
+            if (args.length < 2) { return reject({userMess: `Please provide at least two arguments. Category name followed by as many audio names as you would like.`}); }          
 
             // Get category and audio array
             var category = args.shift();
@@ -38,10 +38,12 @@ module.exports = {
                     }
 
                     // Check if audio is already in the category
-                    if (gd.categoryDict[category].includes(audio)) { 
-                        message.author.send(`Audio "${audio}" is already in the category "${category}", no need to add it again!`);
-                        continue;
-                    }                    
+                    if (Object.keys(gd.categoryDict).includes(category)) {
+                        if (gd.categoryDict[category].includes(audio)) { 
+                            message.author.send(`Audio "${audio}" is already in the category "${category}", no need to add it again!`);
+                            continue;
+                        }
+                    }                
 
                     // Call stored procedure
                     let queryStr = `CALL add_audio_category('${discordId}', '${audio}', '${category}', @message); SELECT @message;`;
