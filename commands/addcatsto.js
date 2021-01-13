@@ -4,9 +4,9 @@ const { Message } = require('discord.js');
 const hf = require('../helperfcns.js');
 
 module.exports = {
-    name: 'addtocat',
-    description: 'Adds audio to the specified category.',
-    usage: 'addtocat!categoryName audioName1 audioName2 audioName3...',
+    name: 'addcatsto',
+    description: 'Adds the given audio name to the specified categories.',
+    usage: 'addtocat!audioName categoryName1 categoryName2 categoryName3...',
     /**
      * @param {Object} methodargs
      * @param {Message} methodargs.message
@@ -22,18 +22,18 @@ module.exports = {
             if (args.length < 2) { return reject({userMess: `Please provide at least two arguments. Category name followed by as many audio names as you would like.`}); }          
 
             // Get category and audio array
-            var category = args.shift();
-            var audioArray = args;
+            var audio = args.shift();
+            var categoryArray = args;
 
-            // Check that category name is in the categorylist
-            if (!gd.categoryList.includes(category)) { return reject({ userMess: `The category "${category}" does not exist!`}); }       
+            // check that audio is in the audioDict
+            if (!Object.keys(gd.audioDict).includes(audio)) { return reject({ userMess: `The audio name "${audio}" does not exist!`}); }       
 
             // Loop over the audio array and call the store procedure
             try {
-                for (let audio of audioArray) {
-                    // check that audio is in the audioDict
-                    if (!Object.keys(gd.audioDict).includes(audio)) { 
-                        message.author.send(`Audio "${audio}" does not exist so it will not be added to category "${category}"!`);
+                for (let category of categoryArray) {
+                    // check that category is in the category list
+                    if (!gd.categoryList.includes(category)) { 
+                        message.author.send(`The category "${category}" does not exist so the audio "${audio}" will not be added it"!`);
                         continue;
                     }
 
@@ -54,7 +54,7 @@ module.exports = {
                         message.author.send(`Audio "${audio}" has been added to the category "${category}"!`);
                     } else {
                         return reject({
-                            userMess: "Adding audio to category was aborted! Try again later or talk to Kevin.",
+                            userMess: "Adding audio to catogories was aborted! Try again later or talk to Kevin.",
                             err: rtnMess
                         });
                     }
@@ -64,7 +64,7 @@ module.exports = {
             }
 
             // Return resolve promise
-            return resolve({userMess: `Adding audio to category complete!`});
+            return resolve({userMess: `Adding audio to catogories complete!`});
         });
     }
 };
