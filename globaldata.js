@@ -28,7 +28,6 @@ const sqlconnection = mysql.createPool({
 
 // paths
 const audioPath = path.join(__dirname, './audio/');
-const categoriesCsvPath = path.join(__dirname, './data/categories.csv');
 var tempDataPath = path.join(__dirname, './temp_data/');
 
 module.exports = {

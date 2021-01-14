@@ -6,6 +6,7 @@ const config = require('./config.json');
 const {Storage} = require('@google-cloud/storage');
 const path = require('path');
 const hf = require('./helperfcns.js');
+const { audioDict } = require('./globaldata.js');
 
 // Creates some directories on startup
 function directories(){
@@ -34,14 +35,42 @@ function directories(){
 function audio(download = true){
     return new Promise(async(resolve,reject) => {
         try {
+            // Retrieve SQL server list of audio            
+            let queryStr = `SELECT audio_name FROM audio;`;
+            let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
+            if (!results[0]) { throw "Audio could not be retrieved by the SQL server!" }
+            let sqlAudioList = [];
+            for (let result of results) { sqlAudioList.push(result["audio_name"]); }
+
+            // Get the google cloud list of audio
+            const gc = new Storage({
+                projectId: config.cloudCredentials.project_id,
+                credentials: config.cloudCredentials
+            });
+            var audioBucket = gc.bucket(config.bucketName);
+            var files = await audioBucket.getFiles();
+            let googleAudioList = [];
+            for (let file of files[0]) { googleAudioList.push(file.name.split(".")[0]); }
+
+            // Compare SQL list to google list
+            let sqlGoogleAudioComparePass = true;
+            for (let sqlAudio of sqlAudioList) {
+                if (!googleAudioList.includes(sqlAudio)) { 
+                    console.log(`The google cloud audio list does not have the sql file "${sqlAudio}"`);
+                    sqlGoogleAudioComparePass = false;
+                }
+            }
+            for (let googleAudio of googleAudioList) {
+                if (!sqlAudioList.includes(googleAudio)) { 
+                    console.log(`The sql audio list does not have the google file "${googleAudio}"`);
+                    sqlGoogleAudioComparePass = false;
+                }
+            }
+            if (!sqlGoogleAudioComparePass) { throw "There is a mismatch between the google and sql audio files."}
+
             // download all of the audio stored on the cloud server
             if (download) {
-                const gc = new Storage({
-                    projectId: config.cloudCredentials.project_id,
-                    credentials: config.cloudCredentials
-                });
-                var audioBucket = gc.bucket(config.bucketName);
-                var files = await audioBucket.getFiles();
+                fs.emptyDirSync(gd.audioPath);
                 for (f of files[0]) {
                     console.log("downloading: ", f.name);
                     await f.download({destination: path.join(gd.audioPath, f.name)});
@@ -56,6 +85,22 @@ function audio(download = true){
                     gd.audioDict[commandName] = filePath;
                 }
             }
+
+            // Check that the audioDict matches the google file list
+            let dictGoogleAudioComparePass = true;
+            for (let dictAudio of Object.keys(audioDict)) {
+                if (!googleAudioList.includes(dictAudio)) { 
+                    console.log(`The google audio list does not have the audioDict file "${dictAudio}"`);
+                    dictGoogleAudioComparePass = false;
+                }
+            }
+            for (let googleAudio of googleAudioList) {
+                if (!Object.keys(audioDict).includes(googleAudio)) { 
+                    console.log(`The audioDict does not have the google file "${googleAudio}"`);
+                    dictGoogleAudioComparePass = false;
+                }
+            }
+            if (!dictGoogleAudioComparePass) { throw "There is a mismatch between the google files and the audio dict."}
 
             // Return promise
             return resolve("Audio inited!");
