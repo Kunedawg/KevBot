@@ -28,6 +28,9 @@ module.exports = {
             // check that the category name format is valid
             if (!hf.kevbotStringOkay(category)) { return reject({userMess: `The category name can only contain lower case letters and numbers.`}); }
 
+            // check that the category is not a resticted name
+            if (["categories", "cats", "all", "emptycats", "allcats"].incldues(category)) { return reject({userMess: `The category name "${category}" is restricted.`}); }
+
             // Check that no additional args were given
             if (args.length > 1) { return reject({userMess: `Please provide only one category at a time. Also remember spaces are not allowed in category names.`}); }            
 

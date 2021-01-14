@@ -1,10 +1,11 @@
 // imports
 var gd = require('../globaldata.js');
+const hf = require('../helperfcns.js');
 
 module.exports = {
     name: 'list',
     description: 'List all commands of the given category or list all categories.',
-    usage: 'list!all, list!cat, list!categories, list!arnold',
+    usage: 'list!all, list!cats, list!categories, list!arnold, list!emptycats, list!allcats',
     /**
      * @param {Object} methodargs
      * @param {Array.<string>} methodargs.args
@@ -15,14 +16,23 @@ module.exports = {
             var category = args?.[0];
 
             // Determine the array that should be listed
-            if (["categories", "cat"].includes(category)) {
+            if (["categories", "cats"].includes(category)) {
                 var listArr = Object.keys(gd.categoryDict);
             } else if (["all", undefined].includes(category)) {
                 var listArr = Object.keys(gd.audioDict);
+            } else if (["allcats"].includes(category)) {
+                var listArr = Array.from(gd.categoryList); // Want to make a copy of the array, that's what Array.from is for
+            } else if (["emptycats"].includes(category)) {
+                var listArr = Array.from(gd.categoryList);
+                for (let cat of Object.keys(gd.categoryDict)) {
+                    hf.removeElementFromArray(listArr,cat); // only none empty categories should be in the category dictionary
+                }
             } else if (category in gd.categoryDict) {
                 var listArr = Array.from(gd.categoryDict[category]);
+            } else if (gd.categoryList.includes(category)) {
+                return reject({userMess: `"${category}" is an empty category, nothing to list!`});
             } else {
-                return reject({ userResponse: `"${category}" is not a valid argument for the list command!` })
+                return reject({ userMess: `"${category}" is not a valid argument for the list command!` })
             }
 
             // Sort the list

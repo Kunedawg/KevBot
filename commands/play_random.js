@@ -19,6 +19,8 @@ module.exports = {
                 var categoryCommands = Object.keys(gd.audioDict);
             } else if (category in gd.categoryDict) {
                 var categoryCommands = gd.categoryDict[category];
+            } else if (gd.categoryList.includes(category)) {
+                return reject({userMess: `"${category}" is an empty category, nothing to play!`});
             } else {
                 return reject({userMess: `"${category}" is not a valid category, ya dingus!`});
             }
