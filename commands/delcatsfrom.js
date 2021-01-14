@@ -5,9 +5,9 @@ const hf = require('../helperfcns.js');
 const config = require('../config.json');
 
 module.exports = {
-    name: 'delfromcat',
-    description: 'Deletes audio from the specified category.',
-    usage: 'delfromcat!categoryName audioName1 audioName2 audioName3...',
+    name: 'delcatsfrom',
+    description: 'Deletes the given audio from the specified categories.',
+    usage: 'delcatsfrom!audioName categoryName1 categoryName2 categoryName3...',
     /**
      * @param {Object} methodargs
      * @param {Message} methodargs.message
@@ -23,33 +23,45 @@ module.exports = {
             if (args.length < 2) { return reject({userMess: `Please provide at least two arguments. Category name followed by as many audio names as you would like.`}); }          
 
             // Get category and audio array
-            var category = args.shift();
-            var audioArray = args;
+            var audio = args.shift();
+            var categoryArray = args;
 
-            // Check that category name is in the categoryDict
-            if (!Object.keys(gd.categoryDict).includes(category)) { return reject({ userMess: `The category "${category}" does not exist!`}); }       
-
-            // Check that the user orginally created this category or is the master user
-            try {
-                if (Number(discordId) != Number(config.masterDiscordId)) {
-                    let queryStr = `SELECT discord_id FROM categories INNER JOIN player_info ON player_info.player_id = categories.player_id WHERE category_name = '${category}';`;
-                    let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
-                    if (!results[0]) {  return reject({userMess: `The creator of the category "${category}" could not be determined, so you may not remove audio "${audio}" from it!`}); }
-                    let rtnDiscordId = results[0]["discord_id"];
-                    if (Number(discordId) != Number(rtnDiscordId)) {  return reject({userMess: `You did not create the category "${category}" so you may not remove audio "${audio}" from it!`}); }
-                }
-            } catch (err) {
-                return reject(err);               
-            }                   
+            // Check that audio name actually exists
+            if (!Object.keys(gd.audioDict).includes(audio)) { return reject({ userMess: `The audio "${audio}" does not exist!`}); }         
 
             // Loop over the audio array and call the store procedure
             try {
-                for (let audio of audioArray) {
-                    // Check if that audio is already in the category
+                for (let category of categoryArray) {
+                    // Check that category name is in the categoryDict
+                    if (!Object.keys(gd.categoryDict).includes(category)) { 
+                        message.author.send(`The category "${category}" does not exist or it is empty!`);
+                        continue;
+                    }   
+
+                    // Check if the audio is in the category
                     if (!gd.categoryDict[category].includes(audio)) { 
                         message.author.send(`Audio "${audio}" is not in the category "${category}", so it cannot be removed from that category!`);
                         continue;
-                    }                    
+                    }        
+                    
+                    // Check that the user orginally created this category or is the master user
+                    try {
+                        if (Number(discordId) != Number(config.masterDiscordId)) {
+                            let queryStr = `SELECT discord_id FROM categories INNER JOIN player_info ON player_info.player_id = categories.player_id WHERE category_name = '${category}';`;
+                            let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
+                            if (!results[0]) {                            
+                                message.author.send(`The creator of the category "${category}" could not be determined, so you may not remove audio "${audio}" from it!`);
+                                continue;
+                            }
+                            let rtnDiscordId = results[0]["discord_id"];
+                            if (Number(discordId) != Number(rtnDiscordId)) { 
+                                message.author.send(`You did not create the category "${category}" so you may not remove audio "${audio}" from it!`);
+                                continue;
+                            }
+                        }
+                    } catch (err) {
+                        return reject(err);               
+                    }                      
 
                     // Call stored procedure
                     let queryStr = `CALL del_audio_category('${audio}', '${category}', @message); SELECT @message;`;
@@ -70,7 +82,6 @@ module.exports = {
             }
 
             // Return resolve promise
-            console.log(gd.categoryDict);
             return resolve({userMess: `Deleting audio from category complete!`});
         });
     }
