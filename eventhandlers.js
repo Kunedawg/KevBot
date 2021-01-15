@@ -24,9 +24,9 @@ async function onVoiceStateUpdate(oldUserVoiceState, newUserVoiceState){
         var newMember = newUserVoiceState.member;
         var oldMember = oldUserVoiceState.member;
         if(oldUserChannel === null && newUserChannel !== null && !newMember.user.bot) { // User Joins a voice channel
-            var greeting = await gd.client.commands.get('getgreeting').execute({user : newMember.user});
-            if (!greeting) {return;}
-            await gd.client.commands.get('p').execute({commandName : greeting, voiceChannel : newUserChannel});
+            var response = await gd.client.commands.get('getgreeting').execute({user : newMember.user});
+            if (!response.greeting) {return;}
+            await gd.client.commands.get('p').execute({commandName : response.greeting, voiceChannel : newUserChannel});
         } else if(newUserChannel === null && oldUserChannel !== null && !oldMember.user.bot){ // User leaves a voice channel
         }
     } catch (err) {
