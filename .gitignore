@@ -1,6 +1,6 @@
 # exclude node modules
 node_modules
 
-# exclude all files except for .gitkeep
+# exclude all files in these folders
 audio/*
 temp_data/*

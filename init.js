@@ -6,7 +6,6 @@ const config = require('./config.json');
 const {Storage} = require('@google-cloud/storage');
 const path = require('path');
 const hf = require('./helperfcns.js');
-const { audioDict } = require('./globaldata.js');
 
 // Creates some directories on startup
 function directories(){
@@ -31,7 +30,7 @@ function directories(){
     });
 }
 
-// Creating dictionary for command to audio file path. yes -> ./audio/yes.mp3
+// Downloads from google cloud server, checks SQL server list, creates audioDict that does this mapping, yes -> ./audio/yes.mp3
 function audio(download = true){
     return new Promise(async(resolve,reject) => {
         try {
@@ -88,14 +87,14 @@ function audio(download = true){
 
             // Check that the audioDict matches the google file list
             let dictGoogleAudioComparePass = true;
-            for (let dictAudio of Object.keys(audioDict)) {
+            for (let dictAudio of Object.keys(gd.audioDict)) {
                 if (!googleAudioList.includes(dictAudio)) { 
                     console.log(`The google audio list does not have the audioDict file "${dictAudio}"`);
                     dictGoogleAudioComparePass = false;
                 }
             }
             for (let googleAudio of googleAudioList) {
-                if (!Object.keys(audioDict).includes(googleAudio)) { 
+                if (!Object.keys(gd.audioDict).includes(googleAudio)) { 
                     console.log(`The audioDict does not have the google file "${googleAudio}"`);
                     dictGoogleAudioComparePass = false;
                 }

@@ -37,7 +37,6 @@ module.exports = {
     client,
     sqlconnection,
     audioPath,
-    categoriesCsvPath,
     tempDataPath,
     categoryList
 };
