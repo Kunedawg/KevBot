@@ -18,10 +18,16 @@ module.exports = {
      * @param {Message} methodargs.message
      */
     execute({message}) {
-        return new Promise(async(resolve,reject) => {  
+        return new Promise(async(resolve,reject) => { 
+            // Get discord id and check that it is valid
+            let discordId = message?.author?.id;
+            if (!discordId) { 
+                return reject({ userMess: `Failed to retrieve discord id!`}); 
+            }
+
             // Check if a file was actually attached
-            if (!(message.attachments.size !== 0)) {
-                return reject({userMess: "You did not attach a file ya dingus!"});
+            if (!(message.attachments.size !== 0)) { 
+                return reject({userMess: "You did not attach a file ya dingus!"}); 
             }
 
             // Determining the url, filename, and extension of the attached file
@@ -74,8 +80,9 @@ module.exports = {
             }
 
             // Check if the file is already on the server
-            if (cloudFiles.includes(fileName))
+            if (cloudFiles.includes(fileName)) {
                 return reject({userMess: `"${fileName}" is already on the cloud server, please pick a new name.`});
+            }
 
             // Download file from discord to a local file path
             try {
@@ -132,9 +139,27 @@ module.exports = {
                 gd.audioDict[commandName] = filePath;
             } catch (err) {
                 return reject({
-                    userMess: "File uploaded, but audio dictionary failed to update. Talk to Kevin.",
+                    userMess: "File uploaded, but audio dictionary failed to update. Definitely let Kevin know!",
                     err: err
                 });                
+            }
+
+            // Update the SQL server table
+            try {
+                let queryStr = `CALL add_audio('${discordId}', '${commandName}', '${duration}', @message); SELECT @message;`;
+                let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
+                let rtnMess = results[1][0]['@message'];
+                if (rtnMess !== 'Success') {
+                    return reject({
+                        userMess: `File uploaded, but failed to add audio "${commandName}" to the SQL audio Table. Definitely let Kevin know!`,
+                        err: rtnMess
+                    });
+                }
+            } catch (err) {
+                return reject({
+                    userMess: `File uploaded, but the add_audio stored procedure failed. Definitely let Kevin know!`,
+                    err: err
+                });                        
             }
 
             // Clean up the temporary data
@@ -142,7 +167,7 @@ module.exports = {
                 await fs.emptyDir(gd.tempDataPath);
             } catch (err) {
                 return reject({
-                    userMess: "File uploaded, but cleanup failed. Talk to Kevin.",
+                    userMess: "File uploaded, but cleanup failed. Definitely let Kevin know!",
                     err: err
                 });                
             }

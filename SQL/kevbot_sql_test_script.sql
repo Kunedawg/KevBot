@@ -10,7 +10,7 @@ CALL get_player_id('1124', @player_id, @mess); SELECT @player_id, @mess;
 SELECT * FROM player_info;
 
 /*audio calls*/
-CALL add_audio('1124', 'kindfawn', @mess); SELECT @mess;
+CALL add_audio('1124', 'newaudio', '9', @mess); SELECT @mess;
 CALL del_audio('kindfawn', @mess); SELECT @mess;
 CALL get_audio_id('kindfawn', @audio_id, @mess); SELECT @audio_id, @mess;
 SELECT * FROM audio;
