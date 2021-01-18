@@ -101,7 +101,7 @@ module.exports = {
             // Check the duration of file does not exceed the max duration
             try {
                 const MAX_DURATION = 15.0; // sec
-                const duration = await getAudioDurationInSeconds(downloadFilePath);
+                var duration = await getAudioDurationInSeconds(downloadFilePath);
                 if(duration > MAX_DURATION) {
                     return reject({
                         userMess: `${fileName} has a duration of ${duration} sec. Max duration is ${MAX_DURATION} sec. Talk to Kevin for exceptions to this rule`
