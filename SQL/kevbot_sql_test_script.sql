@@ -11,9 +11,11 @@ SELECT * FROM player_info;
 
 /*audio calls*/
 CALL add_audio('1124', 'newaudio', '9', @mess); SELECT @mess;
+CALL add_audio('145361690328825857', 'identify', '8', @mess); SELECT @mess;
 CALL del_audio('kindfawn', @mess); SELECT @mess;
 CALL get_audio_id('kindfawn', @audio_id, @mess); SELECT @audio_id, @mess;
 SELECT * FROM audio;
+SELECT COUNT(*) FROM audio;
 
 /*categories calls*/
 CALL add_category('1124', 'animals', @mess); SELECT @mess;
