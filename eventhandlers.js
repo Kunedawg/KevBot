@@ -67,11 +67,12 @@ async function onMessage(message, prefix){
         }
     } catch (err) {
         // Console logging
-        if (commandName) {
-            console.error(`command "${commandName}" has failed: `, err);
-        } else {
-            console.error(err);
-        }
+        let discordId = message?.author?.id;
+        let commandAttempted = message;
+        if (!discordId) { discordId = "undefined";}
+        if (!commandAttempted) { commandAttempted = "undefined";}
+        console.error(`DiscordID: "${discordId}". Command: "${commandAttempted}". Failed with err:\n${err}`);
+
         // User response
         if (err.userMess) {
             message.author.send(err.userMess);

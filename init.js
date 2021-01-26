@@ -70,10 +70,16 @@ function audio(download = true){
             // download all of the audio stored on the cloud server
             if (download) {
                 fs.emptyDirSync(gd.audioPath);
+                let numOfFiles = files[0].length;
+                let tenPercentMark = Math.ceil(numOfFiles/10);
+                let i = 1;
+                console.log("Starting download of audio files from google cloud...");
                 for (f of files[0]) {
-                    console.log("downloading: ", f.name);
+                    if (!(i % tenPercentMark)) {console.log(`${math.floor(100*i/numOfFiles)}% of audio downloaded`);}
                     await f.download({destination: path.join(gd.audioPath, f.name)});
+                    i++;
                 }
+                console.log("Download of audio files complete!");
             }
 
             // Store all of the file paths in a dictionary
