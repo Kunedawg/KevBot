@@ -71,7 +71,7 @@ async function onMessage(message, prefix){
         let commandAttempted = message;
         if (!discordId) { discordId = "undefined";}
         if (!commandAttempted) { commandAttempted = "undefined";}
-        console.error(`DiscordID: "${discordId}". Command: "${commandAttempted}". Failed with err:\n${err}`);
+        console.error(`DiscordID: "${discordId}". Command: "${commandAttempted}". Failed with err: `, err);
 
         // User response
         if (err.userMess) {

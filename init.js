@@ -75,7 +75,7 @@ function audio(download = true){
                 let i = 1;
                 console.log("Starting download of audio files from google cloud...");
                 for (f of files[0]) {
-                    if (!(i % tenPercentMark)) {console.log(`${math.floor(100*i/numOfFiles)}% of audio downloaded`);}
+                    if (!(i % tenPercentMark)) {console.log(`${Math.floor(100*i/numOfFiles)}% of audio downloaded`);}
                     await f.download({destination: path.join(gd.audioPath, f.name)});
                     i++;
                 }
