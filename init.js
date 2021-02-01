@@ -85,9 +85,9 @@ function audio(download = true){
             // Store all of the file paths in a dictionary
             for(var f of fs.readdirSync(gd.audioPath)) {
                 if (f.split(".")[1] === "mp3") {
-                    let commandName = f.split('.')[0];
-                    let filePath = path.join(gd.audioPath, f);
-                    gd.audioDict[commandName] = filePath;
+                    let audio = f.split('.')[0];
+                    let auioFilePath = path.join(gd.audioPath, f);
+                    gd.audioDict[audio] = auioFilePath;
                 }
             }
 

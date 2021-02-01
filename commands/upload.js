@@ -34,19 +34,19 @@ module.exports = {
             const messageAttachment = message.attachments.values().next().value;
             const discordFileUrl = messageAttachment.url;
             const fileName = messageAttachment.name;
-            const commandName = fileName.split('.')[0];
+            const audioName = fileName.split('.')[0];
             const fileExtension = fileName.split('.')[1];
             const filePath = path.join(gd.audioPath, fileName);
             const downloadFilePath = path.join(gd.tempDataPath, 'downloaded_file.mp3');
 
             // Check that the file name is not too long
             const MAX_COMMAND_NAME_LENGTH = 15;
-            if (commandName.length > (MAX_COMMAND_NAME_LENGTH)){
+            if (audioName.length > (MAX_COMMAND_NAME_LENGTH)){
                 return reject({userMess: `The file name can only be ${MAX_COMMAND_NAME_LENGTH} characters long, not including the .mp3.`});
             }
 
             // check that the filename format
-            if (!hf.kevbotStringOkay(commandName)){
+            if (!hf.kevbotStringOkay(audioName)){
                 return reject({userMess: `The file name can only contain lower case letters and numbers.`});
             }
 
@@ -136,7 +136,7 @@ module.exports = {
             
             // Add to audio dictionary and audio folder
             try {
-                gd.audioDict[commandName] = filePath;
+                gd.audioDict[audioName] = filePath;
             } catch (err) {
                 return reject({
                     userMess: "File uploaded, but audio dictionary failed to update. Definitely let Kevin know!",
@@ -146,12 +146,12 @@ module.exports = {
 
             // Update the SQL server table
             try {
-                let queryStr = `CALL add_audio('${discordId}', '${commandName}', '${duration}', @message); SELECT @message;`;
+                let queryStr = `CALL add_audio('${discordId}', '${audioName}', '${duration}', @message); SELECT @message;`;
                 let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
                 let rtnMess = results[1][0]['@message'];
                 if (rtnMess !== 'Success') {
                     return reject({
-                        userMess: `File uploaded, but failed to add audio "${commandName}" to the SQL audio Table. Definitely let Kevin know!`,
+                        userMess: `File uploaded, but failed to add audio "${audioName}" to the SQL audio Table. Definitely let Kevin know!`,
                         err: rtnMess
                     });
                 }

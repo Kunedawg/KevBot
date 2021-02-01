@@ -4,11 +4,8 @@ const Discord = require('discord.js');
 const hf = require('./helperfcns');
 
 // Ready event handler
-/**
- * @param {string} loginMessage
- */
-async function onReady(loginMessage){
-    console.log(loginMessage);
+async function onReady(){
+    console.log(`Logged in as ${gd.client.user.tag}!`);
 }
 
 // Voice Status update handler
@@ -26,7 +23,7 @@ async function onVoiceStateUpdate(oldUserVoiceState, newUserVoiceState){
         if(oldUserChannel === null && newUserChannel !== null && !newMember.user.bot) { // User Joins a voice channel
             var response = await gd.client.commands.get('getgreeting').execute({user : newMember.user});
             if (!response.greeting) {return;}
-            await gd.client.commands.get('p').execute({commandName : response.greeting, voiceChannel : newUserChannel});
+            await gd.client.commands.get('p').execute({audio : response.greeting, voiceChannel : newUserChannel});
         } else if(newUserChannel === null && oldUserChannel !== null && !oldMember.user.bot){ // User leaves a voice channel
         }
     } catch (err) {

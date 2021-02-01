@@ -16,9 +16,9 @@ module.exports = {
             // Validate category and determine list of files to choose from
             var category = args?.[0];
             if (category === 'all' || category === undefined) {
-                var categoryCommands = Object.keys(gd.audioDict);
+                var audioList = Object.keys(gd.audioDict);
             } else if (category in gd.categoryDict) {
-                var categoryCommands = gd.categoryDict[category];
+                var audioList = gd.categoryDict[category];
             } else if (gd.categoryList.includes(category)) {
                 return reject({userMess: `"${category}" is an empty category, nothing to play!`});
             } else {
@@ -27,9 +27,9 @@ module.exports = {
             
             // Play a random file that category
             try {
-                const indexToPlay = Math.floor(Math.random() * categoryCommands.length);     // returns a random integer from 0 to amount of commands
+                const indexToPlay = Math.floor(Math.random()*audioList.length);     // returns a random integer from 0 to amount of commands
                 await gd.client.commands.get('p').execute({
-                    commandName  : categoryCommands[indexToPlay], 
+                    audio : audioList[indexToPlay], 
                     voiceChannel : message?.member?.voice?.channel
                 });
             } catch (err) {

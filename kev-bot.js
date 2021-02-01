@@ -14,13 +14,11 @@ switch(gd.env) {
         var downloadAudio = true;       // always download
         var token = config.deployToken;
         var prefix = config.deployPrefix;
-        var loginMessage = 'kev-bot is ready and logged in!';
         break;
     case 'test':
         var downloadAudio = (downloadFlag === 'dl');
         var token = config.testToken;
         var prefix = config.testPrefix;
-        var loginMessage = 'kev-bot-test is ready and logged in!';
         break;
     default:
         console.error("Not a valid command line arg");
@@ -41,10 +39,9 @@ initialize().catch((err) => {
     process.exit(1);    // end program 
 });
 
-
 // Events
 try {
-    gd.client.once('ready', () => {event.onReady(loginMessage)});
+    gd.client.once('ready', event.onReady);
     gd.client.on('voiceStateUpdate', (a,b) => {event.onVoiceStateUpdate(a,b)});
     gd.client.on('message', (message) => {event.onMessage(message,prefix)});
 } catch(err) {
