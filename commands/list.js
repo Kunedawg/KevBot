@@ -1,11 +1,12 @@
 // imports
 var gd = require('../globaldata.js');
 const hf = require('../helperfcns.js');
+const {parseAudioLogSQL} = require('../functions/parseAudioLogSQL.js')
 
 module.exports = {
     name: 'list',
     description: 'List all commands of the given category or list all categories.',
-    usage: 'list!all, list!cats, list!categories, list!arnold, list!emptycats, list!allcats',
+    usage: 'list!all, list!cats, list!categories, list!arnold, list!emptycats, list!allcats list!mostplayed',
     /**
      * @param {Object} methodargs
      * @param {Array.<string>} methodargs.args
@@ -27,12 +28,14 @@ module.exports = {
                 for (let cat of Object.keys(gd.categoryDict)) {
                     hf.removeElementFromArray(listArr,cat); // only none empty categories should be in the category dictionary
                 }
+            } else if (["mostplayed"].includes(category)) {
+                var listArr = await parseAudioLogSQL();
             } else if (category in gd.categoryDict) {
                 var listArr = Array.from(gd.categoryDict[category]);
             } else if (gd.categoryList.includes(category)) {
                 return reject({userMess: `"${category}" is an empty category, nothing to list!`});
             } else {
-                return reject({ userMess: `"${category}" is not a valid argument for the list command!` })
+                return reject({userMess: `"${category}" is not a valid argument for the list command!`})
             }
 
             // Sort the list

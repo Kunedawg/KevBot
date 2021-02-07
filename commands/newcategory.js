@@ -29,7 +29,7 @@ module.exports = {
             if (!hf.kevbotStringOkay(category)) { return reject({userMess: `The category name can only contain lower case letters and numbers.`}); }
 
             // check that the category is not a resticted name
-            if (["categories", "cats", "all", "emptycats", "allcats"].includes(category)) { return reject({userMess: `The category name "${category}" is restricted.`}); }
+            if (["categories", "cats", "all", "emptycats", "allcats", "mostplayed"].includes(category)) { return reject({userMess: `The category name "${category}" is restricted.`}); }
 
             // Check that no additional args were given
             if (args.length > 1) { return reject({userMess: `Please provide only one category at a time. Also remember spaces are not allowed in category names.`}); }            

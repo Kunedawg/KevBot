@@ -17,6 +17,12 @@ CALL get_audio_id('kindfawn', @audio_id, @mess); SELECT @audio_id, @mess;
 SELECT * FROM audio;
 SELECT COUNT(*) FROM audio;
 
+/*audio and player id inner join */
+SELECT audio.audio_name, audio_play_log.play_type
+FROM audio_play_log
+INNER JOIN audio
+ON audio_play_log.audio_id = audio.audio_id;
+
 /*categories calls*/
 CALL add_category('1124', 'animals', @mess); SELECT @mess;
 CALL del_category('animals', @mess); SELECT @mess;
