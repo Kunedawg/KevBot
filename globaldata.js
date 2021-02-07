@@ -13,6 +13,9 @@ var audioDict = {};
 var categoryDict = {};
 var categoryList = [];
 
+// Most played list [{audio,playCount},{audio,playCount},..] (sorted by playCount)
+var mostPlayedList = [];
+
 // discord client
 var client = new Discord.Client();
 

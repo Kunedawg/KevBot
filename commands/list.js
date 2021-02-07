@@ -29,7 +29,7 @@ module.exports = {
                     hf.removeElementFromArray(listArr,cat); // only none empty categories should be in the category dictionary
                 }
             } else if (["mostplayed"].includes(category)) {
-                var listArr = await parseAudioLogSQL();
+                await parseAudioLogSQL(); // Updates the gd.mostPlayedList
             } else if (category in gd.categoryDict) {
                 var listArr = Array.from(gd.categoryDict[category]);
             } else if (gd.categoryList.includes(category)) {
@@ -37,16 +37,6 @@ module.exports = {
             } else {
                 return reject({userMess: `"${category}" is not a valid argument for the list command!`})
             }
-
-            // Sort the list
-            listArr.sort();
-
-            // Finding the largest number of chars in a string of the list Array
-            var largetNumOfChars = listArr.reduce((a,b) => {return Math.max(a,b.length);},0);
-            if (largetNumOfChars === 0) {return reject("Couldn't get largest number of characters");}   
-
-            // Loop over the list array and pad every string with spaces to make each string equal length
-            for (let idx in listArr) {listArr[idx] += ' '.repeat(largetNumOfChars - listArr[idx].length + 2);}
 
             // Defines a function that splits an array into equal chunks based on the given size
             function chunk(array, size) {
@@ -59,20 +49,66 @@ module.exports = {
                 return chunkedArray;
             }
             
-            // Split the list array into 4 arrays of roughly equal size (last array will be shorter potentially)
-            let numCols = 4;
-            const numRows = Math.ceil(listArr.length / numCols);
-            colArr = chunk(listArr, numRows);
+            // Sort lists of strings 
+            function sortAndFormatStringList(listArr) {
+                // Sort the list (alphabetically)
+                listArr.sort();
 
-            // Loop over the rows and concat the columns together
-            let response = '';
-            for (let row = 0; row < numRows; row++) {
-                response += (colArr[0]?.[row] || "");
-                response += (colArr[1]?.[row] || "");
-                response += (colArr[2]?.[row] || "");
-                response += (colArr[3]?.[row] || "") + "\n";  // last row might be undefined
-            }           
-            
+                // Finding the largest number of chars in a string of the list Array and then pad list with spaces
+                let maxNumOfChars = listArr.reduce((a,b) => Math.max(a,b.length),0);
+                if (maxNumOfChars === 0) {return reject("Couldn't get largest number of characters");}   
+                listArr = listArr.map(str => (str + ' '.repeat(maxNumOfChars - str.length + 2)));
+                
+                // Split the list array into 4 arrays of roughly equal size (last array will be shorter potentially)
+                let numCols = 4;
+                const numRows = Math.ceil(listArr.length / numCols);
+                colArr = chunk(listArr, numRows);
+
+                // Loop over the rows and concat the columns together
+                let response = '';
+                for (let row = 0; row < numRows; row++) {
+                    response += (colArr[0]?.[row] || "");
+                    response += (colArr[1]?.[row] || "");
+                    response += (colArr[2]?.[row] || "");
+                    response += (colArr[3]?.[row] || "") + "\n";
+                }
+                return response;
+            }
+
+            // Formats the most played list
+            function formatMostPlayedList(gd_mostPlayedList) {
+                let mostPlayedList = [...gd_mostPlayedList]; // makes a copy
+
+                // Only use the first 10 elements
+                if (mostPlayedList.length > 10) {mostPlayedList.length = 10;}
+
+                // Add table heades to list
+                mostPlayedList.unshift({audio : "audio_name", playCount : "play_count"});
+
+                // Finding the largest number of chars in a string of the list Array and then pad list with spaces
+                let maxNumOfChars = mostPlayedList.reduce((a,b) => Math.max(a,b.audio.length),0);
+                if (maxNumOfChars === 0) {return reject("Couldn't get largest number of characters");}
+                mostPlayedList = mostPlayedList.map(obj => ({
+                    audio : obj.audio + ' '.repeat(maxNumOfChars - obj.audio.length + 2),
+                    playCount : obj.playCount
+                }));
+                
+                // Loop over the list and make the rows of the response
+                let response = '';
+                for (let obj of mostPlayedList) {
+                    response += obj.audio + obj.playCount + "\n";
+                }
+
+                return response;
+            }
+
+            // Determines the response based on the category that was called
+            if (["mostplayed"].includes(category)) {
+                var response = formatMostPlayedList(gd.mostPlayedList);
+            } else {
+                var response = sortAndFormatStringList(listArr);
+            }
+
             // return promise
             return resolve({ userMess: response, wrapChar: "```" });
         });

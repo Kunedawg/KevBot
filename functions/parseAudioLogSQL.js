@@ -25,16 +25,13 @@ function parseAudioLogSQL (discordId, category) {
                     playCountDict[result["audio_name"]] = 1;
                 }
             }
-            // Get the top played
-            topPlayed = [];
-            // for  (audio in playCountDict) {
-            //     for (let playCount in topPlayed)
-            // }
 
-            console.log(results);
-            console.log(playCountDict);
-            console.log(topPlayed);
-            return resolve(["mostplayed"])
+            // Sort by most played and update the global data list
+            let mostPlayedKeys = Object.keys(playCountDict);
+            gd.mostPlayedList = mostPlayedKeys.map(key => {return {audio : key, playCount : playCountDict[key]}})
+            gd.mostPlayedList = gd.mostPlayedList.sort((a,b) => b.playCount - a.playCount);
+
+            return resolve();
         } catch (err) {
             reject(err);
         }
