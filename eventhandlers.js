@@ -23,7 +23,7 @@ async function onVoiceStateUpdate(oldUserVoiceState, newUserVoiceState){
         if(oldUserChannel === null && newUserChannel !== null && !newMember.user.bot) { // User Joins a voice channel
             var response = await gd.client.commands.get('getgreeting').execute({user : newMember.user});
             if (!response.greeting) {return;}
-            let _discordId = newMember?.user?.id,
+            let _discordId = newMember?.user?.id;
             if (!_discordId) {_discordId = '0';}            
             await gd.client.commands.get('p').execute({
                 audio : response.greeting, 
