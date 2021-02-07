@@ -30,9 +30,9 @@ CALL del_audio_category('kindfawn', 'animals', @mess); SELECT @mess;
 SELECT * FROM audio_category;
 
 /*audio play log calls*/
-CALL log_audio_play('1124', 'kindfawn', @mess); SELECT @mess;
+CALL log_audio_play('1124', '4d3d', '0', @mess); SELECT @mess;
 SELECT * FROM audio_play_log;
 
 /*audio play log calls*/
-CALL log_category_play('1124', 'animals', @mess); SELECT @mess;
+CALL log_category_play('1124', 'timeric', @mess); SELECT @mess;
 SELECT * FROM category_play_log;

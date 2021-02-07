@@ -23,7 +23,14 @@ async function onVoiceStateUpdate(oldUserVoiceState, newUserVoiceState){
         if(oldUserChannel === null && newUserChannel !== null && !newMember.user.bot) { // User Joins a voice channel
             var response = await gd.client.commands.get('getgreeting').execute({user : newMember.user});
             if (!response.greeting) {return;}
-            await gd.client.commands.get('p').execute({audio : response.greeting, voiceChannel : newUserChannel});
+            let _discordId = newMember?.user?.id,
+            if (!_discordId) {_discordId = '0';}            
+            await gd.client.commands.get('p').execute({
+                audio : response.greeting, 
+                voiceChannel : newUserChannel,
+                discordId : _discordId,
+                playType : 2
+            });
         } else if(newUserChannel === null && oldUserChannel !== null && !oldMember.user.bot){ // User leaves a voice channel
         }
     } catch (err) {
@@ -72,7 +79,7 @@ async function onMessage(message, prefix){
 
         // User response
         if (err.userMess) {
-            message.author.send(err.userMess);
+            if (err.userMess != 'NO_MESSAGE') {message.author.send(err.userMess);}
         } else {
             if (commandName) {
                 message.author.send(`There was an issue executing command "${commandName}"! Talk to Kevin.`);

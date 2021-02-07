@@ -1,6 +1,7 @@
 // imports
 var gd = require('../globaldata.js');
 const { Message } = require('discord.js');
+const {logCategoryPlaySQL} = require('../functions/logCategoryPlaySQL.js')
 
 module.exports = {
     name: 'pr',
@@ -13,6 +14,10 @@ module.exports = {
      */
     execute({message, args}) {
         return new Promise(async(resolve,reject) => {
+            // Get discord id. If the discordId is undefined then set it to zero
+            let _discordId = message?.author?.id;
+            if (!_discordId) {_discordId = '0';}            
+            
             // Validate category and determine list of files to choose from
             var category = args?.[0];
             if (category === 'all' || category === undefined) {
@@ -30,10 +35,22 @@ module.exports = {
                 const indexToPlay = Math.floor(Math.random()*audioList.length);     // returns a random integer from 0 to amount of commands
                 await gd.client.commands.get('p').execute({
                     audio : audioList[indexToPlay], 
-                    voiceChannel : message?.member?.voice?.channel
+                    voiceChannel : message?.member?.voice?.channel,
+                    discordId : _discordId,
+                    playType : 1
                 });
             } catch (err) {
                 return reject(err);
+            }
+
+             // On every random play log it
+             try {
+                logCategoryPlaySQL(_discordId, category);
+            } catch (err) {
+                return reject({
+                    userMess: 'NO_MESSAGE',
+                    err: err
+                });
             }
 
             // return promise, no user message is needed
