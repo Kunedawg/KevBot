@@ -11,6 +11,7 @@ function oncePerHour() {
         // Update the most played list
         try {
             await parseAudioLogSQL();
+            await parseAudioSQL();
         } catch (err) {
             return reject(err);
         }

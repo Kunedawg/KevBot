@@ -17,7 +17,13 @@ CALL get_audio_id('kindfawn', @audio_id, @mess); SELECT @audio_id, @mess;
 SELECT * FROM audio;
 SELECT COUNT(*) FROM audio;
 
-/*audio and player id inner join */
+/*audio and player_info join for*/
+SELECT audio.audio_name, player_info.discord_id
+FROM audio
+INNER JOIN player_info
+ON audio.player_id = player_info.player_id;
+
+/*audio log and audio inner join for*/
 SELECT audio.audio_name, audio_play_log.play_type
 FROM audio_play_log
 INNER JOIN audio

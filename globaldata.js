@@ -16,6 +16,9 @@ var categoryList = [];
 // Most played list [{audio,playCount},{audio,playCount},..] (sorted by playCount)
 var mostPlayedList = [];
 
+// List of uploads done by each discord ID
+var uploadsByDiscordId = {};
+
 // discord client
 var client = new Discord.Client();
 
@@ -42,5 +45,6 @@ module.exports = {
     audioPath,
     tempDataPath,
     categoryList,
-    mostPlayedList
+    mostPlayedList,
+    uploadsByDiscordId
 };
