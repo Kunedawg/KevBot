@@ -6,6 +6,7 @@ const config = require('./config.json');
 const {Storage} = require('@google-cloud/storage');
 const path = require('path');
 const hf = require('./helperfcns.js');
+const {parseAudioLogSQL} = require("./functions/parseAudioLogSQL.js")
 
 // Creates some directories on startup
 function directories(){
@@ -156,6 +157,9 @@ function categories(){
                 hf.updateCategoryDict(gd.categoryDict, category, audio);
             }
             
+            // Update the most played list
+            parseAudioLogSQL();
+
             // Return promise
             return resolve("Categories inited!");
         } catch (err) {

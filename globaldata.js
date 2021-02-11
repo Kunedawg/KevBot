@@ -41,5 +41,6 @@ module.exports = {
     sqlconnection,
     audioPath,
     tempDataPath,
-    categoryList
+    categoryList,
+    mostPlayedList
 };

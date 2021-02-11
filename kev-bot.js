@@ -3,6 +3,7 @@ const config = require('./config.json');
 const gd = require('./globaldata.js');
 const init = require('./init.js');
 const event = require('./eventhandlers.js');
+const {oncePerHour} = require("./functions/oncePerHour.js")
 
 // Get command line arguments
 gd.env = process.argv[2];             // environment
@@ -44,6 +45,7 @@ try {
     gd.client.once('ready', event.onReady);
     gd.client.on('voiceStateUpdate', (a,b) => {event.onVoiceStateUpdate(a,b)});
     gd.client.on('message', (message) => {event.onMessage(message,prefix)});
+    setInterval(oncePerHour, 1000*60*60);  // once per hour updates
 } catch(err) {
     console.error(err);
 }
