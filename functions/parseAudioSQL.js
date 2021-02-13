@@ -29,7 +29,6 @@ function parseAudioSQL (discordId, category) {
 
             // Update the global var
             gd.uploadsByDiscordId = uploadsByDiscordId;
-            console.log(gd.uploadsByDiscordId);
             return resolve();
         } catch (err) {
             reject(err);

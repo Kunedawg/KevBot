@@ -1,6 +1,7 @@
 // imports
 var gd = require('../globaldata.js');
 const hf = require('../helperfcns.js');
+const {Message, VoiceChannel} = require('discord.js');
 // const {parseAudioLogSQL} = require('../functions/parseAudioLogSQL.js')
 
 module.exports = {
@@ -9,14 +10,15 @@ module.exports = {
     usage: 'list!all, list!cats, list!categories, list!arnold, list!emptycats, list!allcats list!mostplayed <num_to_list>',
     /**
      * @param {Object} methodargs
+     * @param {Message} methodargs.message
      * @param {Array.<string>} methodargs.args
      */
-    execute({args}) {
+    execute({message, args}) {
         return new Promise(async (resolve, reject) => {
             try {
                 // Validate inputs
                 var category = args?.[0];
-                const mostPlayedListLength = args?.[1] || 25;   // list either 25 or the user requested amount
+                const mostPlayedListLength = args?.[1] || 25;   // list either 25 or the user requested amount  
 
                 // Determine the array that should be listed
                 if (["categories", "cats"].includes(category)) {
@@ -32,6 +34,11 @@ module.exports = {
                     }
                 } else if (["mostplayed"].includes(category)) {
                     var listArr = gd.mostPlayedList;
+                } else if (["myuploads"].includes(category)) {
+                    let discordId = message?.author?.id;
+                    if (!discordId) { return reject({ userMess: `Failed to retrieve discord id!`}); }   
+                    var listArr = gd.uploadsByDiscordId[discordId];
+                    if (!listArr) {return resolve({ userMess: "You have not uploaded any files!" })};
                 } else if (category in gd.categoryDict) {
                     var listArr = Array.from(gd.categoryDict[category]);
                 } else if (gd.categoryList.includes(category)) {
