@@ -1,13 +1,11 @@
 // imports
-const {Storage} = require('@google-cloud/storage');
 var fs = require('fs-extra');
-const config = require('../config.json');
 const path = require('path');
 const fetch = require('node-fetch');
 const {getAudioDurationInSeconds} = require('get-audio-duration');
 const gd = require('../globaldata.js');
 const hf = require('../helperfcns.js');
-const { Message } = require('discord.js');
+const {Message} = require('discord.js');
 
 module.exports = {
     name: 'upload',
@@ -55,23 +53,9 @@ module.exports = {
                 return reject({userMess: "The file you are trying to upload is not an mp3 file! You can only upload mp3 files."});
             }
 
-            // Try to make a connection to the cloud server bucket
-            try {
-                const gc = new Storage({
-                    projectId: config.cloudCredentials.project_id,
-                    credentials: config.cloudCredentials
-                });
-                var audioBucket = gc.bucket(config.bucketName);
-            } catch (err) {
-                return reject({
-                    userMess: "Failed to connect to cloud server. Try again later.",
-                    err: err
-                });
-            }
-
             // Getting list of files from cloud server
             try {
-                var cloudFiles = await hf.getFiles(audioBucket);
+                var cloudFiles = await hf.getFiles(gd.audioBucket);
             } catch (err) {
                 return reject({
                     userMess: "Failed to retrieve files from the cloud server! Talk to Kevin.",

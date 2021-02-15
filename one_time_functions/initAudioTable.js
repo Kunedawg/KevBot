@@ -1,8 +1,6 @@
 // imports
 const gd = require('../globaldata.js');
 var fs = require('fs-extra');
-const config = require('../config.json');
-const {Storage} = require('@google-cloud/storage');
 const path = require('path');
 const hf = require('../helperfcns.js');
 const {getAudioDurationInSeconds} = require('get-audio-duration');
@@ -16,12 +14,7 @@ async function initAudioTable(){
         await hf.asyncQuery(gd.sqlconnection, queryStr);
 
         // Get files from the google cloud server and empty the audio directory
-        const gc = new Storage({
-            projectId: config.cloudCredentials.project_id,
-            credentials: config.cloudCredentials
-        });
-        var audioBucket = gc.bucket(config.bucketName);
-        var files = await audioBucket.getFiles();
+        var files = await gd.audioBucket.getFiles();
         fs.emptyDirSync(gd.audioPath);
 
         // Loop over the files, download them, determine the duration, and update the audio Table

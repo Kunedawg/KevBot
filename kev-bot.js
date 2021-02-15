@@ -1,38 +1,17 @@
 // imports
-const config = require('./config.json');
 const gd = require('./globaldata.js');
 const init = require('./init.js');
 const event = require('./eventhandlers.js');
 const {oncePerHour} = require("./functions/oncePerHour.js")
-
-// Get command line arguments
-gd.env = process.argv[2];             // environment
-var downloadFlag = process.argv[3];     // download flag
-
-// Determine some key variables based on the run environment
-switch(gd.env) {
-    case 'deploy':
-        var downloadAudio = true;       // always download
-        var token = config.deployToken;
-        var prefix = config.deployPrefix;
-        break;
-    case 'test':
-        var downloadAudio = (downloadFlag === 'dl');
-        var token = config.testToken;
-        var prefix = config.testPrefix;
-        break;
-    default:
-        console.error("Not a valid command line arg");
-        process.exit(1);    // end program
-}
+require('dotenv').config()
 
 // Initialization
 async function initialize(){
     console.log(await init.directories());
-    console.log(await init.audio(downloadAudio));
+    console.log(await init.audio(process.argv[2] !== 'ndl'));
     console.log(await init.categories());
     console.log(await init.commands());
-    await gd.client.login(token);
+    await gd.client.login(process.env.BOT_TOKEN);
 }
 initialize().catch((err) => {
     console.error(err);
@@ -44,7 +23,7 @@ initialize().catch((err) => {
 try {
     gd.client.once('ready', event.onReady);
     gd.client.on('voiceStateUpdate', (a,b) => {event.onVoiceStateUpdate(a,b)});
-    gd.client.on('message', (message) => {event.onMessage(message,prefix)});
+    gd.client.on('message', (message) => {event.onMessage(message,process.env.COMMAND_PREFIX)});
     setInterval(oncePerHour, 1000*60*60);  // once per hour updates
 } catch(err) {
     console.error(err);

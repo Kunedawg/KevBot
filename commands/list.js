@@ -1,8 +1,7 @@
 // imports
 var gd = require('../globaldata.js');
 const hf = require('../helperfcns.js');
-const {Message, VoiceChannel} = require('discord.js');
-// const {parseAudioLogSQL} = require('../functions/parseAudioLogSQL.js')
+const {Message} = require('discord.js');
 
 module.exports = {
     name: 'list',

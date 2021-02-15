@@ -2,7 +2,6 @@
 const gd = require('../globaldata.js');
 const { Message } = require('discord.js');
 const hf = require('../helperfcns.js');
-const config = require('../config.json');
 
 module.exports = {
     name: 'delfromcat',
@@ -31,7 +30,7 @@ module.exports = {
 
             // Check that the user orginally created this category or is the master user
             try {
-                if (Number(discordId) != Number(config.masterDiscordId)) {
+                if (Number(discordId) != Number(process.env.MASTER_DISCORD_ID)) {
                     let queryStr = `SELECT discord_id FROM categories INNER JOIN player_info ON player_info.player_id = categories.player_id WHERE category_name = '${category}';`;
                     let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
                     if (!results[0]) {  return reject({userMess: `The creator of the category "${category}" could not be determined, so you may not remove audio "${audio}" from it!`}); }

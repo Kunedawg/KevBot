@@ -2,7 +2,6 @@
 const gd = require('../globaldata.js');
 const { Message } = require('discord.js');
 const hf = require('../helperfcns.js');
-const config = require('../config.json');
 
 module.exports = {
     name: 'delcategory',
@@ -37,7 +36,7 @@ module.exports = {
                 let queryStr = `SELECT discord_id FROM categories INNER JOIN player_info ON player_info.player_id = categories.player_id WHERE category_name = '${category}';`;
                 let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
                 let rtnDiscordId = results[0]["discord_id"];
-                if (![Number(rtnDiscordId), Number(config.masterDiscordId)].includes(Number(discordId))) { return reject({userMess: `You did not create the category "${category}" so you may not delete it!`}); }
+                if (![Number(rtnDiscordId), Number(process.env.MASTER_DISCORD_ID)].includes(Number(discordId))) { return reject({userMess: `You did not create the category "${category}" so you may not delete it!`}); }
             } catch (err) {
                 return reject(err);               
             }           

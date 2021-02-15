@@ -1,9 +1,5 @@
 // imports
 const gd = require('../globaldata.js');
-var fs = require('fs-extra');
-const config = require('../config.json');
-const {Storage} = require('@google-cloud/storage');
-const path = require('path');
 const hf = require('../helperfcns.js');
 
 // Deletes all of the audio from the audio Table and downloads and uploads all the audio from google cloud
@@ -18,12 +14,7 @@ async function sqlGoogleAudioTableCheck(){
         for (let result of results) { sqlAudioList.push(result["audio_name"]); }
 
         // Get the google cloud list of audio
-        const gc = new Storage({
-            projectId: config.cloudCredentials.project_id,
-            credentials: config.cloudCredentials
-        });
-        var audioBucket = gc.bucket(config.bucketName);
-        var files = await audioBucket.getFiles();
+        var files = await gd.audioBucket.getFiles();
         let googleAudioList = [];
         for (let file of files[0]) { googleAudioList.push(file.name.split(".")[0]); }
 

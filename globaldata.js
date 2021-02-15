@@ -2,49 +2,49 @@
 const Discord = require('discord.js');
 var mysql = require('mysql');
 const path = require('path');
+const {Storage} = require('@google-cloud/storage');
+require('dotenv').config()
 
-// current environment
-var env = '';
-
-// Audio dictionary, just maps names to filepaths. filepath = audioDict[name]
-var audioDict = {};
-
-// catergory dictionary, maps category names to sets of audio [name1, name2, name3, ...] = categoryDict[category_name]
-var categoryDict = {};
-var categoryList = [];
-
-// Most played list [{audio,playCount},{audio,playCount},..] (sorted by playCount)
-var mostPlayedList = [];
-
-// List of uploads done by each discord ID
-var uploadsByDiscordId = {};
-
-// discord client
-var client = new Discord.Client();
+// Google cloud credentials from the .env file / heroku credentials
+const gc = new Storage({
+    projectId: JSON.parse(process.env.GOOGLE_CLOUD_CREDENTIALS).project_id,
+    credentials: JSON.parse(process.env.GOOGLE_CLOUD_CREDENTIALS)
+});
+const audioBucket = gc.bucket(process.env.GOOGLE_CLOUD_BUCKET_NAME);
 
 // sql connection
 const sqlconnection = mysql.createPool({
     connectionLimit     : 10,
-    host                : '***REMOVED***',
-    user                : '***REMOVED***',
-    password            : '***REMOVED***',
-    database            : '***REMOVED***',
+    host                : process.env.SQL_DB_HOST,
+    user                : process.env.SQL_DB_USER,
+    password            : process.env.SQL_DB_PASSWORD,
+    database            : process.env.SQL_DB_DATABASE,
     multipleStatements  : true
 });
 
+// discord client
+var client = new Discord.Client();
+
+// Data stuctures for use throughout code
+var audioDict = {};             // Audio dictionary, just maps names to filepaths. filepath = audioDict[name]
+var categoryDict = {};          // catergory dictionary, maps category names to sets of audio [name1, name2, name3, ...] = categoryDict[category_name]
+var categoryList = [];          // Just a simple list of categories
+var mostPlayedList = [];        // Most played list [{audio,playCount},{audio,playCount},..] (sorted by playCount)
+var uploadsByDiscordId = {};    // List of uploads done by each discord ID
+
 // paths
 const audioPath = path.join(__dirname, './audio/');
-var tempDataPath = path.join(__dirname, './temp_data/');
+const tempDataPath = path.join(__dirname, './temp_data/');
 
 module.exports = {
-    env,
+    audioBucket,
+    sqlconnection,
+    client,
     audioDict,
     categoryDict,
-    client,
-    sqlconnection,
-    audioPath,
-    tempDataPath,
     categoryList,
     mostPlayedList,
-    uploadsByDiscordId
+    uploadsByDiscordId,
+    audioPath,
+    tempDataPath
 };

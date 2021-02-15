@@ -1,6 +1,6 @@
 // imports
 var gd = require('../globaldata.js');
-const { Message } = require('discord.js');
+const {Message} = require('discord.js');
 
 module.exports = {
     name: 'setgreeting',

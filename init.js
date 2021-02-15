@@ -2,8 +2,6 @@
 const gd = require('./globaldata.js');
 var fs = require('fs-extra');
 const Discord = require('discord.js');
-const config = require('./config.json');
-const {Storage} = require('@google-cloud/storage');
 const path = require('path');
 const hf = require('./helperfcns.js');
 const {parseAudioLogSQL} = require("./functions/parseAudioLogSQL.js")
@@ -42,14 +40,7 @@ function audio(download = true){
             if (!results[0]) { throw "Audio could not be retrieved by the SQL server!" }
             let sqlAudioList = [];
             for (let result of results) { sqlAudioList.push(result["audio_name"]); }
-
-            // Get the google cloud list of audio
-            const gc = new Storage({
-                projectId: config.cloudCredentials.project_id,
-                credentials: config.cloudCredentials
-            });
-            var audioBucket = gc.bucket(config.bucketName);
-            var files = await audioBucket.getFiles();
+            var files = await gd.audioBucket.getFiles();
             let googleAudioList = [];
             for (let file of files[0]) { googleAudioList.push(file.name.split(".")[0]); }
 
