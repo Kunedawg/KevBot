@@ -1,0 +1,38 @@
+// imports
+var gd = require('../globaldata.js');
+const { Message, VoiceChannel } = require('discord.js');
+
+module.exports = {
+    name: 'raid',
+    description: 'Play audio in another channel (numbered top down starting at 1) at a specified time.',
+    usage: 'raid!file_name channel# time      e.g. raid!imback 3 3:00am',
+    /**
+     * @param {Object} methodargs
+     * @param {Message} methodargs.message
+     * @param {Array.<string>} methodargs.args
+     */
+    execute({message, args}) {
+        return new Promise(async(resolve,reject) => {
+            // Getting file to play and checking that it exists
+            let audioToPlay = args?.[0];
+            let channelNum = args?.[1];
+            let time = args?.[2];
+            // Get voice channel number and time info and print in terminal. E.g. channel number: 1 \n time: 10:00pm
+            /*var channel = message?.member?.voice?.channel;*/
+            let VC = message?.member?.voice?.channel;
+            //var ch_test = VC;
+            let t_test = '10:00pm';
+            console.log('channel number: ', channelNum, '\ntime: ', time);
+            
+            // Calling the play command
+            try {
+                await gd.client.commands.get('p').execute({audio : audioToPlay, voiceChannel : VC});
+            } catch (err) {
+                return reject(err);
+            }
+            
+            // return resolve promise
+            return resolve();
+        });
+    }
+};
