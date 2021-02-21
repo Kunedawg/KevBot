@@ -3,7 +3,6 @@ const gd = require('./globaldata.js');
 const init = require('./init.js');
 const event = require('./eventhandlers.js');
 const {oncePerHour} = require("./functions/oncePerHour.js")
-require('dotenv').config()
 
 // Initialization
 async function initialize(){
