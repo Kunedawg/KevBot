@@ -17,6 +17,7 @@ module.exports = {
             let audioToPlay = args?.[0];
             let channelNum = args?.[1];
             let time = args?.[2];
+            if (channelNum === undefined) return reject({userMess: "Specify a voice channel, ya dingus!"});
             // Get voice channel number and time info and print in terminal. E.g. channel number: 1 \n time: 10:00pm
             /*var channel = message?.member?.voice?.channel;*/
             // let VCCurrent = message?.member?.voice?.channel;
