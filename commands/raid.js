@@ -4,8 +4,8 @@ const { Message, VoiceChannel } = require('discord.js');
 
 module.exports = {
     name: 'raid',
-    description: 'Play audio in another channel (numbered top down starting at 1) at a specified time.',
-    usage: 'raid!file_name channel# time      e.g. raid!imback 3 3:00am',
+    description: 'Play audio in a voice channel (numbered top-down starting at 1)',
+    usage: 'raid!file_name VoiceChannel#      e.g. raid!imback 3',
     /**
      * @param {Object} methodargs
      * @param {Message} methodargs.message
