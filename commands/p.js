@@ -24,7 +24,7 @@ module.exports = {
             let _discordId = discordId || message?.author?.id;
             if (!_discordId) {_discordId = '0';}
 
-            // Get playType Note playType = (0: p!, 1 : pr!, 2 : greeting!)
+            // Get playType Note playType = (0: p!, 1 : pr!, 2 : greeting!, 3 : raid!)
             let _playType = playType || 0;
 
             // Getting file to play and checking that it exists
@@ -32,13 +32,13 @@ module.exports = {
             if (!(_audio in gd.audioDict)) return reject({userMess: `"${_audio}" does not exist, ya dingus!`});
 
             // Get voice channel and verify voice channel is actually a voice channel
-            var VC = voiceChannel || message?.member?.voice?.channel;
-            if (!VC) return reject({userMess: "You are not in a voice channel, ya dingus!"});
+            var _voiceChannel = voiceChannel || message?.member?.voice?.channel;
+            if (!_voiceChannel) return reject({userMess: "You are not in a voice channel, ya dingus!"});
             
             // Join channel, play mp3 from the dictionary, leave when completed.
-            const connection = await VC.join()
+            const connection = await _voiceChannel.join()
             const dispatcher = connection.play(gd.audioDict[_audio]);
-            dispatcher.on("finish", end => {VC.leave()});
+            dispatcher.on("finish", end => {_voiceChannel.leave()});
 
              // On every play log the play, use playType to log what type of play it was
             try {
