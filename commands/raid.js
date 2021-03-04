@@ -13,27 +13,21 @@ module.exports = {
      */
     execute({message, args}) {
         return new Promise(async(resolve,reject) => {
-
-            // Parsing arguments
-            let audioToPlay = args?.[0];
+            // Check that a voice channel number was provided
             let channelNum = args?.[1];
-            let time = args?.[2];
+            if (!channelNum) return reject({userMess: 'Please provide a voice channel number, ya dingus!'}); 
 
             // Read-in collection of voice channels, check if user sent message in a text channel
             let voiceChannels = message?.member?.guild?.channels?.cache?.filter(channel => channel.type === 'voice');
-            if (!voiceChannels) return reject({userMess: 'You need to send this message in a text channel, ya dingus'}); 
+            if (!voiceChannels) return reject({userMess: 'You need to send this message in a text channel, ya dingus!'}); 
 
-            // Sort voice channels from top to bottom and save array of channel IDs
-            let voiceChannelsSorted = voiceChannels.sort((a,b) => {a.rawPosition-b.rawPosition});
-            let voiceChannelsIdArray = Array.from(voiceChannelsSorted.keys());
-            
-            // Get voice channel based on channel #, and check if it exists
-            let voiceChannelSelected = voiceChannelsSorted.get(voiceChannelsIdArray[channelNum-1]);
-            if (!voiceChannelSelected) return reject({userMess: `Specify a voice channel number between 1 and ${length(voiceChannelsIdArray)}, ya dingus!`});
+            // Sort channels by rawPosition and select a channel by the channel #. Check that the selected channel exists.
+            let voiceChannelSelected = voiceChannels.sort((a,b) => a.rawPosition-b.rawPosition).array()[channelNum-1];
+            if (!voiceChannelSelected) return reject({userMess: `"${channelNum}" is not a valid voice channel number. Pick a number between 1 and ${voiceChannels.size}, ya dingus!`});
             
             // Calling the play command
             try {
-                await gd.client.commands.get('p').execute({audio : audioToPlay, voiceChannel : voiceChannelSelected, discordId : message?.author?.id, playType : 3});
+                await gd.client.commands.get('p').execute({audio : args?.[0], voiceChannel : voiceChannelSelected, discordId : message?.author?.id, playType : 3});
             } catch (err) {
                 return reject(err);
             }
