@@ -13,33 +13,21 @@ module.exports = {
      */
     execute({message, args}) {
         return new Promise(async(resolve,reject) => {
-            // Getting file to play and checking that it exists
-            let audioToPlay = args?.[0];
+            // Check that a voice channel number was provided
             let channelNum = args?.[1];
-            let time = args?.[2];
-            if (channelNum === undefined) return reject({userMess: "Specify a voice channel, ya dingus!"});
-            // Get voice channel number and time info and print in terminal. E.g. channel number: 1 \n time: 10:00pm
-            /*var channel = message?.member?.voice?.channel;*/
-            // let VCCurrent = message?.member?.voice?.channel;
-            let VC = message?.member?.guild?.channels?.cache.filter(channel => channel.type === 'voice'); //.channel.type;
-            // let VCSort = VC.sort(channel => channel.type === 'rawPosition');
-            let VCSort = VC.sort(function(a,b){return a.rawPosition-b.rawPosition});
-            let VCId = Array.from(VCSort.keys());
-            // if (channelNum['status'] === undefined || channelNum['status'] === null) return reject({userMess: "That is not a voice channel, ya dingus!"})
-            let i = channelNum-1;
-            let VCSelect = VCSort.get(VCId[i]);
-            if (VCSelect === undefined) return reject({userMess: "That is not a voice channel, ya dingus!"});
-            // if (i<0 || i>VCId.length || i['status'] === undefined) return reject({userMess: "That is not a voice channel, ya dingus!"});
-            // let VCIds = VC.map(channel => channel.id);
-            // var ch_test = VC;
-            let t_test = '10:00pm';
-            // console.log('channel number: ', channelNum, '\ntime: ', time);
-            // console.log('current channel: \n', VCCurrent, '\nselected channel: \n', VCSelect);
-            // console.log('channels: \n', VCSort, '\ntime: ', time);
-            // console.log('channels: \n', VCId, '\ntime: ', time);
+            if (!channelNum) return reject({userMess: 'Please provide a voice channel number, ya dingus!'}); 
+
+            // Read-in collection of voice channels, check if user sent message in a text channel
+            let voiceChannels = message?.member?.guild?.channels?.cache?.filter(channel => channel.type === 'voice');
+            if (!voiceChannels) return reject({userMess: 'You need to send this message in a text channel, ya dingus!'}); 
+
+            // Sort channels by rawPosition and select a channel by the channel #. Check that the selected channel exists.
+            let voiceChannelSelected = voiceChannels.sort((a,b) => a.rawPosition-b.rawPosition).array()[channelNum-1];
+            if (!voiceChannelSelected) return reject({userMess: `"${channelNum}" is not a valid voice channel number. Pick a number between 1 and ${voiceChannels.size}, ya dingus!`});
+            
             // Calling the play command
             try {
-                await gd.client.commands.get('p').execute({audio : audioToPlay, voiceChannel : VCSelect});
+                await gd.client.commands.get('p').execute({audio : args?.[0], voiceChannel : voiceChannelSelected, discordId : message?.author?.id, playType : 3});
             } catch (err) {
                 return reject(err);
             }
