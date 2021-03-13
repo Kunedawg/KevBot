@@ -1,6 +1,5 @@
 // imports
 const gd = require('../globaldata.js');
-const { Message } = require('discord.js');
 const hf = require('../helperfcns.js');
 
 // For logging plays of audio to sql. Note playType = (0: p!, 1 : pr!, 2 : greeting!)

@@ -1,6 +1,5 @@
 // imports
 const gd = require('../globaldata.js');
-const { Message } = require('discord.js');
 const hf = require('../helperfcns.js');
 
 // For logging calls of pr!
