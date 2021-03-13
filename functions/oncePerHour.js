@@ -1,7 +1,4 @@
 // imports
-const gd = require('../globaldata.js');
-const { Message } = require('discord.js');
-const hf = require('../helperfcns.js');
 const {parseAudioLogSQL} = require('./parseAudioLogSQL.js')
 const {parseAudioSQL} = require('./parseAudioSQL.js')
 
