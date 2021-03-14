@@ -11,6 +11,9 @@ const {parseAudioSQL} = require("./functions/parseAudioSQL.js")
 function directories(){
     return new Promise(async(resolve,reject) => {
         try {
+            // Starting message
+            console.log("Directories intializing...");
+
             // Create directories if they do not exist
             if (!fs.existsSync(gd.audioPath)) {
                fs.mkdirSync(gd.audioPath); 
@@ -23,7 +26,7 @@ function directories(){
             fs.emptyDirSync(gd.tempDataPath);
 
             // Return promise
-            return resolve("Directories inited!");
+            return resolve("Directories intialization done!\n");
         } catch (err) {
             return reject("Directories failed to init!\n" + err);
         }
@@ -31,18 +34,24 @@ function directories(){
 }
 
 // Downloads from google cloud server, checks SQL server list, creates audioDict that does this mapping, yes -> ./audio/yes.mp3
-function audio(download = true){
+function audio(freshDownload = true){
     return new Promise(async(resolve,reject) => {
         try {
+            // Starting message
+            console.log("Audio intializing...");
+
             // Retrieve SQL server list of audio            
             let queryStr = `SELECT audio_name FROM audio;`;
             let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
             if (!results[0]) { throw "Audio could not be retrieved by the SQL server!" }
             let sqlAudioList = [];
             for (let result of results) { sqlAudioList.push(result["audio_name"]); }
+
+            // Retrieve google cloud list of audio         
             var files = await gd.audioBucket.getFiles();
             let googleAudioList = [];
             for (let file of files[0]) { googleAudioList.push(file.name.split(".")[0]); }
+            console.log(`There are ${googleAudioList.length} files on google cloud!`)
 
             // Compare SQL list to google list
             let sqlGoogleAudioComparePass = true;
@@ -60,19 +69,25 @@ function audio(download = true){
             }
             if (!sqlGoogleAudioComparePass) { throw "There is a mismatch between the google and sql audio files."}
 
-            // download all of the audio stored on the cloud server
-            if (download) {
+            // Empty audio folder if a fresh download is needed
+            if (freshDownload) {
                 fs.emptyDirSync(gd.audioPath);
-                let numOfFiles = files[0].length;
-                let tenPercentMark = Math.ceil(numOfFiles/10);
-                let i = 1;
-                console.log("Starting download of audio files from google cloud...");
-                for (f of files[0]) {
-                    if (!(i % tenPercentMark)) {console.log(`${Math.floor(100*i/numOfFiles)}% of audio downloaded`);}
-                    await f.download({destination: path.join(gd.audioPath, f.name)});
-                    i++;
+            }
+
+            // Determine files that have not been downloaded and download them
+            let currentFiles = fs.readdirSync(gd.audioPath);
+            let notDownloadedFiles = [];
+            for (f of files[0]) {
+                if (!currentFiles.includes(f.name)) {
+                    notDownloadedFiles.push(f.name)
                 }
-                console.log("Download of audio files complete!");
+            }
+            if (notDownloadedFiles.length > 0) {
+                for (let [i, file] of notDownloadedFiles.entries()) {
+                    hf.printProgress(`Downloading audio files from google cloud...[${i+1}/${notDownloadedFiles.length}]`);
+                    await f.download({destination: path.join(gd.audioPath, file)});
+                }
+                console.log("\nDownload of audio files complete!");
             }
 
             // Store all of the file paths in a dictionary
@@ -101,7 +116,7 @@ function audio(download = true){
             if (!dictGoogleAudioComparePass) { throw "There is a mismatch between the google files and the audio dict."}
 
             // Return promise
-            return resolve("Audio inited!");
+            return resolve("Audio intialization done!\n");
         } catch(err) {
             return reject("Audio failed to init!\n" + err);
         }
@@ -112,6 +127,9 @@ function audio(download = true){
 function categories(){
     return new Promise(async(resolve,reject) => {
         try {
+            // Starting message
+            console.log("Categories intializing...");
+
             // category of all by definition contains all of the audio
             gd.categoryDict["all"] = Object.keys(gd.audioDict);     // adding all the files to category "all"
 
@@ -156,9 +174,8 @@ function categories(){
             parseAudioSQL();
 
             // Return promise
-            return resolve("Categories inited!");
+            return resolve("Categories intialization done!\n");
         } catch (err) {
-            console.log("hello i am here!");
             return reject("Categories failed to init!\n" + err);
         }
     });
@@ -168,6 +185,9 @@ function categories(){
 function commands(){
     return new Promise(async(resolve,reject) => {
         try {
+            // Starting message
+            console.log("Commands intializing...");
+
             // Loop over the commands
             gd.client.commands = new Discord.Collection();
             const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
@@ -177,7 +197,7 @@ function commands(){
             }
 
             // Return promise
-            return resolve("Commands inited!");
+            return resolve("Commands intialization done!\n");
         } catch (err) {
             return reject("Commands failed to init!\n"  + err);
         }
