@@ -138,6 +138,12 @@ function updateCategoryDict(categoryDict, category, audio, type) {
     }
 }
 
+// For printing in progress information
+function printProgress(progress){
+    process.stdout.clearLine();
+    process.stdout.cursorTo(0);
+    process.stdout.write(String(progress));
+}
 
 module.exports = {
     breakUpResponse,
@@ -147,5 +153,6 @@ module.exports = {
     asyncPipe,
     asyncQuery,
     removeElementFromArray,
-    updateCategoryDict
+    updateCategoryDict,
+    printProgress
 }

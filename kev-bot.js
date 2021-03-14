@@ -9,7 +9,7 @@ const {updateUserNames} = require('./functions/updateUserNames.js');
 // Initialization
 async function initialize(){
     console.log(await init.directories());
-    console.log(await init.audio(process.argv[2] !== 'ndl'));
+    console.log(await init.audio(process.env.ENV === 'PRODUCTION'));
     console.log(await init.categories());
     console.log(await init.commands());
     await gd.client.login(process.env.BOT_TOKEN);
