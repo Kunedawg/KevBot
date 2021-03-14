@@ -50,3 +50,7 @@ SELECT * FROM audio_play_log;
 /*audio play log calls*/
 -- CALL log_category_play('1124', 'timeric', @mess); SELECT @mess;
 SELECT * FROM category_play_log;
+
+/* DELETE and REPLACE DATABASE */
+-- DROP DATABASE `database_name`;
+-- CREATE DATABASE `database_name`;
