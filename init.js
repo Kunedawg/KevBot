@@ -77,15 +77,15 @@ function audio(freshDownload = true){
             // Determine files that have not been downloaded and download them
             let currentFiles = fs.readdirSync(gd.audioPath);
             let notDownloadedFiles = [];
-            for (f of files[0]) {
-                if (!currentFiles.includes(f.name)) {
-                    notDownloadedFiles.push(f.name)
+            for (let file of files[0]) {
+                if (!currentFiles.includes(file.name)) {
+                    notDownloadedFiles.push(file)
                 }
             }
             if (notDownloadedFiles.length > 0) {
                 for (let [i, file] of notDownloadedFiles.entries()) {
                     hf.printProgress(`Downloading audio files from google cloud...[${i+1}/${notDownloadedFiles.length}]`);
-                    await f.download({destination: path.join(gd.audioPath, file)});
+                    await file.download({destination: path.join(gd.audioPath, file.name)});
                 }
                 console.log("\nDownload of audio files complete!");
             }
