@@ -8,7 +8,7 @@ const {updateUserNames} = require('./updateUserNames.js')
 function oncePerDay() {
     return new Promise(async(resolve,reject) => {
         try {
-            updateUserNames();
+            await updateUserNames();
         } catch (err) {
             return reject(err);
         }
