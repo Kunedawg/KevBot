@@ -42,7 +42,7 @@ module.exports = {
 
             // On every play log the play, use playType to log what type of play it was
             try {
-                logAudioPlaySQL(_discordId, _audio, _playType);
+                await logAudioPlaySQL(_discordId, _audio, _playType);
             } catch (err) {
                 return reject({
                     userMess: 'NO_MESSAGE',

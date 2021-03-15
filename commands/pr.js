@@ -45,7 +45,7 @@ module.exports = {
 
              // On every random play log it
              try {
-                logCategoryPlaySQL(_discordId, category);
+                await logCategoryPlaySQL(_discordId, category);
             } catch (err) {
                 return reject({
                     userMess: 'NO_MESSAGE',
