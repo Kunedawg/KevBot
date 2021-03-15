@@ -38,9 +38,9 @@ module.exports = {
             // Join channel, play mp3 from the dictionary, leave when completed.
             const connection = await _voiceChannel.join()
             const dispatcher = connection.play(gd.audioDict[_audio]);
-            dispatcher.on("finish", end => {_voiceChannel.leave()});
+            dispatcher.on("finish", end => {connection.disconnect();});
 
-             // On every play log the play, use playType to log what type of play it was
+            // On every play log the play, use playType to log what type of play it was
             try {
                 logAudioPlaySQL(_discordId, _audio, _playType);
             } catch (err) {
