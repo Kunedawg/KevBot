@@ -9,7 +9,6 @@ function logCategoryPlaySQL (discordId, category) {
         let queryStr = `CALL log_category_play('${discordId}', '${category}', @message); SELECT @message;`;
         let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
         let rtnMess = results[1][0]['@message'];
-        console.log(rtnMess);
         if (rtnMess === 'Success') {
             return resolve('Logged audio successfully');
         } else {
