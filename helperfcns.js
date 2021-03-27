@@ -64,10 +64,10 @@ function kevbotStringOkay(string){
 }
 
 // normalizes mp3 files
-function normalizeAudio(inputPath,outputPath) {
+function normalizeAudio(inputPath, outputPath, duration = 3.1) {
     return new Promise((resolve,reject) => {
         ffmpeg(inputPath)
-            .audioFilters('loudnorm=I=-16:LRA=11:TP=-1.5')
+            .audioFilters((duration > 3.0) ? `loudnorm=I=-16:TP=-1.5:LRA=11` : `apad,atrim=0:3,loudnorm=I=-16:TP=-1.5:LRA=11,atrim=0:${duration}`)
             .on('error', function(err) {
                 return reject(err);
             })
