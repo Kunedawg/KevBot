@@ -100,7 +100,7 @@ module.exports = {
 
             // Call the normalize audio function
             try {
-                await hf.normalizeAudio(downloadFilePath,filePath);
+                await hf.normalizeAudio(downloadFilePath,filePath,duration);
             } catch (err) {
                 return reject({
                     userMess: "The file failed to normalize! Talk to Kevin.",
