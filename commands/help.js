@@ -13,12 +13,10 @@ module.exports = {
         return new Promise(async(resolve,reject) => {
             // Validate inputs
             var helpCategory = args?.[0];
-
-            // Determine if help command was called by accident (will be undefined)
-            if (!helpCategory) {return resolve();}
+            if (helpCategory === undefined || helpCategory === '') {return resolve();}
 
             // Return if the help category is not kevbot
-            if (helpCategory !== 'kevbot' && helpCategory !== 'kb') {
+            if (!['kevbot','kb','kev-bot'].includes(helpCategory)) {
                 return reject({userMess: `Please use the command "help!kb" for help with kev-bot.`});
             }
 
