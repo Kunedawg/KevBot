@@ -87,7 +87,7 @@ module.exports = {
                 function formatMostPlayedList(gd_mostPlayedList) {
                     let mostPlayedList = [...gd_mostPlayedList]; // makes a copy
 
-                    // Only use the first 10 elements
+                    // Only use the user specified length
                     if (mostPlayedList.length > mostPlayedListLength) {mostPlayedList.length = mostPlayedListLength;}
 
                     // Add table heades to list
