@@ -1,21 +1,27 @@
-# kev-bot
+kev-bot
+=================
 
 kev-bot is a discord bot for playing custom audio clips. The bot utilzes the discord.js library, MySQL, Google Cloud Storage and Heroku. See below for more information.
 
-##### Table of Contents  
-[Audio Commands](#audio-commands)
-[Category Commands](#category-commands)
-[Greeting Commands](#greeting-commands)
-[Upload Command](#upload-command)
-[Help Command](#help-command)
+Table of contents
+=================
 
-## Commands
+- [Commands](#commands)
+    - [Audio Commands](#audio-commands)
+    - [List Command](#list-command)
+    - [Greeting Commands](#greeting-commands)
+    - [Upload Command](#upload-command)
+    - [Category Commands](#category-commands)
+    - [Help Command](#help-command)
 
-All commands to the bot are text commands. All commands can be sent in a text channel of a Discord Guild that the bot can see and select commands can be sent directly to the bot. All commands have the following basic syntax:
+Commands
+=================
+
+All commands to the bot are text commands. Commands can be sent in a text channel of a Discord Guild that the bot is a member of. Select commands can be sent directly to the bot (most commands except for the ones that actually play audio). All commands have the following basic syntax:
 ```
-commandName!arg1 arg2 arg3...
+commandName!arg1 arg2 arg3 ... argN
 ```
-Where `commandName` is the command you wish to envoke with the arguments of that command followed by the `!`. Here are some common example commands:
+The `commandName` is the name of the command that will be envoked and everything after the `!` are the arguments of that specific command. Here are some common example commands:
 ```
 p!chump
 pr!all
@@ -26,66 +32,122 @@ setgreeting!foryourhealth
 ```
 ### Audio Commands
 
-| Command     | Argument 1      | Argument 2           | Description                                                       | Example Usage    |
-| :---------- | :----------     | :----------          | :----------                                                       | :----------      |
-| `p`         | `audioClipName` | `none`               | Plays the given `audioClipName`                                   | `p!hellogov`     |
-| `pr`        | `categoryName`  | `none`               | Plays a random clip from the given `categoryName`                 | `pr!all`         |
-| `raid`      | `audioClipName` | `voiceChannelIndex`  | Plays the given `audioClipName` in the given `voiceChannelIndex`  | `raid!chump 3`   |
+| `commandName`| Argument 1      | Argument 2           | Description                                                       | Example Usage    |
+| :----------  | :----------     | :----------          | :----------                                                       | :----------      |
+| `p`          | `audioClipName` | `none`               | Plays the given `audioClipName`                                   | `p!hellogov`     |
+| `pr`         | `categoryName`  | `none`               | Plays a random clip from the given `categoryName`                 | `pr!all`         |
+| `raid`       | `audioClipName` | `voiceChannelIndex`  | Plays the given `audioClipName` in the given `voiceChannelIndex`  | `raid!chump 3`   |
 
-### Category Commands
+### List Command
 
-The bot supports categories, which allows you to group audio clips into categories and then play a random clip from that category with the `pr!` command. It is also possible to list all of the clips in a certain category with the `list!` command. Categories can be created with the `newcategory!` command and clips can be added to a category with the `addtocat!` command. See the table below for more details and a full list of category commands.
+<table>
+       <tr>
+              <th><code>commandName</code></th>
+              <th>Argument 1</th>
+              <th>Argument 2</th>
+              <th>Description</th>
+              <th>Example Usage</th>
+       </tr>
+       <tr>
+              <td><code>list</code></code></td>
+              <td><code>categoryName</code></td>
+              <td><code>numOfMostPlayed</code> (optional)</td>
+              <td>
+                     The bot will DM the user a list of everything in the given <code>categoryName</code>. If the <code>categoryName</code> of <code>mostplayed</code> is used the default list length is 25. The user can provide the optional argument <code>numOfMostPlayed</code> 
+              </td>
+              <td><code>list!all</code> , <code>list!mostplayed 10</code></td>
+       </tr>
+       </table>
 
-Note there are are some specialized `categoryNames` that can be used with the `list!` command and the `pr!` command.
+Note there are are some specialized `categoryNames` that can be used with the `list!` command and the `pr!` command. See the table below:
 
-**most played has an additional arg that needs to be addressed**
-
-**Change refs to you to be the user**
-
-| Command       | Argument 1      | Argument (i+1)   | Description                                                         | Example Usage                                                |
-| :----------   | :----------     | :----------      | :----------                                                         | :----------                                                  |
-| `list`        | `categoryName`  | `none`           | The bot will DM you a list of everything in the given `categoryName`| `list!all`                                                   |
-| `newcategory` | `categoryName`  | `none`           | Creates a new category with the given `categoryName`                | `newcategory!arnold`                                         |
-| `delcategory` | `categoryName`  | `none`           | Deletes the category with the given `categoryName`                  | `delcategory!arnold`                                         |
-| `addtocat`    | `categoryName`  | `audioClipNames` | Adds the given `audioClipNames` to the given `categoryName`         | `addtocat!arnold icetomeetyou whoisyourdaddy magicschoolbus` |
-| `delfromcat`  | `categoryName`  | `audioClipNames` | Deletes the given `audioClipNames` from the given `categoryName`    | `delfromcat!arnold magicschoolbus`                           |
-| `addcatsto`   | `audioClipName` | `categoryNames`  | Adds the given `audioClipName` to the given `categoryNames`         | `addcatsto!billions trump president smart`                   |
-| `delcatsfrom` | `audioClipName` | `categoryNames`  | Removes the given `audioClipName` from the given `categoryNames`    | `delcatsfrom!billions smart`                                 |
-
-Note there are are some specialized `categoryNames` that can be used with the `list!` command and the `pr!` command.
-
-| `categoryName`        | Description                                                                           | Compatible with commmands   |
-| :----------           | :----------                                                                           | :----------                 |
-| `all`, `' '`          | All audio clips. Note providing no `categoryName` will be interpreted as `all`        | `list!`, `pr!`              |
-| `mostplayed`          | The most played audio clips. Note you can request the amount, so top 5, 10, 54 etc... | `list!`, `pr!`              |
-| `myuploads`           | The audio clips that the user has personally uploaded                                 | `list!`, `pr!`              |
-| `categories`, `cats`  | Lists all the categories that have audio clips assigned to them                       | `list!`                     |
-| `emptycats`           | List all the categoires that have no clips assigned                                   | `list!`                     |
-| `allcats`             | Lists all categories whether empty or not                                             | `list!`                     |
-
-![categories.gif](https://github.com/Kunedawg/kev-bot/blob/master/gifs/categories.gif)
-
+| `categoryName`        | Description                                                                                         | Compatible with commmands   |
+| :----------           | :----------                                                                                         | :----------                 |
+| `all`, `' '`          | All audio clips. Note providing no `categoryName` will be interpreted as `all`                      | `list!`, `pr!`              |
+| `mostplayed`          | The most played audio clips. Note the user can request the specific amount, so top 5, 10, 54 etc... | `list!`, `pr!`              |
+| `myuploads`           | The audio clips that the user has personally uploaded                                               | `list!`, `pr!`              |
+| `categories`, `cats`  | Lists all the categories that have audio clips assigned to them                                     | `list!`                     |
+| `emptycats`           | List all the categoires that have no clips assigned                                                 | `list!`                     |
+| `allcats`             | Lists all categories whether empty or not                                                           | `list!`                    
 
 ### Greeting Commands
 
-You can set an audio clip to be your greeting. The bot will play your greeting anytime you join a discord voice channel. It is not played when switching between voice channels in the same discord.
+Each user can set a specific audio clip to be their greeting. The bot will play the user's greeting anytime a user joins a discord voice channel. The greeting is not played when switching between voice channels in the same discord.
 
-| command       | Argument 1      | Description                                                       | Example Usage           |
-| :----------   | :----------     | :----------                                                       | :----------             |
-| `setgreeting` | `audioClipName` | Sets the given `audioClipName` to be your greeting                | `setgreeting!hellogov`  |
-| `delgreeting` | `none`          | Deletes/removes your greeting. No greeting will be played now     | `delgreeting!`          |
-| `getgreeting` | `none`          | The bot will DM you your current greeting                         | `getgreeting!`          |
+| `commandName` | Argument 1      | Description                                                         | Example Usage           |
+| :----------   | :----------     | :----------                                                         | :----------             |
+| `setgreeting` | `audioClipName` | Sets the user's greeting to the given `audioClipName`               | `setgreeting!hellogov`  |
+| `delgreeting` | `none`          | Deletes/removes the user's greeting. No greeting will be played now | `delgreeting!`          |
+| `getgreeting` | `none`          | The bot will DM the user the name of their current greeting         | `getgreeting!`          |
 
 ### Upload Command
 
-| Command     | Special Arguments     | Description                                                                                                            | Example Usage            |
-| :---------- | :----------           | :----------                                                                                                            | :----------              |
-| `upload`    | `mp3 File`            | Uploads the attached mp3 file to the bot's google cloud storage. There are restrictions on the max length of the file  | `upload!` w/ mp3 attached|
+| `commandName`| Special Arguments     | Description                                                                                                            | Example Usage            |
+| :----------  | :----------           | :----------                                                                                                            | :----------              |
+| `upload`     | `mp3 File`            | Uploads the attached mp3 file to the bot's google cloud storage. There are restrictions on the max length of the file  | `upload!` w/ mp3 attached|
 
 ![upload.gif](https://github.com/Kunedawg/kev-bot/blob/master/gifs/upload.gif)
 
+### Category Commands
+
+The bot supports categories, which allows the user to group audio clips into categories and then play a random clip from that category with the `pr!` command. It is also possible to list all of the clips in a certain category with the `list!` command. Categories can be created with the `newcategory!` command and clips can be added to a category with the `addtocat!` command. See the table below for more details and a full list of category commands.
+
+<table>
+       <tr>
+              <th><code>commandName</code></th>
+              <th>Argument 1</th>
+              <th>Argument 2+</th>
+              <th>Description</th>
+              <th>Example Usage</th>
+       </tr>
+       <tr>
+              <td><code>newcategory</code></td>
+              <td><code>categoryName</code></td>
+              <td><code>none</code></td>
+              <td>Creates a new category with the given <code>categoryName</code></td>
+              <td><code>newcategory!arnold</code></td>
+       </tr>
+       <tr>
+              <td><code>delcategory</code></td>
+              <td><code>categoryName</code></td>
+              <td><code>none</code></td>
+              <td>Deletes the category with the given <code>categoryName</code></td>
+              <td><code>delcategory!arnold</code></td>
+       </tr>
+       <tr>
+              <td><code>addtocat</code></td>
+              <td><code>categoryName</code></td>
+              <td><code>audioClipNames</code></td>
+              <td>Adds the given <code>audioClipNames</code> to the given <code>categoryName</code></td>
+              <td><code>addtocat!arnold icetomeetyou whoisyourdaddy magicschoolbus</code></td>
+       </tr>
+       <tr>
+              <td><code>delfromcat</code></td>
+              <td><code>categoryName</code></td>
+              <td><code>audioClipNames</code></td>
+              <td>Deletes the given <code>audioClipNames</code> from the given <code>categoryName</code></td>
+              <td><code>delfromcat!arnold magicschoolbus</code></td>
+       </tr>
+       <tr>
+              <td><code>addcatsto</code></td>
+              <td><code>audioClipName</code></td>
+              <td><code>categoryNames</code></td>
+              <td>Adds the given <code>audioClipName</code> to the given <code>categoryNames</code></td>
+              <td><code>addcatsto!billions trump president smart</code></td>
+       </tr>
+       <tr>
+              <td><code>delcatsfrom</code></td>
+              <td><code>audioClipName</code></td>
+              <td><code>categoryNames</code></td>
+              <td>Removes the given <code>audioClipName</code> from the given <code>categoryNames</code></td>
+              <td><code>delcatsfrom!billions smart</code></td>
+       </tr>
+</table> |
+
+![categories.gif](https://github.com/Kunedawg/kev-bot/blob/master/gifs/categories.gif)
+
 ### Help Command
 
-| Command       | Argument 1     | Description                                                                                                            | Example Usage            |
-| :----------   | :----------    | :----------                                                                                                            | :----------              |
-| `help`        | `helpCategory` | The bot will DM you helpful info on all the commands. Currently the only `helpCategies` are {`kb`,`kevbot`,`kev-bot`}  | `help!kb`                |
+| `commandName` | Argument 1     | Description                                                                                                                 | Example Usage            |
+| :----------   | :----------    | :----------                                                                                                                 | :----------              |
+| `help`        | `helpCategory` | The bot will DM the user helpful info on all the commands. Currently the only `helpCategies` are {`kb`,`kevbot`,`kev-bot`}  | `help!kb`                |
