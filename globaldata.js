@@ -23,13 +23,8 @@ const sqlconnection = mysql.createPool({
 });
 
 // discord client
-//const client = new Discord.Client();
-
-//import { Client, Intents } from "discord.js";
 let intents = new Discord.Intents(Discord.Intents.NON_PRIVILEGED);
 intents.add('GUILD_MEMBERS');
-//export const client: Client = new Client({ ws: {intents: intents} });
-
 const client = new Discord.Client({ ws: {intents: intents} });
 
 // Data stuctures for use throughout code
