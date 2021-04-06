@@ -17,7 +17,7 @@ SELECT * FROM player_info;
 -- CALL get_audio_id('kindfawn', @audio_id, @mess); SELECT @audio_id, @mess;
 SELECT * FROM audio;
 SELECT COUNT(*) FROM audio;
-SELECT * FROM audio WHERE player_id = 351 AND audio_id IN (1521,1681,1771,1801,2151,2281,2341,2371,2911,2931,3081,3191,3331,3351,3661,3691,3711,3871,3991,4051,4121,4301);
+SELECT * FROM audio WHERE player_id = 351 AND audio_id IN (1501,2091,2711,2981,3231,3411,3491,4201,4251);
 
 /*audio and player_info join for*/
 SELECT audio.audio_name, player_info.discord_id
