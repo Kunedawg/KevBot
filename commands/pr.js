@@ -21,6 +21,7 @@ module.exports = {
             // Validate category and determine list of files to choose from
             var category = args?.[0];
             if (category === 'all' || category === undefined) {
+                category = 'all';
                 var audioList = Object.keys(gd.audioDict);
             } else if (category in gd.categoryDict) {
                 var audioList = gd.categoryDict[category];
