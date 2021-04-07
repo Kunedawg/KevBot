@@ -91,7 +91,7 @@ Each user can set a specific audio clip to be their greeting. The bot will play 
 | :----------  | :----------           | :----------                                                                                                            | :----------              |
 | `upload`     | `mp3 File`            | Uploads the attached mp3 file to the bot's google cloud storage. There are restrictions on the max length of the file  | `upload!` w/ mp3 attached|
 
-![upload.gif](https://github.com/Kunedawg/kev-bot/blob/master/gifs/upload.gif)
+![upload.gif](/gifs/upload.gif)
 
 ### Category Commands
 
@@ -147,9 +147,9 @@ The bot supports categories, which allows the user to group audio clips into cat
               <td>Removes the given <code>audioClipName</code> from the given <code>categoryNames</code></td>
               <td><code>delcatsfrom!billions smart</code></td>
        </tr>
-</table> |
+</table>
 
-![categories.gif](https://github.com/Kunedawg/kev-bot/blob/master/gifs/categories.gif)
+![categories.gif](/gifs/categories.gif)
 
 ### Help Command
 
