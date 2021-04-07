@@ -13,6 +13,11 @@ Table of contents
     - [Upload Command](#upload-command)
     - [Category Commands](#category-commands)
     - [Help Command](#help-command)
+- [Code Architecture](#code-architecture)
+    - [Node, Discord.js, Discord API](#node-discord.js-discord-api)
+    - [Heroku](#heroku)
+    - [MySQL](#mysql)
+    - [Google Cloud Storage](#google-cloud-storage)
 
 Commands
 =================
@@ -151,3 +156,23 @@ The bot supports categories, which allows the user to group audio clips into cat
 | `commandName` | Argument 1     | Description                                                                                                                 | Example Usage            |
 | :----------   | :----------    | :----------                                                                                                                 | :----------              |
 | `help`        | `helpCategory` | The bot will DM the user helpful info on all the commands. Currently the only `helpCategies` are {`kb`,`kevbot`,`kev-bot`}  | `help!kb`                |
+
+Code Architecture
+=================
+
+Below you can find a diagram depicting the architecture of kev-bot. Note the main resources being leveraged by this project are: Node, Discord.js, the Discord API, Heroku, MySQL, GitHub, and Google Cloud.
+
+![architecture](/docs/architecture.png)
+
+### Node, Discord.js, Discord API
+The javascript code that runs on node is the brains of the bot. The Discord.js library is used to interact with the Discord API.
+
+### Heroku
+Heroku is a cloud computing platform that allows you to host processes. The javsascript code as well as the MySQL Database are both hosted on Heroku. Note that GitHub is connected to Heroku so that anytime the master branch is pushed to it will update the code on the Heroku server.
+### MySQL
+The MySQL database stores a variety of permanent data that makes features like *categories* or *greetings* possible. See below for a visual representation of the database.
+
+![tables](/docs/sql_tables.png)
+
+### Google Cloud Storage
+A Google Cloud Storage bucket is used to store all the mp3 files. The bot downloads all of the files on startup of a new build.
