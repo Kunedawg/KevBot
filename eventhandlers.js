@@ -5,6 +5,12 @@ const hf = require('./helperfcns');
 
 // Ready event handler
 async function onReady(){
+    try {
+        await gd.client.user.setAvatar(gd.avatarPath);
+    } catch (err) {
+        console.log(err);
+    }
+    await gd.client.user.setActivity("kev-bot | help!kb", {type: "PLAYING"});
     console.log(`Logged in as ${gd.client.user.tag}!`);
 }
 

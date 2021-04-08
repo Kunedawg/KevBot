@@ -37,6 +37,7 @@ var uploadsByDiscordId = {};    // List of uploads done by each discord ID
 // paths
 const audioPath = path.join(__dirname, './audio/');
 const tempDataPath = path.join(__dirname, './temp_data/');
+let avatarPath = path.join(__dirname, './docs/pumping-iron-cropped.png');
 
 module.exports = {
     audioBucket,
@@ -48,5 +49,6 @@ module.exports = {
     mostPlayedList,
     uploadsByDiscordId,
     audioPath,
-    tempDataPath
+    tempDataPath,
+    avatarPath
 };
