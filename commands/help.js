@@ -1,5 +1,6 @@
 // imports
 var gd = require('../globaldata.js');
+const {Message} = require('discord.js');
 
 module.exports = {
     name: 'help',
@@ -7,9 +8,10 @@ module.exports = {
     usage: 'help!kevbot, help!kb',
     /**
      * @param {Object} methodargs
+     * @param {Message} methodargs.message
      * @param {Array.<string>} methodargs.args
      */
-    execute({args}) {
+    execute({message,args}) {
         return new Promise(async(resolve,reject) => {
             // Validate inputs
             var helpCategory = args?.[0];
@@ -30,6 +32,9 @@ module.exports = {
                 response += `usage:       ${command.usage}\n`;
                 response += `description: ${command.description}\n\n!@#`;
             }
+
+            // Send link to github
+            message.author.send("https://github.com/Kunedawg/kev-bot");
 
             // return promise
             return resolve({userMess : response, wrapChar : "```"});
