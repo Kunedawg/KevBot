@@ -81,15 +81,15 @@ Each user can set a specific audio clip to be their greeting. The bot will play 
 
 | `commandName` | Argument 1      | Description                                                         | Example Usage           |
 | :----------   | :----------     | :----------                                                         | :----------             |
-| `setgreeting` | `audioClipName` | Sets the user's greeting to the given `audioClipName`               | `setgreeting!hellogov`  |
-| `delgreeting` | `none`          | Deletes/removes the user's greeting. No greeting will be played now | `delgreeting!`          |
-| `getgreeting` | `none`          | The bot will DM the user the name of their current greeting         | `getgreeting!`          |
+| `setgreeting` | `audioClipName` | Sets the user's greeting to the given `audioClipName`.               | `setgreeting!hellogov`  |
+| `delgreeting` | `none`          | Deletes/removes the user's greeting. No greeting will be played now. | `delgreeting!`          |
+| `getgreeting` | `none`          | The bot will DM the user the name of their current greeting.         | `getgreeting!`          |
 
 ### Upload Command
 
-| `commandName`| Special Arguments     | Description                                                                                                            | Example Usage            |
-| :----------  | :----------           | :----------                                                                                                            | :----------              |
-| `upload`     | `mp3 File`            | Uploads the attached mp3 file to the bot's google cloud storage. There are restrictions on the max length of the file  | `upload!` w/ mp3 attached|
+| `commandName`| Arguments 1+               | Special Arguments | Description                                                                                                            | Example Usage                  |
+| :----------  | :----------                | :----------       | :----------                                                                                                            | :----------                    |
+| `upload`     | `categoryNames` (optional) | `mp3 File`        | Uploads the attached mp3 file to the bot's google cloud storage. There are restrictions on the max length of the file and the name. The user can optionally include categories that the file should be added to.  | `upload!arnold` w/ mp3 attached|
 
 ![upload.gif](/gifs/upload.gif)
 
