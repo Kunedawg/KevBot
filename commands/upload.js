@@ -9,13 +9,14 @@ const {Message} = require('discord.js');
 
 module.exports = {
     name: 'upload',
-    description: 'Upload an mp3 file to the bot. Make sure to attach the mp3 file to the message. 15 sec max. 15 char file name max.',
-    usage: 'upload!',
+    description: 'Upload an mp3 file to the bot. Make sure to attach the mp3 file to the message. 15 sec max. 15 char file name max. You can optionally add the file to categories as well.',
+    usage: 'upload!category1 category2 category3...',
     /**
      * @param {Object} methodargs
      * @param {Message} methodargs.message
+     * @param {Array.<string>} methodargs.args
      */
-    execute({message}) {
+    execute({message,args}) {
         return new Promise(async(resolve,reject) => { 
             // Get discord id and check that it is valid
             let discordId = message?.author?.id;
@@ -26,6 +27,18 @@ module.exports = {
             // Check if a file was actually attached
             if (!(message.attachments.size !== 0)) { 
                 return reject({userMess: "You did not attach a file ya dingus!"}); 
+            }
+
+            // Check if a category argument was given and if it is valid
+            let categories = args;
+            console.log("categories: ", categories)
+            let categoryGiven = categories !== undefined;
+            if (categoryGiven) {
+                for (let category of categories) {
+                    if (!gd.categoryList.includes(category)) { 
+                        return reject({ userMess: `The category "${category}" does not exist! Upload failed!`});
+                    }    
+                }
             }
 
             // Determining the url, filename, and extension of the attached file
@@ -156,6 +169,17 @@ module.exports = {
                 });                
             }
 
+            // If a category was given then add the audio to the category
+            if (categoryGiven) {
+                try {
+                    await gd.client.commands.get('addcatsto').execute(message, [audioName, categories]);
+                } catch (err) {
+                    return reject({
+                        userMess: err.userMess + `\nUpload succeeded, but something went wrong when attempting to add the audio to the given categories.`,
+                        err: err
+                    });                
+                }            
+            }
             // return resolve promise
             return resolve({userMess: `"${fileName}" has been uploaded to kev-bot!`});
         });
