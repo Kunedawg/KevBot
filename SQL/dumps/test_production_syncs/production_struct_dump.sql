@@ -2,7 +2,7 @@
 --
 -- Host: us-cdbr-east-02.cleardb.com    Database: heroku_7d46a4d7ec18ce3
 -- ------------------------------------------------------
--- Server version	5.5.62-log
+-- Server version	5.6.50-log
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -31,7 +31,7 @@ CREATE TABLE `audio` (
   PRIMARY KEY (`audio_id`),
   UNIQUE KEY `audio_name_UNIQUE` (`audio_name`),
   KEY `player_id_idx` (`player_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5761 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=5914 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -50,7 +50,7 @@ CREATE TABLE `audio_category` (
   PRIMARY KEY (`audio_categoy_id`),
   KEY `player_id_idx` (`player_id`),
   CONSTRAINT `player_id_fk` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=1621 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1704 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -69,7 +69,7 @@ CREATE TABLE `audio_play_log` (
   PRIMARY KEY (`log_id`),
   KEY `audio_log_player_id_fk_idx` (`player_id`),
   CONSTRAINT `audio_log_player_id_fk` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=8591 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=15504 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -87,7 +87,7 @@ CREATE TABLE `categories` (
   PRIMARY KEY (`category_id`),
   UNIQUE KEY `category_name_UNIQUE` (`category_name`),
   KEY `player_id_fk_idx` (`player_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=431 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=432 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -105,7 +105,7 @@ CREATE TABLE `category_play_log` (
   PRIMARY KEY (`log_id`),
   KEY `cat_log_player_id_fk_idx` (`player_id`),
   CONSTRAINT `cat_log_player_id_fk` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=231 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=724 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -122,7 +122,7 @@ CREATE TABLE `player_greetings` (
   PRIMARY KEY (`greeting_id`),
   KEY `player_id_idx` (`player_id`),
   CONSTRAINT `greeting_player_id_fk` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=471 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=432 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -137,12 +137,8 @@ CREATE TABLE `player_info` (
   `discord_id` varchar(45) NOT NULL,
   `discord_user_name` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`player_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=471 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=452 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping events for database 'heroku_7d46a4d7ec18ce3'
---
 
 --
 -- Dumping routines for database 'heroku_7d46a4d7ec18ce3'
@@ -157,7 +153,7 @@ CREATE TABLE `player_info` (
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
-CREATE PROCEDURE `add_audio`(IN discord_id VARCHAR(45), IN audio_name VARCHAR(45), IN duration FLOAT, OUT return_message VARCHAR(100))
+CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `add_audio`(IN discord_id VARCHAR(45), IN audio_name VARCHAR(45), IN duration FLOAT, OUT return_message VARCHAR(100))
 sp: BEGIN
 	DECLARE audio_name_look_up VARCHAR(45);
 
@@ -196,7 +192,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
-CREATE PROCEDURE `add_audio_category`(IN discord_id VARCHAR(45), IN audio_name VARCHAR(45), IN category_name VARCHAR(45), OUT return_message VARCHAR(100))
+CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `add_audio_category`(IN discord_id VARCHAR(45), IN audio_name VARCHAR(45), IN category_name VARCHAR(45), OUT return_message VARCHAR(100))
 sp: BEGIN
 	DECLARE audio_category_id_look_up VARCHAR(45);
 
@@ -247,7 +243,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
-CREATE PROCEDURE `add_category`(IN discord_id VARCHAR(45), IN category_name VARCHAR(45), OUT return_message VARCHAR(100))
+CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `add_category`(IN discord_id VARCHAR(45), IN category_name VARCHAR(45), OUT return_message VARCHAR(100))
 sp: BEGIN
 	DECLARE category_name_look_up VARCHAR(45);
 
@@ -286,7 +282,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
-CREATE PROCEDURE `add_new_player`(IN discord_id VARCHAR(45), OUT return_message VARCHAR(100))
+CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `add_new_player`(IN discord_id VARCHAR(45), OUT return_message VARCHAR(100))
 BEGIN
 	DECLARE player_id INT;
     
@@ -325,7 +321,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
-CREATE PROCEDURE `del_audio`(IN audio_name VARCHAR(45), OUT return_message VARCHAR(100))
+CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `del_audio`(IN audio_name VARCHAR(45), OUT return_message VARCHAR(100))
 BEGIN
 	DECLARE audio_name_look_up VARCHAR(45);
 	
@@ -358,7 +354,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
-CREATE PROCEDURE `del_audio_category`(IN audio_name VARCHAR(45), IN category_name VARCHAR(45), OUT return_message VARCHAR(100))
+CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `del_audio_category`(IN audio_name VARCHAR(45), IN category_name VARCHAR(45), OUT return_message VARCHAR(100))
 sp: BEGIN
 	DECLARE audio_category_id_look_up VARCHAR(45);
 
@@ -403,7 +399,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
-CREATE PROCEDURE `del_category`(IN category_name VARCHAR(45), OUT return_message VARCHAR(100))
+CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `del_category`(IN category_name VARCHAR(45), OUT return_message VARCHAR(100))
 BEGIN
 	DECLARE category_name_look_up  VARCHAR(45);
 	
@@ -436,7 +432,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
-CREATE PROCEDURE `del_greeting`(IN discord_id VARCHAR(45), OUT return_message VARCHAR(100))
+CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `del_greeting`(IN discord_id VARCHAR(45), OUT return_message VARCHAR(100))
 BEGIN
 	DECLARE player_id INT;
 	
@@ -477,7 +473,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
-CREATE PROCEDURE `get_audio_id`(IN audio_name VARCHAR(45), OUT audio_id INT, OUT return_message VARCHAR(100))
+CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `get_audio_id`(IN audio_name VARCHAR(45), OUT audio_id INT, OUT return_message VARCHAR(100))
 sp: BEGIN
 	SELECT audio.audio_id 
     INTO audio_id
@@ -505,7 +501,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
-CREATE PROCEDURE `get_category_id`(IN category_name VARCHAR(45), OUT category_id INT, OUT return_message VARCHAR(100))
+CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `get_category_id`(IN category_name VARCHAR(45), OUT category_id INT, OUT return_message VARCHAR(100))
 sp: BEGIN
 	SELECT categories.category_id 
     INTO category_id
@@ -533,7 +529,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
-CREATE PROCEDURE `get_greeting`(IN discord_id VARCHAR(45), OUT greeting VARCHAR(100))
+CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `get_greeting`(IN discord_id VARCHAR(45), OUT greeting VARCHAR(100))
 BEGIN
 	SELECT player_greetings.greeting
 	INTO greeting
@@ -559,7 +555,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
-CREATE PROCEDURE `get_player_id`(IN discord_id VARCHAR(45), OUT player_id INT, OUT return_message VARCHAR(100))
+CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `get_player_id`(IN discord_id VARCHAR(45), OUT player_id INT, OUT return_message VARCHAR(100))
 sp: BEGIN
 	SELECT player_info.player_id 
     INTO player_id
@@ -600,7 +596,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
-CREATE PROCEDURE `log_audio_play`(IN discord_id VARCHAR(45), IN audio_name VARCHAR(45), IN play_type INT(11), OUT return_message VARCHAR(100))
+CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `log_audio_play`(IN discord_id VARCHAR(45), IN audio_name VARCHAR(45), IN play_type INT(11), OUT return_message VARCHAR(100))
 sp: BEGIN
 	DECLARE audio_category_id_look_up VARCHAR(45);
 
@@ -635,7 +631,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
-CREATE PROCEDURE `log_category_play`(IN discord_id VARCHAR(45), IN category_name VARCHAR(45), OUT return_message VARCHAR(100))
+CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `log_category_play`(IN discord_id VARCHAR(45), IN category_name VARCHAR(45), OUT return_message VARCHAR(100))
 sp: BEGIN
 	DECLARE audio_category_id_look_up VARCHAR(45);
 
@@ -670,7 +666,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
-CREATE PROCEDURE `set_greeting`(IN discord_id VARCHAR(45), IN greeting VARCHAR(100), OUT return_message VARCHAR(100))
+CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `set_greeting`(IN discord_id VARCHAR(45), IN greeting VARCHAR(100), OUT return_message VARCHAR(100))
 sp: BEGIN
 	DECLARE player_id INT;
     DECLARE greeting_id INT;
@@ -733,7 +729,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
-CREATE PROCEDURE `update_discord_user_name`(IN discord_id VARCHAR(45), IN discord_user_name VARCHAR(45), OUT return_message VARCHAR(100))
+CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `update_discord_user_name`(IN discord_id VARCHAR(45), IN discord_user_name VARCHAR(45), OUT return_message VARCHAR(100))
 sp: BEGIN
 
 	CALL get_player_id(discord_id, @player_id, @return_message);
@@ -762,4 +758,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2021-03-13 19:10:22
+-- Dump completed on 2021-04-12 16:37:04

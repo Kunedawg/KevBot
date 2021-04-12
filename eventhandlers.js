@@ -38,6 +38,16 @@ async function onVoiceStateUpdate(oldUserVoiceState, newUserVoiceState){
                 playType : 2
             });
         } else if(newUserChannel === null && oldUserChannel !== null && !oldMember.user.bot){ // User leaves a voice channel
+            var response = await gd.client.commands.get('getfarewell').execute({user : oldMember.user});
+            if (!response.farewell) {return;}
+            let _discordId = oldMember?.user?.id;
+            if (!_discordId) {_discordId = '0';}            
+            await gd.client.commands.get('p').execute({
+                audio : response.farewell, 
+                voiceChannel : oldUserChannel,
+                discordId : _discordId,
+                playType : 3
+            });
         }
     } catch (err) {
         // Console logging
