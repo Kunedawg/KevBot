@@ -4,9 +4,9 @@ const { Message, User } = require('discord.js');
 const hf = require('../helperfcns.js');
 
 module.exports = {
-    name: 'getgreeting',
-    description: 'Returns the current greeting you have set.',
-    usage: 'getgreeting!',
+    name: 'getfarewell',
+    description: 'Returns the current farewell you have set.',
+    usage: 'getfarewell!',
     /**
      * @param {Object} methodargs
      * @param {Message} methodargs.message
@@ -19,24 +19,23 @@ module.exports = {
             var discordId = user?.id || message?.author?.id;
             if(!discordId) { return reject({ userMess: `Failed to retrieve discord id!`}); }
 
-            // Call get_greeting stored procedure
+            // Call get_farewell stored procedure
             try {
-                let queryStr = `CALL get_greeting('${discordId}', @greeting); SELECT @greeting;`;
+                let queryStr = `CALL get_farewell('${discordId}', @farewell); SELECT @farewell;`;
                 let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
-                let greeting = results[1][0]['@greeting'];
-                if (greeting !== null) {
-                    var response = `Your current greeting is set to "${greeting}"!`;
-                    if (!(greeting in gd.audioDict)) {
-                        response += `\n"${greeting}" is not a valid command. Consider changing it.`;
+                let farewell = results[1][0]['@farewell'];
+                if (farewell !== null) {
+                    var response = `Your current farewell is set to "${farewell}"!`;
+                    if (!(farewell in gd.audioDict)) {
+                        response += `\n"${farewell}" is not a valid command. Consider changing it.`;
                     }
                 } else {
-                    var response = "You do not have a greeting configured.";
+                    var response = "You do not have a farewell configured.";
                 }
-                return resolve({greeting : greeting, userMess : response});
+                return resolve({farewell : farewell, userMess : response});
             } catch (err) {
-                return reject({userMess: "Failed to retrieve greeting. Try again later or talk to Kevin.", err: err});
+                return reject({userMess: "Failed to retrieve farewell. Try again later or talk to Kevin.", err: err});
             }
-
         });
     }
 };

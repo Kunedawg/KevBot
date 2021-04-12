@@ -2,7 +2,7 @@
 --
 -- Host: us-cdbr-east-02.cleardb.com    Database: heroku_7d46a4d7ec18ce3
 -- ------------------------------------------------------
--- Server version	5.5.62-log
+-- Server version	5.6.50-log
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -30,8 +30,9 @@ CREATE TABLE `audio` (
   `duration` float NOT NULL DEFAULT '10',
   PRIMARY KEY (`audio_id`),
   UNIQUE KEY `audio_name_UNIQUE` (`audio_name`),
-  KEY `player_id_idx` (`player_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5761 DEFAULT CHARSET=utf8;
+  KEY `fk_audio_player_id_idx` (`player_id`),
+  CONSTRAINT `fk_audio_player_id` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON DELETE NO ACTION ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=5914 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -48,9 +49,13 @@ CREATE TABLE `audio_category` (
   `dt_created` datetime NOT NULL,
   `player_id` int(11) NOT NULL,
   PRIMARY KEY (`audio_categoy_id`),
-  KEY `player_id_idx` (`player_id`),
-  CONSTRAINT `player_id_fk` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=1621 DEFAULT CHARSET=utf8;
+  KEY `fk_audiocat_player_id_idx` (`player_id`),
+  KEY `fk_audiocat_audio_id_idx` (`audio_id`),
+  KEY `fk_audiocat_cat_id_idx` (`category_id`),
+  CONSTRAINT `fk_audiocat_audio_id` FOREIGN KEY (`audio_id`) REFERENCES `audio` (`audio_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_audiocat_cat_id` FOREIGN KEY (`category_id`) REFERENCES `categories` (`category_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_audiocat_player_id` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON DELETE NO ACTION ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=1704 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -67,9 +72,11 @@ CREATE TABLE `audio_play_log` (
   `player_id` int(11) NOT NULL,
   `play_type` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`log_id`),
-  KEY `audio_log_player_id_fk_idx` (`player_id`),
-  CONSTRAINT `audio_log_player_id_fk` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=8591 DEFAULT CHARSET=utf8;
+  KEY `fk_audiolog_player_id_idx` (`player_id`),
+  KEY `fk_audiolog_audio_id_idx` (`audio_id`),
+  CONSTRAINT `fk_audiolog_audio_id` FOREIGN KEY (`audio_id`) REFERENCES `audio` (`audio_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_audiolog_player_id` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON DELETE NO ACTION ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=15504 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -86,8 +93,9 @@ CREATE TABLE `categories` (
   `player_id` int(11) NOT NULL,
   PRIMARY KEY (`category_id`),
   UNIQUE KEY `category_name_UNIQUE` (`category_name`),
-  KEY `player_id_fk_idx` (`player_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=431 DEFAULT CHARSET=utf8;
+  KEY `fk_cat_player_id_idx` (`player_id`),
+  CONSTRAINT `fk_cat_player_id` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON DELETE NO ACTION ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=432 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -103,9 +111,26 @@ CREATE TABLE `category_play_log` (
   `dt_played` datetime NOT NULL,
   `player_id` int(11) NOT NULL,
   PRIMARY KEY (`log_id`),
-  KEY `cat_log_player_id_fk_idx` (`player_id`),
-  CONSTRAINT `cat_log_player_id_fk` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=231 DEFAULT CHARSET=utf8;
+  KEY `fk_catlog_player_id_idx` (`player_id`),
+  CONSTRAINT `fk_catlog_player_id` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON DELETE NO ACTION ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=724 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `player_farewells`
+--
+
+DROP TABLE IF EXISTS `player_farewells`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `player_farewells` (
+  `farewell_id` int(11) NOT NULL AUTO_INCREMENT,
+  `farewell` varchar(100) NOT NULL,
+  `player_id` int(11) NOT NULL,
+  PRIMARY KEY (`farewell_id`),
+  UNIQUE KEY `player_id_UNIQUE` (`player_id`),
+  CONSTRAINT `fk_farewell_player_id` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON DELETE NO ACTION ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -120,9 +145,9 @@ CREATE TABLE `player_greetings` (
   `greeting` varchar(100) NOT NULL,
   `player_id` int(11) NOT NULL,
   PRIMARY KEY (`greeting_id`),
-  KEY `player_id_idx` (`player_id`),
-  CONSTRAINT `greeting_player_id_fk` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=471 DEFAULT CHARSET=utf8;
+  UNIQUE KEY `player_id_UNIQUE` (`player_id`),
+  CONSTRAINT `fk_greeting_player_id` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON DELETE NO ACTION ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=432 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -136,13 +161,10 @@ CREATE TABLE `player_info` (
   `player_id` int(11) NOT NULL AUTO_INCREMENT,
   `discord_id` varchar(45) NOT NULL,
   `discord_user_name` varchar(45) DEFAULT NULL,
-  PRIMARY KEY (`player_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=471 DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`player_id`),
+  UNIQUE KEY `discord_id_UNIQUE` (`discord_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=452 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping events for database 'heroku_7d46a4d7ec18ce3'
---
 
 --
 -- Dumping routines for database 'heroku_7d46a4d7ec18ce3'
@@ -426,6 +448,47 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `del_farewell` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,TRADITIONAL,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `del_farewell`(IN discord_id VARCHAR(45), OUT return_message VARCHAR(100))
+BEGIN
+	DECLARE player_id INT;
+	
+	DELETE FROM player_farewells
+    WHERE player_farewells.player_id = (
+		SELECT player_info.player_id 
+		FROM player_info
+		WHERE player_info.discord_id = discord_id  
+    );
+    
+    SELECT player_farewells.player_id 
+    INTO player_id
+    FROM player_farewells
+    WHERE player_farewells.player_id = (
+		SELECT player_info.player_id 
+		FROM player_info
+		WHERE player_info.discord_id = discord_id  
+    );
+    
+    IF player_id IS NULL THEN
+		SET return_message = 'Success';
+	ELSE
+		SET return_message = 'Failed';
+	END IF;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `del_greeting` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -517,6 +580,32 @@ sp: BEGIN
 	ELSE
 		SET return_message = 'Failed. category_id does not exist for given category_name';
     END IF;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `get_farewell` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,TRADITIONAL,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `get_farewell`(IN discord_id VARCHAR(45), OUT farewell VARCHAR(100))
+BEGIN
+	SELECT player_farewells.farewell
+	INTO farewell
+	FROM player_farewells
+    WHERE player_farewells.player_id = (
+		SELECT player_info.player_id
+        FROM player_info
+        WHERE player_info.discord_id = discord_id
+    );
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -660,6 +749,69 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `set_farewell` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,TRADITIONAL,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `set_farewell`(IN discord_id VARCHAR(45), IN farewell VARCHAR(100), OUT return_message VARCHAR(100))
+sp: BEGIN
+	DECLARE player_id INT;
+    DECLARE farewell_id INT;
+    DECLARE return_farewell VARCHAR(100);
+    
+    SELECT player_info.player_id 
+    INTO player_id
+    FROM player_info
+    WHERE player_info.discord_id = discord_id;
+    
+    IF player_id IS NULL THEN
+		CALL add_new_player(discord_id, @return_message);
+        IF @return_message = 'Success' THEN
+			SELECT player_info.player_id 
+			INTO player_id
+			FROM player_info
+			WHERE player_info.discord_id = discord_id;
+		ELSE
+			SET return_message = 'Failed. Could not add new player';
+			LEAVE sp;
+		END IF;
+    END IF;
+    
+	SELECT player_farewells.farewell_id
+	INTO farewell_id
+	FROM player_farewells
+	WHERE player_farewells.player_id = player_id;
+    
+	IF player_id IS NOT NULL THEN
+		IF farewell_id IS NOT NULL THEN
+			UPDATE player_farewells
+            SET player_farewells.farewell = farewell
+            WHERE player_farewells.farewell_id = farewell_id;
+        ELSE
+			INSERT INTO player_farewells (farewell, player_id)
+			VALUES (farewell, player_id);
+        END IF;
+		CALL get_farewell(discord_id, return_farewell);
+        IF farewell = return_farewell THEN
+			SET return_message = 'Success';
+        ELSE
+			SET return_message = 'Failed. Farewell did not set correctly.';
+        END IF;
+	ELSE
+		SET return_message = 'Failed. player_id does not exist.';
+    END IF;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `set_greeting` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -762,4 +914,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2021-03-13 19:10:22
+-- Dump completed on 2021-04-12 17:24:43

@@ -16,7 +16,7 @@ SELECT * FROM player_info;
 -- CALL del_audio('kindfawn', @mess); SELECT @mess;
 -- CALL get_audio_id('kindfawn', @audio_id, @mess); SELECT @audio_id, @mess;
 SELECT * FROM audio;
-SELECT COUNT(*) FROM audio;
+SELECT COUNT(*) FROM audio WHERE player_id != 1;
 SELECT * FROM audio WHERE player_id = 351 AND audio_id IN (
 3391,
 3961);
@@ -56,3 +56,5 @@ SELECT * FROM category_play_log;
 /* DELETE and REPLACE DATABASE */
 -- DROP DATABASE `database_name`;
 -- CREATE DATABASE `database_name`;
+
+SELECT * FROM player_farewells;
