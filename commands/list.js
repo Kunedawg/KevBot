@@ -15,38 +15,7 @@ module.exports = {
     execute({message, args}) {
         return new Promise(async (resolve, reject) => {
             try {
-                // Validate inputs
-                var category = args?.[0];
-                const mostPlayedListLength = args?.[1] || 25;   // list either 25 or the user requested amount  
-
-                // Determine the array that should be listed
-                if (["categories", "cats"].includes(category)) {
-                    var listArr = Object.keys(gd.categoryDict);
-                } else if (["all", undefined].includes(category)) {
-                    var listArr = Object.keys(gd.audioDict);
-                } else if (["allcats"].includes(category)) {
-                    var listArr = Array.from(gd.categoryList); // Want to make a copy of the array, that's what Array.from is for
-                } else if (["emptycats"].includes(category)) {
-                    var listArr = Array.from(gd.categoryList);
-                    for (let cat of Object.keys(gd.categoryDict)) {
-                        hf.removeElementFromArray(listArr,cat); // only none empty categories should be in the category dictionary
-                    }
-                } else if (["mostplayed"].includes(category)) {
-                    var listArr = gd.mostPlayedList;
-                } else if (["myuploads"].includes(category)) {
-                    let discordId = message?.author?.id;
-                    if (!discordId) { return reject({ userMess: `Failed to retrieve discord id!`}); }   
-                    var listArr = gd.uploadsByDiscordId[discordId];
-                    if (!listArr) {return resolve({ userMess: "You have not uploaded any files!" })};
-                } else if (category in gd.categoryDict) {
-                    var listArr = Array.from(gd.categoryDict[category]);
-                } else if (gd.categoryList.includes(category)) {
-                    return reject({userMess: `"${category}" is an empty category, nothing to list!`});
-                } else {
-                    return reject({userMess: `"${category}" is not a valid argument for the list command!`})
-                }
-
-                // Defines a function that splits an array into equal chunks based on the given size
+                // FUNCTION: Defines a function that splits an array into equal chunks based on the given size
                 function chunk(array, size) {
                     const chunkedArray = [];
                     let index = 0;
@@ -57,7 +26,7 @@ module.exports = {
                     return chunkedArray;
                 }
                 
-                // Sort lists of strings 
+                // FUNCTION: Sort lists of strings 
                 function sortAndFormatStringList(listArr) {
                     // Sort the list (alphabetically)
                     listArr.sort();
@@ -83,14 +52,14 @@ module.exports = {
                     return response;
                 }
 
-                // Formats the most played list
-                function formatMostPlayedList(gd_mostPlayedList) {
+                // FUNCTION: Formats the most played list
+                function formatMostPlayedList(gd_mostPlayedList, mostPlayedListLength) {
                     let mostPlayedList = [...gd_mostPlayedList]; // makes a copy
 
                     // Only use the user specified length
                     if (mostPlayedList.length > mostPlayedListLength) {mostPlayedList.length = mostPlayedListLength;}
 
-                    // Add table heades to list
+                    // Add table headers to list
                     mostPlayedList.unshift({audio : "audio_name", playCount : "play_count"});
 
                     // Finding the largest number of chars in a string of the list Array and then pad list with spaces
@@ -106,22 +75,27 @@ module.exports = {
                     for (let obj of mostPlayedList) {
                         response += obj.audio + obj.playCount + "\n";
                     }
-
                     return response;
                 }
 
+                // Validate inputs
+                var category = args?.[0];
+                const mostPlayedListLength = args?.[1] || gd.MOST_PLAYED_DEFAULT_LENGTH;
+
+                // Determine the array that should be listed
+                let discordId = message?.author?.id;
+                let listArr = await hf.getList(category, discordId);
+
+                // Return message if the list is empty
+                if (listArr.length === 0) {return resolve({ userMess: "There is nothing to list!"});}
+
                 // Determines the response based on the category that was called
-                if (["mostplayed"].includes(category)) {
-                    var response = formatMostPlayedList(listArr);
-                } else {
-                    var response = sortAndFormatStringList(listArr);
-                }
+                var response = category === "mostplayed" ? formatMostPlayedList(listArr, mostPlayedListLength) : sortAndFormatStringList(listArr);
+                return resolve({ userMess: response, wrapChar: "```" });
+
             } catch (err) {
                 reject(err);
             }
-
-            // return promise
-            return resolve({ userMess: response, wrapChar: "```" });
         });
     }
 };

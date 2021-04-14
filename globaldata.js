@@ -39,6 +39,12 @@ const audioPath = path.join(__dirname, './audio/');
 const tempDataPath = path.join(__dirname, './temp_data/');
 let avatarPath = path.join(__dirname, './docs/pumping-iron-cropped.png');
 
+// Protected named
+let protectedCategoryNames = ["categories", "cats", "all", "allcats", "emptycats", "mostplayed", "myuploads"];
+
+// most played default length
+let MOST_PLAYED_DEFAULT_LENGTH = 25;
+
 module.exports = {
     audioBucket,
     sqlconnection,
@@ -50,5 +56,7 @@ module.exports = {
     uploadsByDiscordId,
     audioPath,
     tempDataPath,
-    avatarPath
+    avatarPath,
+    protectedCategoryNames,
+    MOST_PLAYED_DEFAULT_LENGTH
 };

@@ -1,6 +1,7 @@
 // imports
 const {Storage, Bucket} = require('@google-cloud/storage');
 var ffmpeg = require('fluent-ffmpeg');
+const gd = require('./globaldata.js');
 
 // function to break responses into 2000 char length (max discord allows)
 function breakUpResponse(response, splitChar = '!@#', wrapChar = '```') {
@@ -145,6 +146,42 @@ function printProgress(progress){
     process.stdout.write(String(progress));
 }
 
+// List function. This function should return an array of sorts. Mostplayed is an exception, it is a 2d array.
+function getList(category, discordId) {
+    return new Promise(async (resolve, reject) => {
+        switch (category){
+            case "categories":
+            case "cats":
+                return resolve(Object.keys(gd.categoryDict));
+            case undefined:
+            case "all":
+                return resolve(Object.keys(gd.audioDict));
+            case "allcats":
+                return resolve(Array.from(gd.categoryList)); // Array.from makes a copy
+            case "emptycats":
+                let listArr = Array.from(gd.categoryList);
+                for (let cat of Object.keys(gd.categoryDict)) {
+                    removeElementFromArray(listArr,cat); // only none empty categories should be in the category dictionary
+                }
+                return resolve(listArr);
+            case "mostplayed":
+                return resolve([...gd.mostPlayedList]); // makes a copy
+            case "myuploads":    
+                if (!discordId) { return reject({ userMess: `Failed to retrieve discord id!`}); }   
+                if (!gd.uploadsByDiscordId[discordId]) {return resolve({ userMess: "You have not uploaded any files!"})};
+                return resolve(gd.uploadsByDiscordId[discordId]);
+            default:
+                if (category in gd.categoryDict) {
+                    resolve(Array.from(gd.categoryDict[category]));
+                } else if (gd.categoryList.includes(category)) {
+                    return reject({userMess: `"${category}" is an empty category, nothing to list/play!`});
+                } else {
+                    return reject({userMess: `"${category}" is not a valid argument for the list/pr command!`})
+                }
+        }
+    });
+}    
+
 module.exports = {
     breakUpResponse,
     getFiles,
@@ -154,5 +191,6 @@ module.exports = {
     asyncQuery,
     removeElementFromArray,
     updateCategoryDict,
-    printProgress
+    printProgress,
+    getList
 }
