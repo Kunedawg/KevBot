@@ -2,8 +2,8 @@
 const gd = require('../globaldata.js');
 const hf = require('../helperfcns.js');
 
-// For logging calls of pr!
-function parseAudioSQL (discordId, category) {
+// Updates the lists of uploads by user
+function updateUploadsByUsers () {
     return new Promise(async(resolve,reject) => {
         try {
             // Call stored procedure
@@ -36,5 +36,5 @@ function parseAudioSQL (discordId, category) {
 }
 
 module.exports = {
-    parseAudioSQL
+    updateUploadsByUsers
 };

@@ -20,19 +20,16 @@ module.exports = {
                 var _discordId = message?.author?.id;
                 if (!_discordId) {_discordId = '0';}            
                 
-                // Get the category from the args
+                // Get inputs from args
                 var category = args?.[0];
+                const mostPlayedListLength = args?.[1];
                 
                 // Ignore attempts to play certain protected categories
                 if (["categories", "cats", "allcats", "emptycats"].includes(category)) {return reject({userMess: `"${category}" is not a valid category, ya dingus!`});}
 
                 // Get the audioList and do some extra processes if it is the mostPlayed category
-                let audioList = await hf.getList(category, _discordId);
-                if (category === "mostplayed") {
-                    const mostPlayedListLength = args?.[1] || gd.MOST_PLAYED_DEFAULT_LENGTH;
-                    if (audioList.length > mostPlayedListLength) {audioList.length = mostPlayedListLength;}
-                    audioList = audioList.map(obj => obj.audio);
-                }
+                let audioList = await hf.getList(category, _discordId, mostPlayedListLength);
+                if (category === "mostplayed") {audioList = audioList.map(obj => obj.audio);}
 
                 // Play a random file that category
                 const indexToPlay = Math.floor(Math.random()*audioList.length);     // returns a random integer from 0 to amount of commands
@@ -40,7 +37,7 @@ module.exports = {
                     audio : audioList[indexToPlay], 
                     voiceChannel : message?.member?.voice?.channel,
                     discordId : _discordId,
-                    playType : 1
+                    playType : gd.PLAY_TYPE.PLAY_RANDOM
                 });
             } catch (err) {
                 return reject(err);
@@ -51,7 +48,7 @@ module.exports = {
                 await logCategoryPlaySQL(_discordId, category);
             } catch (err) {
                 return reject({
-                    userMess: 'NO_MESSAGE',
+                    userMess: 'SUPPRESS_GENERAL_ERR_MESSAGE',
                     err: err
                 });
             }

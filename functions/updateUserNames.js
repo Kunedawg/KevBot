@@ -2,8 +2,8 @@
 const gd = require('../globaldata.js');
 const hf = require('../helperfcns.js');
 
-// For logging calls of pr!
-function updateUserNames (discordId, category) {
+// Updates the user names on SQL
+function updateUserNames () {
     return new Promise(async(resolve,reject) => {
         try {
             // Retrieve all discord ids and user names from discord

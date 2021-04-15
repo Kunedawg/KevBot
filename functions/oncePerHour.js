@@ -1,14 +1,14 @@
 // imports
-const {parseAudioLogSQL} = require('./parseAudioLogSQL.js')
-const {parseAudioSQL} = require('./parseAudioSQL.js')
+const {updateMostPlayed} = require('./updateMostPlayed.js')
+const {updateUploadsByUsers} = require('./updateUploadsByUsers.js')
 
-// For logging calls of pr!
+// To be called once per hour
 function oncePerHour() {
     return new Promise(async(resolve,reject) => {
         // Update the most played list
         try {
-            await parseAudioLogSQL();
-            await parseAudioSQL();
+            await updateMostPlayed();
+            await updateUploadsByUsers();
         } catch (err) {
             return reject(err);
         }

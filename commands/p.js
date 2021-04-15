@@ -24,8 +24,8 @@ module.exports = {
             let _discordId = discordId || message?.author?.id;
             if (!_discordId) {_discordId = '0';}
 
-            // Get playType Note playType = (0: p!, 1 : pr!, 2 : greeting!, 3 : raid!)
-            let _playType = playType || 0;
+            // Get playType Note playType = (0: p!, 1 : pr!, 2 : greeting!, 3 : raid!, 4 : farewell!)
+            let _playType = playType || gd.PLAY_TYPE.PLAY;
 
             // Getting file to play and checking that it exists
             var _audio = audio || args?.[0];
@@ -40,12 +40,16 @@ module.exports = {
             const dispatcher = connection.play(gd.audioDict[_audio]);
             dispatcher.on("finish", end => {connection.disconnect();});
 
+            // On every play update the recently played list
+            gd.recentlyPlayedList.pop();
+            gd.recentlyPlayedList.unshift(_audio);
+
             // On every play log the play, use playType to log what type of play it was
             try {
                 await logAudioPlaySQL(_discordId, _audio, _playType);
             } catch (err) {
                 return reject({
-                    userMess: 'NO_MESSAGE',
+                    userMess: 'SUPPRESS_GENERAL_ERR_MESSAGE',
                     err: err
                 });
             }

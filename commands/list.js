@@ -53,11 +53,9 @@ module.exports = {
                 }
 
                 // FUNCTION: Formats the most played list
-                function formatMostPlayedList(gd_mostPlayedList, mostPlayedListLength) {
-                    let mostPlayedList = [...gd_mostPlayedList]; // makes a copy
-
-                    // Only use the user specified length
-                    if (mostPlayedList.length > mostPlayedListLength) {mostPlayedList.length = mostPlayedListLength;}
+                function formatMostPlayedList(gd_mostPlayedList) {
+                    // makes a copy of array
+                    let mostPlayedList = [...gd_mostPlayedList]; 
 
                     // Add table headers to list
                     mostPlayedList.unshift({audio : "audio_name", playCount : "play_count"});
@@ -78,19 +76,31 @@ module.exports = {
                     return response;
                 }
 
-                // Validate inputs
-                var category = args?.[0];
-                const mostPlayedListLength = args?.[1] || gd.MOST_PLAYED_DEFAULT_LENGTH;
+                // Inputs
+                let category = args?.[0];
+                const mostPlayedListLength = args?.[1];
+                let discordId = message?.author?.id;
 
                 // Determine the array that should be listed
-                let discordId = message?.author?.id;
-                let listArr = await hf.getList(category, discordId);
+                let listArr = await hf.getList(category, discordId, mostPlayedListLength);
 
                 // Return message if the list is empty
                 if (listArr.length === 0) {return resolve({ userMess: "There is nothing to list!"});}
 
                 // Determines the response based on the category that was called
-                var response = category === "mostplayed" ? formatMostPlayedList(listArr, mostPlayedListLength) : sortAndFormatStringList(listArr);
+                let response = '';
+                switch (category){
+                    case "mostplayed":
+                        response = formatMostPlayedList(listArr);
+                        break;
+                    case "recentlyplayed":
+                        for (let str of listArr) {
+                            response += `${str}\n`;
+                        }
+                        break;
+                    default:
+                        response = sortAndFormatStringList(listArr);
+                }
                 return resolve({ userMess: response, wrapChar: "```" });
 
             } catch (err) {

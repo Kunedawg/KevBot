@@ -33,6 +33,7 @@ var categoryDict = {};          // catergory dictionary, maps category names to 
 var categoryList = [];          // Just a simple list of categories
 var mostPlayedList = [];        // Most played list [{audio,playCount},{audio,playCount},..] (sorted by playCount)
 var uploadsByDiscordId = {};    // List of uploads done by each discord ID
+var recentlyPlayedList = [];    // List of recently played audio
 
 // paths
 const audioPath = path.join(__dirname, './audio/');
@@ -40,10 +41,19 @@ const tempDataPath = path.join(__dirname, './temp_data/');
 let avatarPath = path.join(__dirname, './docs/pumping-iron-cropped.png');
 
 // Protected named
-let protectedCategoryNames = ["categories", "cats", "all", "allcats", "emptycats", "mostplayed", "myuploads"];
+let protectedCategoryNames = ["categories", "cats", "all", "allcats", "emptycats", "mostplayed", "myuploads", "recentlyplayed", "history"];
 
 // most played default length
-let MOST_PLAYED_DEFAULT_LENGTH = 25;
+let DEFAULT_LIST_LENGTH = 25;
+
+// Play type enumeration (0: p!, 1 : pr!, 2 : greeting!, 3 : raid!, 4: farewell!)
+const PLAY_TYPE = {
+    PLAY        : 0,
+    PLAY_RANDOM : 1,
+    GREETING    : 2,
+    RAID        : 3,
+    FAREWELL    : 4
+}
 
 module.exports = {
     audioBucket,
@@ -54,9 +64,11 @@ module.exports = {
     categoryList,
     mostPlayedList,
     uploadsByDiscordId,
+    recentlyPlayedList,
     audioPath,
     tempDataPath,
     avatarPath,
     protectedCategoryNames,
-    MOST_PLAYED_DEFAULT_LENGTH
+    DEFAULT_LIST_LENGTH,
+    PLAY_TYPE
 };

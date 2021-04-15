@@ -2,8 +2,8 @@
 const gd = require('../globaldata.js');
 const hf = require('../helperfcns.js');
 
-// For logging calls of pr!
-function parseAudioLogSQL (discordId, category) {
+// Updates the most played list
+function updateMostPlayed () {
     return new Promise(async(resolve,reject) => {
         try {
             // Call stored procedure
@@ -38,5 +38,5 @@ function parseAudioLogSQL (discordId, category) {
 }
 
 module.exports = {
-    parseAudioLogSQL
+    updateMostPlayed
 };

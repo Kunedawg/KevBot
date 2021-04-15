@@ -32,13 +32,13 @@ function breakUpResponse(response, splitChar = '!@#', wrapChar = '```') {
     let responseArray = [];
     for (let subResponse of subResponseArray) {
         if ((strBuild + subResponse).length > MAX_NO_WRAP_LENGTH) {
-            responseArray.push(wrapChar + strBuild + wrapChar);
+            responseArray.push(`${wrapChar}\n${strBuild}${wrapChar}`);
             strBuild = subResponse;
         } else {
             strBuild += subResponse;
         }
     }
-    if (strBuild.length > 0 && strBuild.length <= MAX_NO_WRAP_LENGTH) responseArray.push(wrapChar + strBuild + wrapChar);
+    if (strBuild.length > 0 && strBuild.length <= MAX_NO_WRAP_LENGTH) responseArray.push(`${wrapChar}\n${strBuild}${wrapChar}`);
 
     return responseArray;
 }
@@ -147,8 +147,9 @@ function printProgress(progress){
 }
 
 // List function. This function should return an array of sorts. Mostplayed is an exception, it is a 2d array.
-function getList(category, discordId) {
+function getList(category, discordId, optionalArg) {
     return new Promise(async (resolve, reject) => {
+        let listLength;
         switch (category){
             case "categories":
             case "cats":
@@ -165,14 +166,27 @@ function getList(category, discordId) {
                 }
                 return resolve(listArr);
             case "mostplayed":
-                return resolve([...gd.mostPlayedList]); // makes a copy
+                let mostPlayed = [...gd.mostPlayedList]
+                listLength = optionalArg || gd.DEFAULT_LIST_LENGTH;
+                if (listLength < mostPlayed.length && listLength > 0) {
+                    mostPlayed.length = listLength;
+                }
+                return resolve(mostPlayed);
             case "myuploads":    
                 if (!discordId) { return reject({ userMess: `Failed to retrieve discord id!`}); }   
                 if (!gd.uploadsByDiscordId[discordId]) {return resolve({ userMess: "You have not uploaded any files!"})};
                 return resolve(gd.uploadsByDiscordId[discordId]);
+            case "recentlyplayed":
+            case "history":
+                let recentlyPlayed = [...gd.recentlyPlayedList]
+                listLength = optionalArg || gd.DEFAULT_LIST_LENGTH;
+                if (listLength < recentlyPlayed.length && listLength > 0) {
+                    recentlyPlayed.length = listLength;
+                }
+                return resolve(recentlyPlayed);
             default:
                 if (category in gd.categoryDict) {
-                    resolve(Array.from(gd.categoryDict[category]));
+                    return resolve(Array.from(gd.categoryDict[category]));
                 } else if (gd.categoryList.includes(category)) {
                     return reject({userMess: `"${category}" is an empty category, nothing to list/play!`});
                 } else {

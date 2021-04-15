@@ -1,10 +1,7 @@
 // imports
-const gd = require('../globaldata.js');
-const { Message } = require('discord.js');
-const hf = require('../helperfcns.js');
 const {updateUserNames} = require('./updateUserNames.js')
 
-// For logging calls of pr!
+// To be called once per day
 function oncePerDay() {
     return new Promise(async(resolve,reject) => {
         try {

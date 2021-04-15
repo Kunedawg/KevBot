@@ -91,7 +91,7 @@ Each user can set a specific audio clip to be their greeting. The bot will play 
 | :----------  | :----------                | :----------       | :----------                                                                                                            | :----------                    |
 | `upload`     | `categoryNames` (optional) | `mp3 File`        | Uploads the attached mp3 file to the bot's google cloud storage. There are restrictions on the max length of the file and the name. The user can optionally include categories that the file should be added to.  | `upload!arnold` w/ mp3 attached|
 
-![upload.gif](/gifs/upload.gif)
+![upload.gif](/docs/gifs/upload.gif)
 
 ### Category Commands
 
@@ -149,7 +149,7 @@ The bot supports categories, which allows the user to group audio clips into cat
        </tr>
 </table>
 
-![categories.gif](/gifs/categories.gif)
+![categories.gif](/docs/gifs/categories.gif)
 
 ### Help Command
 
