@@ -4,8 +4,9 @@ var fs = require('fs-extra');
 const Discord = require('discord.js');
 const path = require('path');
 const hf = require('./helperfcns.js');
-const {parseAudioLogSQL} = require("./functions/parseAudioLogSQL.js")
-const {parseAudioSQL} = require("./functions/parseAudioSQL.js")
+const {updateMostPlayed} = require("./functions/updateMostPlayed.js")
+const {updateUploadsByUsers} = require("./functions/updateUploadsByUsers.js");
+const {updateRecentlyPlayed} = require('./functions/updateRecentlyPlayed.js');
 
 // Creates some directories on startup
 function directories(){
@@ -173,10 +174,13 @@ function categories(){
             }
             
             // Update the most played list
-            parseAudioLogSQL();
+            updateMostPlayed();
 
             // Update the uploads by discordId
-            parseAudioSQL();
+            updateUploadsByUsers();
+
+            // Update recently played list
+            updateRecentlyPlayed();
 
             // Return promise
             return resolve("Categories intialization done!\n");

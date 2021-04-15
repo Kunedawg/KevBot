@@ -27,7 +27,7 @@ module.exports = {
             
             // Calling the play command
             try {
-                await gd.client.commands.get('p').execute({audio : args?.[0], voiceChannel : voiceChannelSelected, discordId : message?.author?.id, playType : 3});
+                await gd.client.commands.get('p').execute({audio : args?.[0], voiceChannel : voiceChannelSelected, discordId : message?.author?.id, playType : gd.PLAY_TYPE.RAID});
             } catch (err) {
                 return reject(err);
             }

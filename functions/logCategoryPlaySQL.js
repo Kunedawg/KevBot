@@ -2,7 +2,11 @@
 const gd = require('../globaldata.js');
 const hf = require('../helperfcns.js');
 
-// For logging calls of pr!
+// For logging category plays with pr!
+/**
+ * @param {string} discordId
+ * @param {string} category
+ */
 function logCategoryPlaySQL (discordId, category) {
     return new Promise(async(resolve,reject) => {
         // Call stored procedure

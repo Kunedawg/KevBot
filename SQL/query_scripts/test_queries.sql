@@ -17,6 +17,9 @@ SELECT * FROM player_info;
 -- CALL get_audio_id('kindfawn', @audio_id, @mess); SELECT @audio_id, @mess;
 SELECT * FROM audio;
 SELECT COUNT(*) FROM audio WHERE player_id != 1;
+
+SELECT * FROM audio_play_log WHERE play_type = 3;
+
 SELECT * FROM audio WHERE player_id = 351 AND audio_id IN (
 3391,
 3961);
@@ -28,10 +31,12 @@ INNER JOIN player_info
 ON audio.player_id = player_info.player_id;
 
 /*audio log and audio inner join for*/
-SELECT audio.audio_name, audio_play_log.play_type
+SELECT audio.audio_name, audio_play_log.dt_played, audio_play_log.play_type
 FROM audio_play_log
 INNER JOIN audio
-ON audio_play_log.audio_id = audio.audio_id;
+ON audio_play_log.audio_id = audio.audio_id
+ORDER BY audio_play_log.dt_played DESC
+LIMIT 100;
 
 /*categories calls*/
 -- CALL add_category('1124', 'animals', @mess); SELECT @mess;
