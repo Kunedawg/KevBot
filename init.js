@@ -7,6 +7,7 @@ const hf = require('./helperfcns.js');
 const {updateMostPlayed} = require("./functions/updateMostPlayed.js")
 const {updateUploadsByUsers} = require("./functions/updateUploadsByUsers.js");
 const {updateRecentlyPlayed} = require('./functions/updateRecentlyPlayed.js');
+const {updateRecentlyUploaded} = require('./functions/updateRecentlyUploaded.js');
 
 // Creates some directories on startup
 function directories(){
@@ -181,6 +182,9 @@ function categories(){
 
             // Update recently played list
             updateRecentlyPlayed();
+
+            // Update recently uploaded
+            updateRecentlyUploaded();
 
             // Return promise
             return resolve("Categories intialization done!\n");

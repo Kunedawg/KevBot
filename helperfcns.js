@@ -177,13 +177,21 @@ function getList(category, discordId, optionalArg) {
                 if (!gd.uploadsByDiscordId[discordId]) {return resolve({ userMess: "You have not uploaded any files!"})};
                 return resolve(gd.uploadsByDiscordId[discordId]);
             case "recentlyplayed":
-            case "history":
+            case "playhistory":
                 let recentlyPlayed = [...gd.recentlyPlayedList]
                 listLength = optionalArg || gd.DEFAULT_LIST_LENGTH;
                 if (listLength < recentlyPlayed.length && listLength > 0) {
                     recentlyPlayed.length = listLength;
                 }
                 return resolve(recentlyPlayed);
+            case "recentlyuploaded":
+            case "uploadhistory":
+                let recentlyUploaded = [...gd.recentlyUploadedList]
+                listLength = optionalArg || gd.DEFAULT_LIST_LENGTH;
+                if (listLength < recentlyUploaded.length && listLength > 0) {
+                    recentlyUploaded.length = listLength;
+                }
+                return resolve(recentlyUploaded);                
             default:
                 if (category in gd.categoryDict) {
                     return resolve(Array.from(gd.categoryDict[category]));
