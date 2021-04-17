@@ -34,6 +34,7 @@ var categoryList = [];          // Just a simple list of categories
 var mostPlayedList = [];        // Most played list [{audio,playCount},{audio,playCount},..] (sorted by playCount)
 var uploadsByDiscordId = {};    // List of uploads done by each discord ID
 var recentlyPlayedList = [];    // List of recently played audio
+var recentlyUploadedList = [];  // List of the recently uplaoded audio
 
 // paths
 const audioPath = path.join(__dirname, './audio/');
@@ -41,7 +42,7 @@ const tempDataPath = path.join(__dirname, './temp_data/');
 let avatarPath = path.join(__dirname, './docs/pumping-iron-cropped.png');
 
 // Protected named
-let protectedCategoryNames = ["categories", "cats", "all", "allcats", "emptycats", "mostplayed", "myuploads", "recentlyplayed", "history"];
+let protectedCategoryNames = ["categories", "cats", "all", "allcats", "emptycats", "mostplayed", "myuploads", "recentlyplayed", "playhistory", "recentlyuploaded", "uploadhistory"];
 
 // most played default length
 let DEFAULT_LIST_LENGTH = 25;
@@ -65,6 +66,7 @@ module.exports = {
     mostPlayedList,
     uploadsByDiscordId,
     recentlyPlayedList,
+    recentlyUploadedList,
     audioPath,
     tempDataPath,
     avatarPath,

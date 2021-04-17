@@ -94,6 +94,9 @@ module.exports = {
                         response = formatMostPlayedList(listArr);
                         break;
                     case "recentlyplayed":
+                    case "playhistory":
+                    case "recentlyuploaded":
+                    case "uploadhistory":
                         for (let str of listArr) {
                             response += `${str}\n`;
                         }
