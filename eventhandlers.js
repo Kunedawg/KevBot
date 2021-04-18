@@ -69,7 +69,7 @@ async function onVoiceStateUpdate(oldUserVoiceState, newUserVoiceState){
 async function onMessage(message, prefix){
     try {
         // Return if the message does not start with the prefix or if the message was from a bot
-        if (!message.content.startsWith(prefix) || message.author.bot) {return;}
+        if (!message.content.startsWith(prefix) || message.author.bot || !message.content.includes('!')) {return;}
 
         // Get args and command name. Format of every command should follow "prefixcommand!arg1 arg2 arg3 arg4"
         const messageSplit = message.content.toLowerCase().slice(prefix.length).trim().split('!'); // ["command", "arg1 arg2 arg3 arg4"]
