@@ -1,6 +1,6 @@
 // imports
 const Discord = require('discord.js');
-var mysql = require('mysql');
+const mysql = require('mysql');
 const path = require('path');
 const {Storage} = require('@google-cloud/storage');
 require('dotenv').config()
@@ -45,8 +45,11 @@ let avatarPath = path.join(__dirname, './docs/pumping-iron-cropped.png');
 // Protected named
 let protectedCategoryNames = ["categories", "cats", "emptycats", "all", "mostplayed", "myuploads", "playhistory", "uploadhistory"];
 
-// most played default length
+// CONSTANTS
 let DEFAULT_LIST_LENGTH = 25;
+let MAX_UPLOAD_CLIP_DURATION = 15;      // sec
+let MAX_FAREWELL_CLIP_DURATION = 4;    // sec
+
 
 // Play type enumeration (0: p!, 1 : pr!, 2 : greeting!, 3 : raid!, 4: farewell!)
 const PLAY_TYPE = {
@@ -73,5 +76,7 @@ module.exports = {
     avatarPath,
     protectedCategoryNames,
     DEFAULT_LIST_LENGTH,
+    MAX_UPLOAD_CLIP_DURATION,
+    MAX_FAREWELL_CLIP_DURATION,
     PLAY_TYPE
 };

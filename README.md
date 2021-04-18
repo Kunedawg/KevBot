@@ -1,7 +1,7 @@
 kev-bot
 =================
 
-kev-bot is a discord bot for playing custom audio clips. The bot utilzes the discord.js library, MySQL, Google Cloud Storage and Heroku. See below for more information.
+kev-bot is a discord bot for playing custom audio clips. The bot utilizes the discord.js library, MySQL, Google Cloud Storage and Heroku. See below for more information.
 
 Table of contents
 =================
@@ -10,6 +10,7 @@ Table of contents
     - [Audio Commands](#audio-commands)
     - [List Command](#list-command)
     - [Greeting Commands](#greeting-commands)
+    - [Farewell Commands](#farewell-commands)
     - [Upload Command](#upload-command)
     - [Category Commands](#category-commands)
     - [Help Command](#help-command)
@@ -26,7 +27,7 @@ All commands to the bot are text commands. Commands can be sent in a text channe
 ```
 commandName!arg1 arg2 arg3 ... argN
 ```
-The `commandName` is the name of the command that will be envoked and everything after the `!` are the arguments of that specific command. Here are some common example commands:
+The `commandName` is the name of the command that will be called and everything after the `!` are the arguments of that specific command. Here are some common example commands:
 ```
 p!chump
 pr!all
@@ -66,24 +67,35 @@ setgreeting!foryourhealth
 
 Note there are are some specialized `categoryNames` that can be used with the `list!` command and the `pr!` command. See the table below:
 
-| `categoryName`        | Description                                                                                         | Compatible with commmands   |
-| :----------           | :----------                                                                                         | :----------                 |
-| `all`, `' '`          | All audio clips. Note providing no `categoryName` will be interpreted as `all`                      | `list!`, `pr!`              |
-| `mostplayed`          | The most played audio clips. Note the user can request the specific amount, so top 5, 10, 54 etc... | `list!`, `pr!`              |
-| `myuploads`           | The audio clips that the user has personally uploaded                                               | `list!`, `pr!`              |
-| `categories`, `cats`  | Lists all the categories that have audio clips assigned to them                                     | `list!`                     |
-| `emptycats`           | List all the categoires that have no clips assigned                                                 | `list!`                     |
-| `allcats`             | Lists all categories whether empty or not                                                           | `list!`                    
+| `categoryName`       | Description                                                                                         | Compatible with commmands |
+| :------------------- | :-------------------------------------------------------------------------------------------------- | :------------------------ |
+| `categories`, `cats` | All of the categories                                                                               | `list!`                   |
+| `emptycats`          | All of the categories that have no clips                                                            | `list!`                   |
+| `all`                | All audio clips. Note providing no `categoryName` will be interpreted as `all`                      | `list!`, `pr!`            |
+| `mostplayed`         | The most played audio clips. Note the user can request the specific amount, so top 5, 10, 54 etc... | `list!`, `pr!`            |
+| `myuploads`          | The audio clips that the user has personally uploaded                                               | `list!`, `pr!`            |
+| `playhistory`        | The most recently played audio clips                                                                | `list!`, `pr!`            |
+| `uploadhistory`      | The most recently uploaded audio clips                                                              | `list!`, `pr!`            |
 
 ### Greeting Commands
 
 Each user can set a specific audio clip to be their greeting. The bot will play the user's greeting anytime a user joins a discord voice channel. The greeting is not played when switching between voice channels in the same discord.
 
-| `commandName` | Argument 1      | Description                                                         | Example Usage           |
-| :----------   | :----------     | :----------                                                         | :----------             |
+| `commandName` | Argument 1      | Description                                                          | Example Usage           |
+| :----------   | :----------     | :----------                                                          | :----------             |
 | `setgreeting` | `audioClipName` | Sets the user's greeting to the given `audioClipName`.               | `setgreeting!hellogov`  |
 | `delgreeting` | `none`          | Deletes/removes the user's greeting. No greeting will be played now. | `delgreeting!`          |
 | `getgreeting` | `none`          | The bot will DM the user the name of their current greeting.         | `getgreeting!`          |
+
+### Farewell Commands
+
+Each user can set a specific audio clip to be their farewell. The bot will play the user's farewell anytime a user disconnects from a discord guild. The farewell is not played when switching between voice channels in the same discord. **Note that farewells are limited to 3 sec**.
+
+| `commandName` | Argument 1      | Description                                                                     | Example Usage        |
+| :------------ | :-------------- | :------------------------------------------------------------------------------ | :------------------- |
+| `setfarewell` | `audioClipName` | Sets the user's farewell to the given `audioClipName`. Max clip length is 3 sec | `setfarewell!solong` |
+| `delfarewell` | `none`          | Deletes/removes the user's farewell. No farewell will be played now.            | `delfarewell!`       |
+| `getfarewell` | `none`          | The bot will DM the user the name of their current farewell.                    | `getfarewell!`       |
 
 ### Upload Command
 
@@ -155,7 +167,7 @@ The bot supports categories, which allows the user to group audio clips into cat
 
 | `commandName` | Argument 1     | Description                                                                                                                 | Example Usage            |
 | :----------   | :----------    | :----------                                                                                                                 | :----------              |
-| `help`        | `helpCategory` | The bot will DM the user helpful info on all the commands. Currently the only `helpCategies` are {`kb`,`kevbot`,`kev-bot`}  | `help!kb`                |
+| `help`        | `helpCategory` | The bot will DM the user helpful info on all the commands. Currently the only `helpCategories` are {`kb`,`kevbot`,`kev-bot`}  | `help!kb`                |
 
 Code Architecture
 =================
@@ -168,7 +180,7 @@ Below you can find a diagram depicting the architecture of kev-bot. Note the mai
 The javascript code that runs on node is the brains of the bot. The Discord.js library is used to interact with the Discord API.
 
 ### Heroku
-Heroku is a cloud computing platform that allows you to host processes. The javsascript code as well as the MySQL Database are both hosted on Heroku. Note that GitHub is connected to Heroku so that anytime the master branch is pushed to it will update the code on the Heroku server.
+Heroku is a cloud computing platform that allows you to host processes. The javascript code as well as the MySQL Database are both hosted on Heroku. Note that GitHub is connected to Heroku so that anytime the master branch is pushed to it will update the code on the Heroku server.
 ### MySQL
 The MySQL database stores a variety of permanent data that makes features like *categories* or *greetings* possible. See below for a visual representation of the database.
 
@@ -176,3 +188,12 @@ The MySQL database stores a variety of permanent data that makes features like *
 
 ### Google Cloud Storage
 A Google Cloud Storage bucket is used to store all the mp3 files. The bot downloads all of the files on startup of a new build.
+
+Release Notes
+=================
+
+### v1.0.0
+- GitHub is now public and a README has been written. Arbitrarily calling this release v1.0.0, now that everything is setup.
+- Added farewells. Farewells are the same as greetings, except the clip is played on exit of a discord guild instead of entry.
+- Added new categories: `playhistory` and `uploadhistory`.
+- Various bug fixes and code improvements.
