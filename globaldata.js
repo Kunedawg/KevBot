@@ -43,7 +43,7 @@ const tempDataPath = path.join(__dirname, './temp_data/');
 let avatarPath = path.join(__dirname, './docs/pumping-iron-cropped.png');
 
 // Protected named
-let protectedCategoryNames = ["categories", "cats", "all", "allcats", "emptycats", "mostplayed", "myuploads", "playhistory", "uploadhistory"];
+let protectedCategoryNames = ["categories", "cats", "emptycats", "all", "mostplayed", "myuploads", "playhistory", "uploadhistory"];
 
 // most played default length
 let DEFAULT_LIST_LENGTH = 25;

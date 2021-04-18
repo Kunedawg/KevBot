@@ -7,7 +7,7 @@ const hf = require('../helperfcns.js');
  * @param {string} discordId
  * @param {string} category
  */
-function logCategoryPlaySQL (discordId, category) {
+function logCategoryPlaySQL (discordId = 0, category) {
     return new Promise(async(resolve,reject) => {
         // Call stored procedure
         let queryStr = `CALL log_category_play('${discordId}', '${category}', @message); SELECT @message;`;

@@ -69,7 +69,6 @@ module.exports = {
             }
 
             // Return resolve promise
-            console.log(gd.categoryDict);
             return resolve({userMess: `Deleting audio from category complete!`});
         });
     }

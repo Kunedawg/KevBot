@@ -68,7 +68,7 @@ module.exports = {
 
             try {
                 // Inputs
-                let category = args?.[0];
+                let category = args?.[0] || "all";
                 const listLength = args?.[1];
                 let discordId = message?.author?.id;
 
