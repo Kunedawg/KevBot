@@ -22,19 +22,16 @@ module.exports = {
                 
                 // Get inputs from args
                 var category = args?.[0];
-                const mostPlayedListLength = args?.[1];
-                
-                // Ignore attempts to play certain protected categories
-                if (["categories", "cats", "allcats", "emptycats"].includes(category)) {return reject({userMess: `"${category}" is not a valid category, ya dingus!`});}
+                const listLength = args?.[1];
 
-                // Get the audioList and do some extra processes if it is the mostPlayed category
-                let audioList = await hf.getList(category, _discordId, mostPlayedListLength);
-                if (category === "mostplayed") {audioList = audioList.map(obj => obj.audio);}
+                // Get the audioList
+                let lists = await hf.getList(category, _discordId, listLength);
+                if (!lists?.audioNameList) {return reject({userMess: `"${category}" is not a valid category for random plays, ya dingus!`});}
 
                 // Play a random file that category
-                const indexToPlay = Math.floor(Math.random()*audioList.length);     // returns a random integer from 0 to amount of commands
+                const indexToPlay = Math.floor(Math.random()*lists.audioNameList.length);     // returns a random integer from 0 to amount of commands
                 await gd.client.commands.get('p').execute({
-                    audio : audioList[indexToPlay], 
+                    audio : lists.audioNameList[indexToPlay], 
                     voiceChannel : message?.member?.voice?.channel,
                     discordId : _discordId,
                     playType : gd.PLAY_TYPE.PLAY_RANDOM

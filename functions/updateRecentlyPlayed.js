@@ -8,7 +8,7 @@ function updateRecentlyPlayed() {
         try {
             // Call stored procedure
             let queryStr = 
-            `SELECT audio.audio_name
+            `SELECT audio.audio_name, audio_play_log.dt_played
             FROM audio_play_log
             INNER JOIN audio
             ON audio_play_log.audio_id = audio.audio_id
@@ -16,9 +16,14 @@ function updateRecentlyPlayed() {
             LIMIT 100;`;
             let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
 
-            // loop over results, ignore playTypes that are non-zero
+            // console.log(results);
+
+            // loop over results
             for (let result of results){
-                gd.recentlyPlayedList.push(result["audio_name"]);
+                gd.recentlyPlayedList.push({
+                    audio : result["audio_name"],
+                    datetime : result["dt_played"]
+                });
             }
 
             return resolve();

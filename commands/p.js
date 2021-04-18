@@ -42,7 +42,10 @@ module.exports = {
 
             // On every play update the recently played list
             gd.recentlyPlayedList.pop();
-            gd.recentlyPlayedList.unshift(_audio);
+            gd.recentlyPlayedList.unshift({
+                audio : _audio,
+                datetime : new Date(Date.now())
+            });
 
             // On every play log the play, use playType to log what type of play it was
             try {

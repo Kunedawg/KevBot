@@ -8,15 +8,18 @@ function updateRecentlyUploaded() {
         try {
             // Call stored procedure
             let queryStr = 
-            `SELECT audio.audio_name
+            `SELECT audio.audio_name, audio.dt_created
             FROM audio
             ORDER BY audio.dt_created DESC
             LIMIT 100;`;
             let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
 
-            // loop over results, ignore playTypes that are non-zero
+            // loop over results
             for (let result of results){
-                gd.recentlyUploadedList.push(result["audio_name"]);
+                gd.recentlyUploadedList.push({
+                    audio : result["audio_name"],
+                    datetime : result["dt_created"]
+                });
             }
 
             return resolve();
