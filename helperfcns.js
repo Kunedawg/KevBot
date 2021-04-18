@@ -147,62 +147,116 @@ function printProgress(progress){
 }
 
 // List function. This function should return an array of sorts. Mostplayed is an exception, it is a 2d array.
-function getList(category, discordId, optionalArg) {
+function getList(category, discordId, listLen) {
     return new Promise(async (resolve, reject) => {
-        let listLength;
-        switch (category){
-            case "categories":
-            case "cats":
-                return resolve(Object.keys(gd.categoryDict));
-            case undefined:
-            case "all":
-                return resolve(Object.keys(gd.audioDict));
-            case "allcats":
-                return resolve(Array.from(gd.categoryList)); // Array.from makes a copy
-            case "emptycats":
-                let listArr = Array.from(gd.categoryList);
-                for (let cat of Object.keys(gd.categoryDict)) {
-                    removeElementFromArray(listArr,cat); // only none empty categories should be in the category dictionary
-                }
-                return resolve(listArr);
-            case "mostplayed":
-                let mostPlayed = [...gd.mostPlayedList]
-                listLength = optionalArg || gd.DEFAULT_LIST_LENGTH;
-                if (listLength < mostPlayed.length && listLength > 0) {
-                    mostPlayed.length = listLength;
-                }
-                return resolve(mostPlayed);
-            case "myuploads":    
-                if (!discordId) { return reject({ userMess: `Failed to retrieve discord id!`}); }   
-                if (!gd.uploadsByDiscordId[discordId]) {return resolve({ userMess: "You have not uploaded any files!"})};
-                return resolve(gd.uploadsByDiscordId[discordId]);
-            case "recentlyplayed":
-            case "playhistory":
-                let recentlyPlayed = [...gd.recentlyPlayedList]
-                listLength = optionalArg || gd.DEFAULT_LIST_LENGTH;
-                if (listLength < recentlyPlayed.length && listLength > 0) {
-                    recentlyPlayed.length = listLength;
-                }
-                return resolve(recentlyPlayed);
-            case "recentlyuploaded":
-            case "uploadhistory":
-                let recentlyUploaded = [...gd.recentlyUploadedList]
-                listLength = optionalArg || gd.DEFAULT_LIST_LENGTH;
-                if (listLength < recentlyUploaded.length && listLength > 0) {
-                    recentlyUploaded.length = listLength;
-                }
-                return resolve(recentlyUploaded);                
-            default:
-                if (category in gd.categoryDict) {
-                    return resolve(Array.from(gd.categoryDict[category]));
-                } else if (gd.categoryList.includes(category)) {
-                    return reject({userMess: `"${category}" is an empty category, nothing to list/play!`});
-                } else {
-                    return reject({userMess: `"${category}" is not a valid argument for the list/pr command!`})
-                }
+        try {
+            let audioNameList;
+            let categoryNameList;
+            let supplementalDataList;
+            let headers;
+            const listLength = listLen || gd.DEFAULT_LIST_LENGTH;
+            switch (category){
+                case "categories":
+                case "cats":
+                    categoryNameList = Object.keys(gd.categoryDict);
+                    break;
+                case "allcats":
+                    categoryNameList = Array.from(gd.categoryList); // Array.from makes a copy
+                    break;
+                case "emptycats":
+                    categoryNameList = Array.from(gd.categoryList);
+                    for (let cat of Object.keys(gd.categoryDict)) {
+                        removeElementFromArray(categoryNameList,cat); // only none empty categories should be in the category dictionary
+                    }
+                    break;
+                case undefined:
+                case "all":
+                    audioNameList = Object.keys(gd.audioDict);
+                    break;
+                case "mostplayed":
+                    audioNameList = [];
+                    supplementalDataList = [];
+                    let mostPlayed = [...gd.mostPlayedList];
+                    if (listLength < mostPlayed.length && listLength > 0) {
+                        mostPlayed.length = listLength;
+                    }
+                    for (let obj of mostPlayed) {
+                        audioNameList.push(obj.audio);
+                        supplementalDataList.push(obj.playCount);
+                    }
+                    headers = ["audio_name", "play_count"];
+                    break;
+                case "myuploads":    
+                    if (!discordId) { return reject({ userMess: `Failed to retrieve discord id!`}); }   
+                    if (!gd.uploadsByDiscordId[discordId]) {return resolve({ userMess: "You have not uploaded any files!"})};
+                    audioNameList = gd.uploadsByDiscordId[discordId];
+                    break;
+                case "playhistory":
+                    audioNameList = [];
+                    supplementalDataList = [];
+                    let recentlyPlayed = [...gd.recentlyPlayedList]
+                    if (listLength < recentlyPlayed.length && listLength > 0) {
+                        recentlyPlayed.length = listLength;
+                    }
+                    for (let obj of recentlyPlayed) {
+                        audioNameList.push(obj.audio);
+                        supplementalDataList.push(getDateTimeString(obj.datetime));
+                    }
+                    headers = ["audio_name", "date_time"];
+                    break;
+                case "uploadhistory":
+                    audioNameList = [];
+                    supplementalDataList = [];
+                    let recentlyUploaded = [...gd.recentlyUploadedList]
+                    if (listLength < recentlyUploaded.length && listLength > 0) {
+                        recentlyUploaded.length = listLength;
+                    }
+                    for (let obj of recentlyUploaded) {
+                        audioNameList.push(obj.audio);
+                        supplementalDataList.push(getDateTimeString(obj.datetime));
+                    }
+                    headers = ["audio_name", "date_time"];
+                    break;             
+                default:
+                    if (category in gd.categoryDict) {
+                        categoryNameList = Array.from(gd.categoryDict[category]);
+                    } else if (gd.categoryList.includes(category)) {
+                        return reject({userMess: `"${category}" is an empty category, nothing to list/play!`});
+                    } else {
+                        return reject({userMess: `"${category}" is not a valid argument for the list/pr command!`})
+                    }
+            }
+            return resolve ({audioNameList, categoryNameList, supplementalDataList, headers});
+        } catch (err) {
+            return reject(err);
         }
     });
-}    
+}
+
+// For nice formatting of a date time string
+    /**
+     * @param {Date} date
+     */
+function getDateTimeString (date) {
+    if (date instanceof Date) {
+        let year = String(date.getUTCFullYear());
+        let day = String(date.getUTCDate());
+        let month = String(date.getUTCMonth());
+        let hour = String(date.getUTCHours());
+        let min = String(date.getUTCMinutes());
+        let sec = String(date.getUTCSeconds());
+        let pad = (str) => {
+            if (str.length === 1) {
+                return `0${str}`
+            } else {
+                return `${str}`
+            }
+        };
+        return `${pad(year)}-${pad(month)}-${day} ${pad(hour)}:${pad(min)}:${pad(sec)} (UTC)`
+    } else if(typeof date === 'string') {
+        return date + " (UTC)";
+    }
+}
 
 module.exports = {
     breakUpResponse,
@@ -214,5 +268,6 @@ module.exports = {
     removeElementFromArray,
     updateCategoryDict,
     printProgress,
-    getList
+    getList,
+    getDateTimeString
 }

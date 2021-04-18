@@ -180,6 +180,14 @@ module.exports = {
                     });                
                 }            
             }
+
+            // On every upload update the recently uploaded list
+            gd.recentlyUploadedList.pop();
+            gd.recentlyUploadedList.unshift({
+                audio : audioName,
+                datetime : Date.now()
+            });
+            
             // return resolve promise
             return resolve({userMess: `"${fileName}" has been uploaded to kev-bot!`});
         });

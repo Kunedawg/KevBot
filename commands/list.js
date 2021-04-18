@@ -14,97 +14,89 @@ module.exports = {
      */
     execute({message, args}) {
         return new Promise(async (resolve, reject) => {
-            try {
-                // FUNCTION: Defines a function that splits an array into equal chunks based on the given size
-                function chunk(array, size) {
-                    const chunkedArray = [];
-                    let index = 0;
-                    while (index < array.length) {
-                        chunkedArray.push(array.slice(index, size + index));
-                        index += size;
-                    }
-                    return chunkedArray;
+            // FUNCTION: Defines a function that splits an array into equal chunks based on the given size
+            function chunk(array, size) {
+                const chunkedArray = [];
+                let index = 0;
+                while (index < array.length) {
+                    chunkedArray.push(array.slice(index, size + index));
+                    index += size;
                 }
+                return chunkedArray;
+            }
+            
+            // FUNCTION: Sort lists of strings 
+            function sortAlphaAndIntoColumns(listArr) {
+                // Sort the list (alphabetically)
+                listArr.sort();
+
+                // Finding the largest number of chars in a string of the list Array and then pad list with spaces
+                let maxNumOfChars = listArr.reduce((a,b) => Math.max(a,b.length),0);
+                if (maxNumOfChars === 0) {return reject("Couldn't get largest number of characters");}   
+                listArr = listArr.map(str => (str + ' '.repeat(maxNumOfChars - str.length + 2)));
                 
-                // FUNCTION: Sort lists of strings 
-                function sortAndFormatStringList(listArr) {
-                    // Sort the list (alphabetically)
-                    listArr.sort();
+                // Split the list array into 4 arrays of roughly equal size (last array will be shorter potentially)
+                let numCols = 4;
+                const numRows = Math.ceil(listArr.length / numCols);
+                colArr = chunk(listArr, numRows);
 
-                    // Finding the largest number of chars in a string of the list Array and then pad list with spaces
-                    let maxNumOfChars = listArr.reduce((a,b) => Math.max(a,b.length),0);
-                    if (maxNumOfChars === 0) {return reject("Couldn't get largest number of characters");}   
-                    listArr = listArr.map(str => (str + ' '.repeat(maxNumOfChars - str.length + 2)));
-                    
-                    // Split the list array into 4 arrays of roughly equal size (last array will be shorter potentially)
-                    let numCols = 4;
-                    const numRows = Math.ceil(listArr.length / numCols);
-                    colArr = chunk(listArr, numRows);
-
-                    // Loop over the rows and concat the columns together
-                    let response = '';
-                    for (let row = 0; row < numRows; row++) {
-                        response += (colArr[0]?.[row] || "");
-                        response += (colArr[1]?.[row] || "");
-                        response += (colArr[2]?.[row] || "");
-                        response += (colArr[3]?.[row] || "") + "\n";
-                    }
-                    return response;
+                // Loop over the rows and concat the columns together
+                let response = '';
+                for (let row = 0; row < numRows; row++) {
+                    response += (colArr[0]?.[row] || "");
+                    response += (colArr[1]?.[row] || "");
+                    response += (colArr[2]?.[row] || "");
+                    response += (colArr[3]?.[row] || "") + "\n";
                 }
+                return response;
+            }
 
-                // FUNCTION: Formats the most played list
-                function formatMostPlayedList(gd_mostPlayedList) {
-                    // makes a copy of array
-                    let mostPlayedList = [...gd_mostPlayedList]; 
+            // FUNCTION: Formats the most played list
+            function formatTwoColumnList(nameList, supplementalDataList) {
+                // Finding the largest number of chars in a string of the list Array and then pad list with spaces
+                let maxNumOfChars = nameList.reduce((a,b) => Math.max(a, b.length),0);
+                if (maxNumOfChars === 0) {return reject("Couldn't get largest number of characters");}
+                if (nameList.length !== supplementalDataList.length) {return reject("nameList and supplementalDataList do not match");}
 
-                    // Add table headers to list
-                    mostPlayedList.unshift({audio : "audio_name", playCount : "play_count"});
-
-                    // Finding the largest number of chars in a string of the list Array and then pad list with spaces
-                    let maxNumOfChars = mostPlayedList.reduce((a,b) => Math.max(a,b.audio.length),0);
-                    if (maxNumOfChars === 0) {return reject("Couldn't get largest number of characters");}
-                    mostPlayedList = mostPlayedList.map(obj => ({
-                        audio : obj.audio + ' '.repeat(maxNumOfChars - obj.audio.length + 2),
-                        playCount : obj.playCount
-                    }));
-                    
-                    // Loop over the list and make the rows of the response
-                    let response = '';
-                    for (let obj of mostPlayedList) {
-                        response += obj.audio + obj.playCount + "\n";
-                    }
-                    return response;
+                // Package data into single string
+                let responseStr = '';
+                for (let i in nameList) {
+                    responseStr += nameList[i] + ' '.repeat(maxNumOfChars - nameList[i].length + 2) + supplementalDataList[i] + "\n";
                 }
+                return responseStr;
+            }
 
+            try {
                 // Inputs
                 let category = args?.[0];
-                const mostPlayedListLength = args?.[1];
+                const listLength = args?.[1];
                 let discordId = message?.author?.id;
 
-                // Determine the array that should be listed
-                let listArr = await hf.getList(category, discordId, mostPlayedListLength);
-
-                // Return message if the list is empty
-                if (listArr.length === 0) {return resolve({ userMess: "There is nothing to list!"});}
-
-                // Determines the response based on the category that was called
-                let response = '';
-                switch (category){
-                    case "mostplayed":
-                        response = formatMostPlayedList(listArr);
-                        break;
-                    case "recentlyplayed":
-                    case "playhistory":
-                    case "recentlyuploaded":
-                    case "uploadhistory":
-                        for (let str of listArr) {
-                            response += `${str}\n`;
-                        }
-                        break;
-                    default:
-                        response = sortAndFormatStringList(listArr);
+                // Get the lists of data that should be listed and perform some checks
+                let lists = await hf.getList(category, discordId, listLength);
+                if ((!lists?.audioNameList && !lists?.categoryNameList) || (lists?.audioNameList && lists?.categoryNameList)) {
+                    return reject({
+                        userMess: "Something went wrong! Talk to Kevin.", 
+                        err : "audioNameList and categoryNameList are both undefined or both defined"
+                    });
                 }
-                return resolve({ userMess: response, wrapChar: "```" });
+                if ((lists?.audioNameList && lists?.audioNameList?.length === 0) || (lists?.categoryNameList && lists?.categoryNameList?.length === 0)) {
+                    return resolve({ userMess: "There is nothing to list!"});
+                }
+                // Format data based on the returned arrays
+                let responseStr = '';
+                if (lists?.supplementalDataList) {
+                    if (lists?.headers) {
+                        if (lists?.audioNameList) {lists.audioNameList.unshift(lists.headers[0]);}
+                        if (lists?.categoryNameList) {lists.categoryNameList.unshift(lists.headers[0]);}
+                        lists.supplementalDataList.unshift(lists.headers[1]);
+                    }
+                    responseStr = formatTwoColumnList(lists?.audioNameList || lists?.categoryNameList, lists?.supplementalDataList);
+                } else {
+                    responseStr = sortAlphaAndIntoColumns(lists?.audioNameList || lists.categoryNameList);
+                }
+
+                return resolve({ userMess: responseStr, wrapChar: "```" });
 
             } catch (err) {
                 reject(err);
