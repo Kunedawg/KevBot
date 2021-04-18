@@ -26,7 +26,10 @@ module.exports = {
             var audioArray = args;
 
             // Check that category name is in the categorylist
-            if (!gd.categoryList.includes(category)) { return reject({ userMess: `The category "${category}" does not exist!`}); }       
+            if (!gd.categoryList.includes(category)) { return reject({ userMess: `The category "${category}" does not exist!`}); }
+
+            // Check if category is protected
+            if (gd.protectedCategoryNames.includes(category)) { return reject({ userMess: `The category "${category}" is restricted!`}); }
 
             // Loop over the audio array and call the store procedure
             try {

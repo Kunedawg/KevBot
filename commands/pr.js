@@ -16,12 +16,9 @@ module.exports = {
     execute({message, args}) {
         return new Promise(async(resolve,reject) => {
             try {
-                // Get discord id. If the discordId is undefined then set it to zero
+                // Get discord ID, category and list length
                 var _discordId = message?.author?.id;
-                if (!_discordId) {_discordId = '0';}            
-                
-                // Get inputs from args
-                var category = args?.[0];
+                var category = args?.[0] || "all";
                 const listLength = args?.[1];
 
                 // Get the audioList

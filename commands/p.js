@@ -20,9 +20,8 @@ module.exports = {
      */
     execute({message, args, audio, voiceChannel, discordId, playType}) {
         return new Promise(async(resolve,reject) => {
-            // Get discord id. If the discordId is undefined then set it to zero
+            // Get discord id
             let _discordId = discordId || message?.author?.id;
-            if (!_discordId) {_discordId = '0';}
 
             // Get playType Note playType = (0: p!, 1 : pr!, 2 : greeting!, 3 : raid!, 4 : farewell!)
             let _playType = playType || gd.PLAY_TYPE.PLAY;

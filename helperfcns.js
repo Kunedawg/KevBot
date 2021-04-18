@@ -104,12 +104,11 @@ function asyncQuery(connection,queryStr) {
 // Removes the element from the array
 function removeElementFromArray(array, element) {
     for (let index in array) {
-        if ( array[index] === element) {
-            var savedIndex = index;
-            break;
+        if (array[index] === element) {
+            array.splice(index,1)
+            return;
         }
     }
-    if (savedIndex) { array.splice(savedIndex,1); } 
 }
 
 // Removes the element from the array
@@ -158,18 +157,17 @@ function getList(category, discordId, listLen) {
             switch (category){
                 case "categories":
                 case "cats":
-                    categoryNameList = Object.keys(gd.categoryDict);
-                    break;
-                case "allcats":
                     categoryNameList = Array.from(gd.categoryList); // Array.from makes a copy
                     break;
                 case "emptycats":
                     categoryNameList = Array.from(gd.categoryList);
                     for (let cat of Object.keys(gd.categoryDict)) {
-                        removeElementFromArray(categoryNameList,cat); // only none empty categories should be in the category dictionary
+                        removeElementFromArray(categoryNameList,cat); // removes the non empty categories from the full list. non empty cats are in the dict
+                    }
+                    for (let cat of gd.protectedCategoryNames) {
+                        removeElementFromArray(categoryNameList,cat); // removes the protected names form the empty category
                     }
                     break;
-                case undefined:
                 case "all":
                     audioNameList = Object.keys(gd.audioDict);
                     break;

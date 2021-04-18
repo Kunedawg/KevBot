@@ -25,6 +25,9 @@ module.exports = {
             // Check that category name is in the existing list of categories
             if (!gd.categoryList.includes(category)) { return reject({ userMess: `The category "${category}" does not exist, so it cannot be deleted!`}); }
 
+            // Check if category is protected
+            if (gd.protectedCategoryNames.includes(category)) { return reject({ userMess: `The category "${category}" is restricted!`}); }
+
             // Check that category is not in the dictionary (meaning there are no entries added to the category yet)
             if (Object.keys(gd.categoryDict).includes(category)) { return reject({ userMess: `The category "${category}" has audio associated with it, so it cannot be deleted!`}); }                  
 

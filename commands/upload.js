@@ -31,7 +31,6 @@ module.exports = {
 
             // Check if a category argument was given and if it is valid
             let categories = args;
-            console.log("categories: ", categories)
             let categoryGiven = categories !== undefined;
             if (categoryGiven) {
                 for (let category of categories) {

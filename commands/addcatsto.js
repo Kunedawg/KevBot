@@ -31,10 +31,16 @@ module.exports = {
             // Loop over the audio array and call the store procedure
             try {
                 for (let category of categoryArray) {
-                    // check that category is in the category list
+                    // check that category is in the category list / if the category is restricted
                     if (!gd.categoryList.includes(category)) { 
-                        message.author.send(`The category "${category}" does not exist so the audio "${audio}" will not be added it"!`);
+                        message.author.send(`The category "${category}" does not exist, so the audio "${audio}" will not be added to it!`);
                         continue;
+                    }
+
+                    // check if category is protected
+                    if (gd.protectedCategoryNames.includes(category)) { 
+                        message.author.send(`The category "${category}" is restricted, so the audio "${audio}" will not be added it!`);
+                        continue; 
                     }
 
                     // Check if audio is already in the category

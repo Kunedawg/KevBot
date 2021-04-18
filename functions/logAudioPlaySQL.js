@@ -8,7 +8,7 @@ const hf = require('../helperfcns.js');
  * @param {string} audio
  * @param {number} playType
  */
-function logAudioPlaySQL (discordId, audio, playType) {
+function logAudioPlaySQL (discordId = 0, audio, playType) {
     return new Promise(async(resolve,reject) => {
         // Call stored procedure
         let queryStr = `CALL log_audio_play('${discordId}', '${audio}', '${playType}', @message); SELECT @message;`;

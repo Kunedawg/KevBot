@@ -16,8 +16,6 @@ function updateRecentlyPlayed() {
             LIMIT 100;`;
             let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
 
-            // console.log(results);
-
             // loop over results
             for (let result of results){
                 gd.recentlyPlayedList.push({
