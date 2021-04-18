@@ -1,5 +1,5 @@
 // imports
-var fs = require('fs-extra');
+const fs = require('fs-extra');
 const path = require('path');
 const fetch = require('node-fetch');
 const {getAudioDurationInSeconds} = require('get-audio-duration');
@@ -96,11 +96,10 @@ module.exports = {
 
             // Check the duration of file does not exceed the max duration
             try {
-                const MAX_DURATION = 15.0; // sec
                 var duration = await getAudioDurationInSeconds(downloadFilePath);
-                if(duration > MAX_DURATION) {
+                if(duration >= gd.MAX_UPLOAD_CLIP_DURATION) {
                     return reject({
-                        userMess: `${fileName} has a duration of ${duration} sec. Max duration is ${MAX_DURATION} sec. Talk to Kevin for exceptions to this rule`
+                        userMess: `${fileName} has a duration of ${duration} sec. Max duration is ${gd.MAX_UPLOAD_CLIP_DURATION} sec. Talk to Kevin for exceptions to this rule`
                     });
                 }
             } catch(err) {

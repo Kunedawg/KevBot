@@ -1,7 +1,9 @@
 // imports
-var gd = require('../globaldata.js');
+const gd = require('../globaldata.js');
 const {Message} = require('discord.js');
 const hf = require('../helperfcns.js');
+const {getAudioDurationInSeconds} = require('get-audio-duration');
+
 
 module.exports = {
     name: 'setfarewell',
@@ -23,6 +25,14 @@ module.exports = {
             if(!(farewell in gd.audioDict)) {
                 return reject({ userMess: `"${farewell}" is not a valid farewell name. Check your spelling.`});
             }
+
+            // Check that the duration is less than the allowed amount
+            var duration = await getAudioDurationInSeconds(gd.audioDict[farewell]);
+            if(duration >= gd.MAX_FAREWELL_CLIP_DURATION) {
+                return reject({
+                    userMess: `"${farewell}" has a duration of ${duration} sec. Max duration is ${gd.MAX_FAREWELL_CLIP_DURATION} sec. Talk to Kevin for exceptions to this rule.`
+                });
+            }            
             
             // Call set_farewell stored procedure
             try {

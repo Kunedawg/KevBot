@@ -7,3 +7,6 @@ temp_data/*
 
 # exlude .env file that contains sensitive data
 .env
+
+# ignore vscode settings
+.vscode
