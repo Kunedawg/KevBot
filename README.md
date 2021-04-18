@@ -19,7 +19,9 @@ Table of contents
     - [Heroku](#heroku)
     - [MySQL](#mysql)
     - [Google Cloud Storage](#google-cloud-storage)
-
+- [Release Notes](#release-notes)
+    - [v1.0.0](#v1.0.0)
+    
 Commands
 =================
 
