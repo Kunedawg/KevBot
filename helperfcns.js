@@ -155,7 +155,11 @@ function printProgress(progress) {
   process.stdout.write(String(progress));
 }
 
-// List function. This function should return an array of sorts. Mostplayed is an exception, it is a 2d array.
+// Given the category this returns the appropriate data. There are specialized categories, like myuploads or mostplayed, so special treatment is done.
+// audioNameList = list of audio files. 
+// categoryNameList = list of category names. 
+// supplementalDataList = for some categories this returns play count and dates
+// headers = names of headers for tables that get displayed
 function getList(category, discordId, listLen) {
   return new Promise(async (resolve, reject) => {
     try {

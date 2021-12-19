@@ -21,27 +21,45 @@ async function onReady(){
  */
 async function onVoiceStateUpdate(oldUserVoiceState, newUserVoiceState){
     try {
-        if (process.env.ENV === 'TEST') { return; } // do not run a command if the test environment is being used
+        // if (process.env.ENV === 'TEST') { return; } // do not run a command if the test environment is being used
         var newUserChannel = newUserVoiceState.channel;
         var oldUserChannel = oldUserVoiceState.channel;
         var newMember = newUserVoiceState.member;
         var oldMember = oldUserVoiceState.member;
         if(oldUserChannel === null && newUserChannel !== null && !newMember.user.bot) { // User Joins a voice channel
+            var memberToMessage = newMember;
+            var commandAttempted = "greeting";
             var response = await gd.client.commands.get('getgreeting').execute({user : newMember.user});
-            if (!response.greeting) {return;}
-            let _discordId = newMember?.user?.id;
-            if (!_discordId) {_discordId = '0';}            
-            await gd.client.commands.get('p').execute({
-                audio : response.greeting, 
-                voiceChannel : newUserChannel,
-                discordId : _discordId,
-                playType : gd.PLAY_TYPE.GREETING
-            });
+            if (!response.greeting || !response.greeting_type) {return;}
+            var _discordId = newMember?.user?.id;
+            if (!_discordId) {return;}
+            switch(response.greeting_type) {
+                case gd.GREETING_TYPE.FILE:
+                    await gd.client.commands.get('p').execute({
+                        audio : response.greeting, 
+                        voiceChannel : newUserChannel,
+                        discordId : _discordId,
+                        playType : gd.PLAY_TYPE.GREETING
+                    });
+                    break;
+                case gd.GREETING_TYPE.CATEGORY:
+                    await gd.client.commands.get('pr').execute({
+                        category : response.greeting, 
+                        voiceChannel : newUserChannel,
+                        discordId : _discordId,
+                        playType : gd.PLAY_TYPE.CATEGORY_GREETING
+                    });
+                    break;
+                default:
+                    console.error(`An invalid greeting_type has been set for discord_id: ${_discordId}`);
+              }
         } else if(newUserChannel === null && oldUserChannel !== null && !oldMember.user.bot){ // User leaves a voice channel
+            var memberToMessage = oldMember;
+            var commandAttempted = "farewell";
             var response = await gd.client.commands.get('getfarewell').execute({user : oldMember.user});
             if (!response.farewell) {return;}
-            let _discordId = oldMember?.user?.id;
-            if (!_discordId) {_discordId = '0';}            
+            var _discordId = oldMember?.user?.id;
+            if (!_discordId) {return;}            
             await gd.client.commands.get('p').execute({
                 audio : response.farewell, 
                 voiceChannel : oldUserChannel,
@@ -51,13 +69,21 @@ async function onVoiceStateUpdate(oldUserVoiceState, newUserVoiceState){
         }
     } catch (err) {
         // Console logging
-        console.error(err);
+        console.error(`onVoiceStateUpdate error. DiscordID: "${_discordId || "undefined"}". Command: "${commandAttempted || "undefined"}". response: "${response? JSON.stringify(response) : "undefined"}" Failed with err: `, err);
+
         // User response
-        if (err.userMess) {
-            newMember.user.send(err.userMess);
-        } else {
-            newMember.user.send(`Something went wrong! Talk to Kevin.`);
+        if (memberToMessage) {
+            if (err.userMess) {
+                if (err.userMess != 'SUPPRESS_GENERAL_ERR_MESSAGE') {memberToMessage.send(err.userMess);}
+            } else {
+                if (commandAttempted) {
+                    memberToMessage.send(`There was an issue executing command "${commandAttempted}"! Talk to Kevin.`);
+                } else {
+                    memberToMessage.send(`Something went wrong! Talk to Kevin.`);
+                }
+            }
         }
+
     }
 }
 
@@ -87,20 +113,18 @@ async function onMessage(message, prefix){
         }
     } catch (err) {
         // Console logging
-        let discordId = message?.author?.id;
-        let commandAttempted = message;
-        if (!discordId) { discordId = "undefined";}
-        if (!commandAttempted) { commandAttempted = "undefined";}
-        console.error(`DiscordID: "${discordId}". Command: "${commandAttempted}". Failed with err: `, err);
+        console.error(`DiscordID: "${ message?.author?.id || "undefined"}". Command: "${message || "undefined"}". Failed with err: `, err);
 
         // User response
-        if (err.userMess) {
-            if (err.userMess != 'SUPPRESS_GENERAL_ERR_MESSAGE') {message.author.send(err.userMess);}
-        } else {
-            if (commandName) {
-                message.author.send(`There was an issue executing command "${commandName}"! Talk to Kevin.`);
+        if (message) {
+            if (err.userMess) {
+                if (err.userMess != 'SUPPRESS_GENERAL_ERR_MESSAGE') {message.author.send(err.userMess);}
             } else {
-                message.author.send(`Something went wrong! Talk to Kevin.`);
+                if (commandName) {
+                    message.author.send(`There was an issue executing command "${commandName}"! Talk to Kevin.`);
+                } else {
+                    message.author.send(`Something went wrong! Talk to Kevin.`);
+                }
             }
         }
     }

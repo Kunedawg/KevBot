@@ -53,11 +53,18 @@ let MAX_FAREWELL_CLIP_DURATION = 4;    // sec
 
 // Play type enumeration (0: p!, 1 : pr!, 2 : greeting!, 3 : raid!, 4: farewell!)
 const PLAY_TYPE = {
-    PLAY        : 0,
-    PLAY_RANDOM : 1,
-    GREETING    : 2,
-    RAID        : 3,
-    FAREWELL    : 4
+    PLAY                : 0,
+    PLAY_RANDOM         : 1,
+    GREETING            : 2,
+    RAID                : 3,
+    FAREWELL            : 4,
+    CATEGORY_GREETING   : 5
+}
+
+// Greeting type
+const GREETING_TYPE = {
+    FILE        : 0,
+    CATEGORY    : 1
 }
 
 module.exports = {
@@ -78,5 +85,6 @@ module.exports = {
     DEFAULT_LIST_LENGTH,
     MAX_UPLOAD_CLIP_DURATION,
     MAX_FAREWELL_CLIP_DURATION,
-    PLAY_TYPE
+    PLAY_TYPE,
+    GREETING_TYPE
 };
