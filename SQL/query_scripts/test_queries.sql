@@ -63,3 +63,7 @@ SELECT * FROM category_play_log;
 -- CREATE DATABASE `database_name`;
 
 SELECT * FROM player_farewells;
+
+CALL set_greeting('1124','timeric', 1, @message); SELECT @message;
+CALL get_greeting('1124', @greeting, @greeting_type); SELECT @greeting, @greeting_type; 
+SELECT * FROM player_greetings;
