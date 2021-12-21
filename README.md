@@ -199,3 +199,5 @@ Release Notes
 - Added farewells. Farewells are the same as greetings, except the clip is played on exit of a discord guild instead of entry.
 - Added new categories: `playhistory` and `uploadhistory`.
 - Various bug fixes and code improvements.
+### v1.1.0
+- Greeting command now supports categories. Now you can set your greeting to a category and a random file from that category will be played upon entering a discord channel.
