@@ -40,11 +40,11 @@ setgreeting!foryourhealth
 ```
 ### Audio Commands
 
-| `commandName`| Argument 1      | Argument 2           | Description                                                       | Example Usage    |
-| :----------  | :----------     | :----------          | :----------                                                       | :----------      |
-| `p`          | `audioClipName` | `none`               | Plays the given `audioClipName`                                   | `p!hellogov`     |
-| `pr`         | `categoryName`  | `none`               | Plays a random clip from the given `categoryName`                 | `pr!all`         |
-| `raid`       | `audioClipName` | `voiceChannelIndex`  | Plays the given `audioClipName` in the given `voiceChannelIndex`  | `raid!chump 3`   |
+| `commandName` | Argument 1      | Argument 2          | Description                                                      | Example Usage  |
+| :------------ | :-------------- | :------------------ | :--------------------------------------------------------------- | :------------- |
+| `p`           | `audioClipName` | `none`              | Plays the given `audioClipName`                                  | `p!hellogov`   |
+| `pr`          | `categoryName`  | `none`              | Plays a random clip from the given `categoryName`                | `pr!all`       |
+| `raid`        | `audioClipName` | `voiceChannelIndex` | Plays the given `audioClipName` in the given `voiceChannelIndex` | `raid!chump 3` |
 
 ### List Command
 
@@ -83,11 +83,11 @@ Note there are are some specialized `categoryNames` that can be used with the `l
 
 Each user can set a specific audio clip to be their greeting. The bot will play the user's greeting anytime a user joins a discord voice channel. The greeting is not played when switching between voice channels in the same discord.
 
-| `commandName` | Argument 1      | Description                                                          | Example Usage           |
-| :----------   | :----------     | :----------                                                          | :----------             |
-| `setgreeting` | `audioClipName` | Sets the user's greeting to the given `audioClipName`.               | `setgreeting!hellogov`  |
-| `delgreeting` | `none`          | Deletes/removes the user's greeting. No greeting will be played now. | `delgreeting!`          |
-| `getgreeting` | `none`          | The bot will DM the user the name of their current greeting.         | `getgreeting!`          |
+| `commandName` | Argument 1                        | Argument 2 | Description                                                                                                                              | Example Usage          |
+| :------------ | :-------------------------------- | ---------- | :--------------------------------------------------------------------------------------------------------------------------------------- | :--------------------- |
+| `setgreeting` | `audioClipName` or `categoryName` | `type`     | Sets the user's greeting to the given `audioClipName`. Specifiy the `type` (file or category) if the file or category name is ambiguous. | `setgreeting!hellogov` |
+| `delgreeting` | `none`                            | `none`     | Deletes/removes the user's greeting. No greeting will be played now.                                                                     | `delgreeting!`         |
+| `getgreeting` | `none`                            | `none`     | The bot will DM the user the name of their current greeting.                                                                             | `getgreeting!`         |
 
 ### Farewell Commands
 
@@ -101,9 +101,9 @@ Each user can set a specific audio clip to be their farewell. The bot will play 
 
 ### Upload Command
 
-| `commandName`| Arguments 1+               | Special Arguments | Description                                                                                                            | Example Usage                  |
-| :----------  | :----------                | :----------       | :----------                                                                                                            | :----------                    |
-| `upload`     | `categoryNames` (optional) | `mp3 File`        | Uploads the attached mp3 file to the bot's google cloud storage. There are restrictions on the max length of the file and the name. The user can optionally include categories that the file should be added to.  | `upload!arnold` w/ mp3 attached|
+| `commandName` | Arguments 1+               | Special Arguments | Description                                                                                                                                                                                                      | Example Usage                   |
+| :------------ | :------------------------- | :---------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------ |
+| `upload`      | `categoryNames` (optional) | `mp3 File`        | Uploads the attached mp3 file to the bot's google cloud storage. There are restrictions on the max length of the file and the name. The user can optionally include categories that the file should be added to. | `upload!arnold` w/ mp3 attached |
 
 ![upload.gif](/docs/gifs/upload.gif)
 
@@ -167,9 +167,9 @@ The bot supports categories, which allows the user to group audio clips into cat
 
 ### Help Command
 
-| `commandName` | Argument 1     | Description                                                                                                                 | Example Usage            |
-| :----------   | :----------    | :----------                                                                                                                 | :----------              |
-| `help`        | `helpCategory` | The bot will DM the user helpful info on all the commands. Currently the only `helpCategories` are {`kb`,`kevbot`,`kev-bot`}  | `help!kb`                |
+| `commandName` | Argument 1     | Description                                                                                                                  | Example Usage |
+| :------------ | :------------- | :--------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| `help`        | `helpCategory` | The bot will DM the user helpful info on all the commands. Currently the only `helpCategories` are {`kb`,`kevbot`,`kev-bot`} | `help!kb`     |
 
 Code Architecture
 =================
@@ -193,11 +193,13 @@ A Google Cloud Storage bucket is used to store all the mp3 files. The bot downlo
 
 Release Notes
 =================
-
+### v1.1.1
+- Bug fix to greetings of `type` file not playing.
+- Updated the README to include updates to greeting functionality
+### v1.1.0
+- Greeting command now supports categories. Now you can set your greeting to a category and a random file from that category will be played upon entering a discord channel.
 ### v1.0.0
 - GitHub is now public and a README has been written. Arbitrarily calling this release v1.0.0, now that everything is setup.
 - Added farewells. Farewells are the same as greetings, except the clip is played on exit of a discord guild instead of entry.
 - Added new categories: `playhistory` and `uploadhistory`.
 - Various bug fixes and code improvements.
-### v1.1.0
-- Greeting command now supports categories. Now you can set your greeting to a category and a random file from that category will be played upon entering a discord channel.
