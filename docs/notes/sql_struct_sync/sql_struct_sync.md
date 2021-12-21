@@ -24,7 +24,7 @@
 
     ![](6.png)
 
-7. Hit Next. On the "Select Sources" page, select the source file to be the the test structure export and set the destination source to be the production structure export. The ALTER script does not seem to matter, but pick a name for the file, it does not need to exist.
+7. Hit Next. On the "Select Sources" page, select the source file to be the the test structure export and set the destination source to be the production structure export. The ALTER script is what the output script gets saved to. You have the option to copy the script to clipboard later, or you can save it to this file.
 
     ![](7.png)
 
@@ -36,23 +36,24 @@
 
     ![](9.png)
 
-10. Hit next until the "Detected Changes" page. This shows the script that has been generated. This script when applied to the production server will update it to be in sync with the test server, structure wise. There are a few modifications that are needed though, so instead of executing it in this window, copy the file to clipboard and save it to a new file. Note, the save to file does not seem to work.
+10. Hit next until the "Detected Changes" page. This shows the script that has been generated. This script when applied to the production server will update it to be in sync with the test server, structure wise. You have the option to hit copy to clipboard and paste it into a text editor, or hit execute for the script to be saved to the alter file.
 
     ![](10.png)
 
-11. Refereences to AUTO_INCREMENT for tables can be deleted, they are kind of pointless.
+11. References to AUTO_INCREMENT for tables can be deleted, they are kind of pointless.
 
     ![](11.png)
 
-12. All references to `default_schema` should be deleted from the update script.
+12. All references to `default_schema` should be replaced by the production's database name `heroku_7d46a4d7ec18ce3`.
 
     ![](12.png)
     ![](13.png)
+    ![](14.png)
 
 13. Finally, open the production server and go to file "Run SQL Script".
 
-    ![](14.png)
-
-14. Select the schema that should be updated and set the char set to `utf8`. Then hit run. If all goes well a window should pop up that says operation succesfull. 
-
     ![](15.png)
+
+14. Select the schema that should be updated and set the char set to `utf8`. Then hit run. If all goes well a window should pop up that says operation successful. 
+
+    ![](16.png)
