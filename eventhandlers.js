@@ -30,7 +30,7 @@ async function onVoiceStateUpdate(oldUserVoiceState, newUserVoiceState){
             var memberToMessage = newMember;
             var commandAttempted = "greeting";
             var response = await gd.client.commands.get('getgreeting').execute({user : newMember.user});
-            if (!response.greeting || !response.greeting_type) {return;}
+            if (!response.greeting || (!response.greeting_type && response.greeting_type != 0)) {return;}
             var _discordId = newMember?.user?.id;
             if (!_discordId) {return;}
             switch(response.greeting_type) {
