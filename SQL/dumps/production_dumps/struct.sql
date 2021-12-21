@@ -32,7 +32,7 @@ CREATE TABLE `audio` (
   UNIQUE KEY `audio_name_UNIQUE` (`audio_name`),
   KEY `fk_audio_player_id_idx` (`player_id`),
   CONSTRAINT `fk_audio_player_id` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON DELETE NO ACTION ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=5914 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=7904 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -55,7 +55,7 @@ CREATE TABLE `audio_category` (
   CONSTRAINT `fk_audiocat_audio_id` FOREIGN KEY (`audio_id`) REFERENCES `audio` (`audio_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_audiocat_cat_id` FOREIGN KEY (`category_id`) REFERENCES `categories` (`category_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_audiocat_player_id` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON DELETE NO ACTION ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=1704 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=2144 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -76,7 +76,7 @@ CREATE TABLE `audio_play_log` (
   KEY `fk_audiolog_audio_id_idx` (`audio_id`),
   CONSTRAINT `fk_audiolog_audio_id` FOREIGN KEY (`audio_id`) REFERENCES `audio` (`audio_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_audiolog_player_id` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON DELETE NO ACTION ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=15504 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=115754 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -95,7 +95,7 @@ CREATE TABLE `categories` (
   UNIQUE KEY `category_name_UNIQUE` (`category_name`),
   KEY `fk_cat_player_id_idx` (`player_id`),
   CONSTRAINT `fk_cat_player_id` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON DELETE NO ACTION ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=432 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=544 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -113,7 +113,7 @@ CREATE TABLE `category_play_log` (
   PRIMARY KEY (`log_id`),
   KEY `fk_catlog_player_id_idx` (`player_id`),
   CONSTRAINT `fk_catlog_player_id` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON DELETE NO ACTION ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=724 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=16794 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -130,7 +130,7 @@ CREATE TABLE `player_farewells` (
   PRIMARY KEY (`farewell_id`),
   UNIQUE KEY `player_id_UNIQUE` (`player_id`),
   CONSTRAINT `fk_farewell_player_id` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON DELETE NO ACTION ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=144 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -147,7 +147,7 @@ CREATE TABLE `player_greetings` (
   PRIMARY KEY (`greeting_id`),
   UNIQUE KEY `player_id_UNIQUE` (`player_id`),
   CONSTRAINT `fk_greeting_player_id` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON DELETE NO ACTION ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=432 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=494 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -163,7 +163,7 @@ CREATE TABLE `player_info` (
   `discord_user_name` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`player_id`),
   UNIQUE KEY `discord_id_UNIQUE` (`discord_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=452 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=584 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -616,16 +616,16 @@ DELIMITER ;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = '' */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,TRADITIONAL,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `get_greeting`(IN discord_id VARCHAR(45), OUT greeting VARCHAR(100))
+CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `get_greeting`(IN discord_id VARCHAR(45), OUT greeting VARCHAR(100), OUT greeting_type INT)
 BEGIN
-	SELECT player_greetings.greeting
-	INTO greeting
+	SELECT player_greetings.greeting, player_greetings.greeting_type
+	INTO greeting, greeting_type
 	FROM player_greetings
     WHERE player_greetings.player_id = (
 		SELECT player_info.player_id
@@ -816,22 +816,29 @@ DELIMITER ;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = '' */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,TRADITIONAL,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `set_greeting`(IN discord_id VARCHAR(45), IN greeting VARCHAR(100), OUT return_message VARCHAR(100))
+CREATE DEFINER=`ba804a74437d95`@`%` PROCEDURE `set_greeting`(IN discord_id VARCHAR(45), IN greeting VARCHAR(100), IN greeting_type INT, OUT return_message VARCHAR(100))
 sp: BEGIN
+	
 	DECLARE player_id INT;
     DECLARE greeting_id INT;
     DECLARE return_greeting VARCHAR(100);
+    DECLARE return_greeting_type INT;
     
     SELECT player_info.player_id 
     INTO player_id
     FROM player_info
     WHERE player_info.discord_id = discord_id;
+    
+    IF greeting_type IS NULL OR greeting_type < 0 OR greeting_type > 1 THEN
+		SET return_message = 'Failed, greeeting_type was not provided, or was not 0 or 1.';
+		LEAVE sp;
+    END IF;
     
     IF player_id IS NULL THEN
 		CALL add_new_player(discord_id, @return_message);
@@ -854,17 +861,17 @@ sp: BEGIN
 	IF player_id IS NOT NULL THEN
 		IF greeting_id IS NOT NULL THEN
 			UPDATE player_greetings
-            SET player_greetings.greeting = greeting
+            SET player_greetings.greeting = greeting, player_greetings.greeting_type = greeting_type
             WHERE player_greetings.greeting_id = greeting_id;
         ELSE
-			INSERT INTO player_greetings (greeting, player_id)
-			VALUES (greeting, player_id);
+			INSERT INTO player_greetings (greeting, player_id, greeting_type)
+			VALUES (greeting, player_id, greeting_type);
         END IF;
-		CALL get_greeting(discord_id,return_greeting);
-        IF greeting = return_greeting THEN
+		CALL get_greeting(discord_id, return_greeting, return_greeting_type);
+        IF greeting = return_greeting AND greeting_type = return_greeting_type THEN
 			SET return_message = 'Success';
         ELSE
-			SET return_message = 'Failed. greeting did not set correctly.';
+			SET return_message = 'Failed. Greeting did not set correctly.';
         END IF;
 	ELSE
 		SET return_message = 'Failed. player_id does not exist.';
@@ -914,4 +921,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2021-04-12 17:24:43
+-- Dump completed on 2021-12-20 23:35:04

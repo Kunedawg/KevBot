@@ -3,8 +3,8 @@ const fs = require('fs');
 const path = require('path');
 
 // Setup file paths
-const inputFilePath = path.join(__dirname, process.argv[2]);
-const outputFilePath = path.join(__dirname, process.argv[2].split(".sql")[0]+"_definers_removed.sql");
+const inputFilePath = path.join('./', process.argv[2]);
+const outputFilePath = path.join('./', process.argv[2].split(".sql")[0]+"_definers_removed.sql");
 
 // Create write stream and line reader
 var lineReader = require('readline').createInterface({input: require('fs').createReadStream(inputFilePath)});
