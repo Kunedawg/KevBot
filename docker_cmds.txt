@@ -1,0 +1,2 @@
+docker build . -t kev-bot
+docker run --env-file .env -d kev-bot

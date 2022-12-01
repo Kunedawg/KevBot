@@ -4,7 +4,7 @@
   "description": "Custom discord bot for playing mp3 files and much more because I'm ballsy and I don't take no shit from anyone.",
   "main": "kev-bot.js",
   "engines": {
-    "node": "14.x"
+    "node": "18.12.1"
   },
   "scripts": {
     "start": "node kev-bot.js"
@@ -21,15 +21,18 @@
   },
   "homepage": "https://github.com/Kunedawg/kev-bot#readme",
   "dependencies": {
-    "@discordjs/opus": "^0.3.3",
+    "@discordjs/opus": "^0.8.0",
+    "@discordjs/voice": "^0.14.0",
     "@google-cloud/storage": "^5.5.0",
-    "discord.js": "^12.3.1",
+    "discord.js": "^14.7.0",
     "dotenv": "^8.2.0",
+    "ffmpeg-static": "^5.1.0",
+    "ffprobe-static": "^3.1.0",
     "fluent-ffmpeg": "^2.1.2",
     "fs-extra": "^9.0.1",
     "get-audio-duration": "^2.0.3",
-    "googleapis": "^65.0.0",
     "mysql": "^2.18.1",
-    "node-fetch": "^2.6.1"
+    "node-fetch": "^2.6.1",
+    "sodium": "^3.0.2"
   }
 }
