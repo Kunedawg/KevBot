@@ -15,7 +15,7 @@ SELECT * FROM player_info;
 -- CALL add_audio('145361690328825857', 'identify', '8', @mess); SELECT @mess;
 -- CALL del_audio('kindfawn', @mess); SELECT @mess;
 -- CALL get_audio_id('kindfawn', @audio_id, @mess); SELECT @audio_id, @mess;
-SELECT * FROM audio;
+SELECT COUNT(*) FROM audio;
 SELECT COUNT(*) FROM audio WHERE player_id != 1;
 
 SELECT * FROM audio_play_log WHERE play_type = 3;
@@ -38,6 +38,16 @@ ON audio_play_log.audio_id = audio.audio_id
 ORDER BY audio_play_log.dt_played DESC
 LIMIT 100;
 
+/*play count by user name*/
+SELECT player_info.discord_user_name, Count(audio_play_log.play_type)
+FROM audio_play_log
+INNER JOIN player_info
+ON audio_play_log.player_id = player_info.player_id
+-- WHERE audio_play_log.play_type = 0
+GROUP BY player_info.discord_user_name
+ORDER BY Count(audio_play_log.play_type) DESC
+LIMIT 500;
+
 /*categories calls*/
 -- CALL add_category('1124', 'animals', @mess); SELECT @mess;
 -- CALL del_category('animals', @mess); SELECT @mess;
@@ -52,7 +62,7 @@ SELECT * FROM audio_category;
 
 /*audio play log calls*/
 -- CALL log_audio_play('1124', '4d3d', '0', @mess); SELECT @mess;
-SELECT * FROM audio_play_log;
+SELECT COUNT(*) FROM audio_play_log;
 
 /*audio play log calls*/
 -- CALL log_category_play('1124', 'timeric', @mess); SELECT @mess;
