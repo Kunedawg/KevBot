@@ -1,6 +1,6 @@
 // imports
 const gd = require("./globaldata.js");
-const Discord = require("discord.js");
+const { Discord, ActivityType } = require("discord.js");
 const hf = require("./helperfcns");
 
 // Ready event handler
@@ -10,7 +10,7 @@ async function onReady() {
   } catch (err) {
     console.log(err);
   }
-  await gd.client.user.setActivity("kev-bot | help!kb", { type: "PLAYING" });
+  await gd.client.user.setActivity("kev-bot | help!kb", { type: ActivityType.Playing });
   console.log(`Logged in as ${gd.client.user.tag}!`);
 }
 
