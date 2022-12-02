@@ -1,5 +1,5 @@
 // imports
-const { Discord, GatewayIntentBits, Client } = require("discord.js");
+const { GatewayIntentBits, Client, Partials } = require("discord.js");
 const mysql = require("mysql");
 const path = require("path");
 const { Storage } = require("@google-cloud/storage");
@@ -24,9 +24,6 @@ const sqlconnection = mysql.createPool({
 });
 
 // discord client
-// let intents = new Discord.Intents(Discord.Intents.NON_PRIVILEGED);
-// intents.add("GUILD_MEMBERS");
-// const client = new Discord.Client({ ws: { intents: intents } });
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -34,7 +31,11 @@ const client = new Client({
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.DirectMessages,
+    GatewayIntentBits.DirectMessageReactions,
+    GatewayIntentBits.DirectMessageTyping,
   ],
+  partials: [Partials.Message, Partials.Channel, Partials.Reaction],
 });
 
 // Data structures for use throughout code

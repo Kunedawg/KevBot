@@ -27,7 +27,6 @@
     "discord.js": "^14.7.0",
     "dotenv": "^8.2.0",
     "ffmpeg-static": "^5.1.0",
-    "ffprobe-static": "^3.1.0",
     "fluent-ffmpeg": "^2.1.2",
     "fs-extra": "^9.0.1",
     "get-audio-duration": "^2.0.3",

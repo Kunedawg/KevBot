@@ -1,7 +1,8 @@
 // imports
 const { Storage, Bucket } = require("@google-cloud/storage");
-var ffmpeg = require("fluent-ffmpeg");
 const gd = require("./globaldata.js");
+const ffmpeg = require("fluent-ffmpeg");
+const path = require("path");
 
 // function to break responses into 2000 char length (max discord allows)
 function breakUpResponse(response, splitChar = "!@#", wrapChar = "```") {
@@ -16,8 +17,7 @@ function breakUpResponse(response, splitChar = "!@#", wrapChar = "```") {
     } else {
       for (let newLineElement of splitElement.split("\n")) {
         if ((newLineElement + "\n").length <= MAX_NO_WRAP_LENGTH) {
-          if (newLineElement.length > 0)
-            subResponseArray.push(newLineElement + "\n");
+          if (newLineElement.length > 0) subResponseArray.push(newLineElement + "\n");
         } else {
           const regex = new RegExp(`(.{${MAX_NO_WRAP_LENGTH}})`);
           for (let element of newLineElement.split(regex).filter((O) => O)) {
@@ -156,8 +156,8 @@ function printProgress(progress) {
 }
 
 // Given the category this returns the appropriate data. There are specialized categories, like myuploads or mostplayed, so special treatment is done.
-// audioNameList = list of audio files. 
-// categoryNameList = list of category names. 
+// audioNameList = list of audio files.
+// categoryNameList = list of category names.
 // supplementalDataList = for some categories this returns play count and dates
 // headers = names of headers for tables that get displayed
 function getList(category, discordId, listLen) {
@@ -277,9 +277,7 @@ function getDateTimeString(date) {
         return `${str}`;
       }
     };
-    return `${pad(year)}-${pad(month)}-${day} ${pad(hour)}:${pad(min)}:${pad(
-      sec
-    )} (UTC)`;
+    return `${pad(year)}-${pad(month)}-${day} ${pad(hour)}:${pad(min)}:${pad(sec)} (UTC)`;
   } else if (typeof date === "string") {
     return date + " (UTC)";
   }
