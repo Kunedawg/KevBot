@@ -1,17 +1,22 @@
 # syntax=docker/dockerfile:1
 
-FROM node:16-alpine
+FROM node:18.12.1-alpine
 ENV NODE_ENV=production
 
 WORKDIR /app
 
+RUN apk add make
+RUN apk add libtool
+RUN apk add libsodium
+RUN apk add autoconf
+RUN apk add automake
+RUN apk add g++
+RUN apk add --no-cache python3 py3-pip
+RUN npm install node-gyp -g
+
 COPY ["package.json", "package-lock.json*", "./"]
 
-RUN npm install
-
-EXPOSE 80
-EXPOSE 443
-EXPOSE 3306
+RUN npm install --omit-dev
 
 COPY . .
 

@@ -86,12 +86,7 @@ function audio(freshDownload = true) {
       }
       if (notDownloadedFiles.length > 0) {
         for (let [i, file] of notDownloadedFiles.entries()) {
-          let str = `Downloading audio files from google cloud...[${i + 1}/${notDownloadedFiles.length}]`;
-          if (process.env.ENV === "PRODUCTION") {
-            console.log(str);
-          } else {
-            hf.printProgress(str);
-          }
+          console.log(`Downloading audio files from google cloud...[${i + 1}/${notDownloadedFiles.length}]`);
           await file.download({ destination: path.join(gd.audioPath, file.name) });
         }
         console.log("\nDownload of audio files complete!");
