@@ -148,13 +148,6 @@ function updateCategoryDict(categoryDict, category, audio, type) {
   }
 }
 
-// For printing in progress information
-function printProgress(progress) {
-  process.stdout.clearLine();
-  process.stdout.cursorTo(0);
-  process.stdout.write(String(progress));
-}
-
 // Given the category this returns the appropriate data. There are specialized categories, like myuploads or mostplayed, so special treatment is done.
 // audioNameList = list of audio files.
 // categoryNameList = list of category names.
