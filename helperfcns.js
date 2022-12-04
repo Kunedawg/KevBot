@@ -285,7 +285,6 @@ module.exports = {
   asyncQuery,
   removeElementFromArray,
   updateCategoryDict,
-  printProgress,
   getList,
   getDateTimeString,
 };

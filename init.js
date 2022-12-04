@@ -29,7 +29,7 @@ function directories() {
 }
 
 // Downloads from google cloud server, checks SQL server list, creates audioDict that does this mapping, yes -> ./audio/yes.mp3
-function audio(freshDownload = true) {
+function audio(freshDownload = false) {
   return new Promise(async (resolve, reject) => {
     try {
       console.log("Audio initializing...");
