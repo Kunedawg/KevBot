@@ -10,7 +10,7 @@ const { Events } = require("discord.js");
 // Initialization
 async function initialize() {
   console.log(await init.directories());
-  console.log(await init.audio(process.env.ENV === "PRODUCTION" || process.argv[2] === "fdl"));
+  console.log(await init.audio(process.env.CLEAR_AUDIO_PRIOR_TO_DOWNLOAD === "true"));
   console.log(await init.categories());
   console.log(await init.commands());
   await gd.client.login(process.env.BOT_TOKEN);

@@ -21,7 +21,6 @@ async function onReady() {
  */
 async function onVoiceStateUpdate(oldUserVoiceState, newUserVoiceState) {
   try {
-    // if (process.env.ENV === 'TEST') { return; } // do not run a command if the test environment is being used
     var newUserChannel = newUserVoiceState.channel;
     var oldUserChannel = oldUserVoiceState.channel;
     var newMember = newUserVoiceState.member;
