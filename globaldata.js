@@ -1,5 +1,4 @@
 // imports
-const { GatewayIntentBits, Client, Partials } = require("discord.js");
 const mysql = require("mysql");
 const path = require("path");
 const { Storage } = require("@google-cloud/storage");
@@ -23,21 +22,6 @@ const sqlconnection = mysql.createPool({
   dateStrings: true,
 });
 
-// discord client
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.GuildVoiceStates,
-    GatewayIntentBits.DirectMessages,
-    GatewayIntentBits.DirectMessageReactions,
-    GatewayIntentBits.DirectMessageTyping,
-  ],
-  partials: [Partials.Message, Partials.Channel, Partials.Reaction],
-});
-
 // Data structures for use throughout code
 var audioDict = {}; // Audio dictionary, just maps names to filepaths. filepath = audioDict[name]
 var categoryDict = {}; // category dictionary, maps category names to sets of audio [name1, name2, name3, ...] = categoryDict[category_name]
@@ -50,7 +34,7 @@ var recentlyUploadedList = []; // List of the recently uploaded audio [{audio,da
 // paths
 const audioPath = path.join(__dirname, "./audio/");
 const tempDataPath = path.join(__dirname, "./temp_data/");
-let avatarPath = path.join(__dirname, "./docs/pumping-iron-cropped.png");
+// let avatarPath = path.join(__dirname, "./docs/pumping-iron-cropped.png");
 
 // Protected named
 let protectedCategoryNames = [

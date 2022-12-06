@@ -2,12 +2,12 @@
   "name": "kev-bot",
   "version": "1.0.0",
   "description": "Custom discord bot for playing mp3 files and much more because I'm ballsy and I don't take no shit from anyone.",
-  "main": "kev-bot.js",
+  "main": "index.js",
   "engines": {
     "node": "18.12.1"
   },
   "scripts": {
-    "start": "node kev-bot.js"
+    "start": "node index.js"
   },
   "repository": {
     "type": "git",
