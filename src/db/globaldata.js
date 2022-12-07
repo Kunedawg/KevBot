@@ -1,4 +1,3 @@
-// imports
 const mysql = require("mysql");
 const path = require("path");
 const { Storage } = require("@google-cloud/storage");
@@ -32,9 +31,8 @@ var recentlyPlayedList = []; // List of recently played audio [{audio,datetime},
 var recentlyUploadedList = []; // List of the recently uploaded audio [{audio,datetime},{audio,datetime},..] (sorted by datetime)
 
 // paths
-const audioPath = path.join(__dirname, "./audio/");
-const tempDataPath = path.join(__dirname, "./temp_data/");
-// let avatarPath = path.join(__dirname, "./docs/pumping-iron-cropped.png");
+const audioPath = path.join(__dirname, "./temp/audio/");
+const tempDataPath = path.join(__dirname, "./temp/data/");
 
 // Protected named
 let protectedCategoryNames = [
