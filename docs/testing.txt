@@ -1,0 +1,28 @@
+addcatsto       ✓  
+addtocat        ✓    
+delcategory     ✓
+delcatsfrom     ✓
+newcategory     ✓
+delfromcat      ✓
+
+setfarewell     ✓
+delfarewell     ✓
+getfarewell     ✓
+farewell plays  ✓
+
+setgreeting     ✓
+delgreeting     ✓
+getgreeting     ✓
+greeting plays  ✓
+
+help            ✓
+
+list            ✓
+
+p               ✓
+pr              ✓
+raid            ✓
+
+upload          ✓
+
+status info "Playing kev-bot"
