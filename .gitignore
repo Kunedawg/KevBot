@@ -3,8 +3,7 @@ node_modules
 
 # exclude all files in these folders
 audio/
-temp_data/
-ignore/
+temp/
 
 # exlude .env file that contains sensitive data
 *.env
