@@ -1,4 +1,3 @@
-// imports
 var gd = require("../globaldata.js");
 const { Message, ChannelType } = require("discord.js");
 

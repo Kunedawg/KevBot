@@ -1,4 +1,3 @@
-// imports
 var gd = require("../globaldata.js");
 const { Message } = require("discord.js");
 const { logCategoryPlaySQL } = require("../functions/logCategoryPlaySQL.js");
@@ -25,7 +24,7 @@ module.exports = {
         var _category = category || args?.[0] || "all";
         var _voiceChannel = voiceChannel || message?.member?.voice?.channel;
         const _listLength = args?.[1]; // listLength argument is relevant to certain categories like most played or recent played.
-        var _playType = playType || gd.PLAY_TYPE.PLAY_RANDOM; 
+        var _playType = playType || gd.PLAY_TYPE.PLAY_RANDOM;
 
         // Get the audio name list from the given category name
         let lists = await hf.getList(_category, _discordId, _listLength);

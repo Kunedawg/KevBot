@@ -1,4 +1,3 @@
-// imports
 var gd = require("../globaldata.js");
 const { Message, VoiceChannel } = require("discord.js");
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus } = require("@discordjs/voice");
