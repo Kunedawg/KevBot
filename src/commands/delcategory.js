@@ -49,7 +49,7 @@ module.exports = {
         });
       }
 
-      // Check that the user orginally created this category
+      // Check that the user originally created this category
       try {
         let queryStr = `SELECT discord_id FROM categories INNER JOIN player_info ON player_info.player_id = categories.player_id WHERE category_name = '${category}';`;
         let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
