@@ -1,5 +1,7 @@
 const gd = require("./globaldata.js");
 
+const DEFAULT_LIST_LENGTH = 25;
+
 /**
  * Given the category this returns the appropriate data.
  * There are specialized categories, like myuploads or mostplayed, so special treatment is done.
@@ -15,7 +17,7 @@ function getList(category, discordId, listLen) {
       let categoryNameList; //  list of category names.
       let supplementalDataList; // for some categories this returns play count and dates
       let headers; // names of headers for tables that get displayed
-      const listLength = listLen || gd.DEFAULT_LIST_LENGTH;
+      const listLength = listLen || DEFAULT_LIST_LENGTH;
       switch (category) {
         case "categories":
         case "cats":

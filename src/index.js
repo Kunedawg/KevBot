@@ -1,6 +1,7 @@
 const init = require("./init.js");
 const { updateUserNames } = require("./functions/updateUserNames.js");
 const { GatewayIntentBits, Client, Partials } = require("discord.js");
+require("dotenv").config();
 
 // Client
 const client = new Client({

@@ -1,7 +1,6 @@
 const mysql = require("mysql");
 const path = require("path");
 const { Storage } = require("@google-cloud/storage");
-require("dotenv").config();
 
 // Google cloud credentials from the .env file / heroku credentials
 const gc = new Storage({
@@ -35,7 +34,7 @@ const audioPath = path.join(__dirname, "./temp/audio/");
 const tempDataPath = path.join(__dirname, "./temp/data/");
 
 // Protected named
-let protectedCategoryNames = [
+const protectedCategoryNames = [
   "categories",
   "cats",
   "emptycats",
@@ -45,27 +44,6 @@ let protectedCategoryNames = [
   "playhistory",
   "uploadhistory",
 ];
-
-// CONSTANTS
-let DEFAULT_LIST_LENGTH = 25;
-let MAX_UPLOAD_CLIP_DURATION = 15; // sec
-let MAX_FAREWELL_CLIP_DURATION = 4; // sec
-
-// Play type enumeration (0: p!, 1 : pr!, 2 : greeting!, 3 : raid!, 4: farewell!)
-const PLAY_TYPE = {
-  PLAY: 0,
-  PLAY_RANDOM: 1,
-  GREETING: 2,
-  RAID: 3,
-  FAREWELL: 4,
-  CATEGORY_GREETING: 5,
-};
-
-// Greeting type
-const GREETING_TYPE = {
-  FILE: 0,
-  CATEGORY: 1,
-};
 
 module.exports = {
   audioBucket,
@@ -82,9 +60,4 @@ module.exports = {
   tempDataPath,
   avatarPath,
   protectedCategoryNames,
-  DEFAULT_LIST_LENGTH,
-  MAX_UPLOAD_CLIP_DURATION,
-  MAX_FAREWELL_CLIP_DURATION,
-  PLAY_TYPE,
-  GREETING_TYPE,
 };

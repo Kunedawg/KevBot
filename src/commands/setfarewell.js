@@ -27,10 +27,12 @@ module.exports = {
       }
 
       // Check that the duration is less than the allowed amount
+      const MAX_FAREWELL_CLIP_DURATION = 4; // sec
+
       var duration = await getAudioDurationInSeconds(gd.audioDict[farewell]);
-      if (duration >= gd.MAX_FAREWELL_CLIP_DURATION) {
+      if (duration >= MAX_FAREWELL_CLIP_DURATION) {
         return reject({
-          userMess: `"${farewell}" has a duration of ${duration} sec. Max duration is ${gd.MAX_FAREWELL_CLIP_DURATION} sec. Talk to Kevin for exceptions to this rule.`,
+          userMess: `"${farewell}" has a duration of ${duration} sec. Max duration is ${MAX_FAREWELL_CLIP_DURATION} sec. Talk to Kevin for exceptions to this rule.`,
         });
       }
 

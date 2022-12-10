@@ -99,11 +99,12 @@ module.exports = {
       }
 
       // Check the duration of file does not exceed the max duration
+      const MAX_UPLOAD_CLIP_DURATION = 15; // sec
       try {
         var duration = await getAudioDurationInSeconds(downloadFilePath);
-        if (duration >= gd.MAX_UPLOAD_CLIP_DURATION) {
+        if (duration >= MAX_UPLOAD_CLIP_DURATION) {
           return reject({
-            userMess: `${fileName} has a duration of ${duration} sec. Max duration is ${gd.MAX_UPLOAD_CLIP_DURATION} sec. Talk to Kevin for exceptions to this rule`,
+            userMess: `${fileName} has a duration of ${duration} sec. Max duration is ${MAX_UPLOAD_CLIP_DURATION} sec. Talk to Kevin for exceptions to this rule`,
           });
         }
       } catch (err) {
