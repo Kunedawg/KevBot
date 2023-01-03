@@ -1,25 +1,20 @@
-const gd = require("./globaldata.js.js");
-var fs = require("fs-extra");
-const Discord = require("discord.js");
+const { Client, Collection } = require("discord.js");
+const fs = require("fs-extra");
 
 /**
  * Stores commands into a collection
+ * @param {Client} client
  */
-function commands() {
+function handleCommands(client) {
   return new Promise(async (resolve, reject) => {
     try {
-      // Starting message
       console.log("Commands initializing...");
-
-      // Loop over the commands
-      gd.client.commands = new Discord.Collection();
+      client.commands = new Collection();
       const commandFiles = fs.readdirSync("./commands").filter((file) => file.endsWith(".js"));
       for (const file of commandFiles) {
         const command = require(`./commands/${file}`);
-        gd.client.commands.set(command.name, command);
+        client.commands.set(command.name, command);
       }
-
-      // Return promise
       return resolve("Commands initialization done!\n");
     } catch (err) {
       return reject("Commands failed to init!\n" + err);
@@ -27,4 +22,4 @@ function commands() {
   });
 }
 
-module.exports = { commands };
+module.exports = { handleCommands };
