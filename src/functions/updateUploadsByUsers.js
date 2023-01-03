@@ -1,35 +1,18 @@
-const gd = require("../globaldata.js");
-const hf = require("../helperfcns.js");
+var { sqlDatabase, uploadsByDiscordId } = require("../data");
 
-// Updates the lists of uploads by user
-function updateUploadsByUsers() {
-  return new Promise(async (resolve, reject) => {
-    try {
-      // Call stored procedure
-      let queryStr = `SELECT audio.audio_name, player_info.discord_id
-            FROM audio
-            INNER JOIN player_info
-            ON audio.player_id = player_info.player_id;`;
-      let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
-
-      // loop over results and create a dictionary of lists
-      let uploadsByDiscordId = {};
-      for (let result of results) {
-        let audio = result["audio_name"];
-        let dicordId = result["discord_id"];
-        if (Object.keys(uploadsByDiscordId).includes(dicordId)) {
-          uploadsByDiscordId[dicordId].push(audio);
-        } else {
-          uploadsByDiscordId[dicordId] = [audio];
-        }
-      }
-
-      // Update the global var
-      gd.uploadsByDiscordId = uploadsByDiscordId;
-      return resolve();
-    } catch (err) {
-      reject(err);
-    }
+/**
+ * Updates the lists of uploads by user
+ */
+async function updateUploadsByUsers() {
+  let results = await sqlDatabase.asyncQuery(
+    `SELECT audio.audio_name, player_info.discord_id
+      FROM audio
+      INNER JOIN player_info
+      ON audio.player_id = player_info.player_id;`
+  );
+  uploadsByDiscordId = {};
+  results.forEach((result) => {
+    (uploadsByDiscordId[result["discord_id"]] ||= []).push(result["audio_name"]);
   });
 }
 
