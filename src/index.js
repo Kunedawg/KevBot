@@ -4,11 +4,8 @@ const { audio } = require("./functions/initialization/audio");
 const { categories } = require("./functions/initialization/categories");
 const { updateUserNames } = require("./functions/updaters/updateUserNames.js");
 const { handleEvents } = require("./functions/handlers/handleEvents");
-// const { handleCommands } = require("./functions/handlers/handleCommands");
-
+const { handleCommands } = require("./functions/handlers/handleCommands");
 require("dotenv").config();
-
-// const { commands } = require("./functions/initialization/commands");
 
 // Discord Client
 const client = new Client({
@@ -33,7 +30,7 @@ const client = new Client({
   await categories();
   await updateUserNames(client);
   handleEvents(client);
-  // console.log(await commands(client));
+  handleCommands(client);
   await client.login(process.env.BOT_TOKEN);
   console.log("Initializing...done!");
 })().catch((err) => {
@@ -41,24 +38,3 @@ const client = new Client({
   console.error("Initializing...failed! Exiting program!");
   process.exit(1);
 });
-
-// delete below once implemented elsewhere
-
-// // Event Handlers
-// const eventsPath = path.join(__dirname, "events");
-// const eventFiles = fs.readdirSync(eventsPath).filter((file) => file.endsWith(".js"));
-// for (const file of eventFiles) {
-//   const filePath = path.join(eventsPath, file);
-//   const event = require(filePath);
-//   if (event.once) {
-//     client.once(event.name, (...args) => event.execute(client, ...args));
-//   } else {
-//     client.on(event.name, (...args) => event.execute(client, ...args));
-//   }
-// }
-
-// // Timed event start
-// const MS_PER_HOUR = 3600000;
-// const MS_PER_DAY = 86400000;
-// setInterval(client.emit("OncePerHour"), MS_PER_HOUR);
-// setInterval(client.emit("OncePerDay"), MS_PER_DAY);
