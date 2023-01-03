@@ -1,5 +1,5 @@
 const { Events, Message, Client } = require("discord.js");
-const hf = require("../helperfcns");
+const { breakUpResponse } = require("../functions/helpers/breakUpResponse");
 
 module.exports = {
   name: Events.MessageCreate,
@@ -27,7 +27,7 @@ module.exports = {
       if (client.commands.has(commandName)) {
         let response = await client.commands.get(commandName).execute({ message: message, args: args });
         if (response?.userMess) {
-          for (res of hf.breakUpResponse(response.userMess, "!@#", response.wrapChar || "")) {
+          for (res of breakUpResponse(response.userMess, "!@#", response.wrapChar || "")) {
             await message.author.send(res);
           }
         }
