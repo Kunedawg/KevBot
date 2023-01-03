@@ -1,9 +1,9 @@
 const { audioDict, sqlDatabase, categoryList, categoryDict } = require("../../data");
-const { updateCategoryDict } = require("../helper/updateCategoryDict");
-const { updateMostPlayed } = require("../updateMostPlayed.js");
-const { updateUploadsByUsers } = require("../updateUploadsByUsers.js");
-const { updateRecentlyPlayed } = require("../updateRecentlyPlayed.js");
-const { updateRecentlyUploaded } = require("../updateRecentlyUploaded.js");
+const { updateCategoryDict } = require("../updaters/updateCategoryDict");
+const { updateMostPlayed } = require("../updaters/updateMostPlayed.js");
+const { updateUploadsByUsers } = require("../updaters/updateUploadsByUsers.js");
+const { updateRecentlyPlayed } = require("../updaters/updateRecentlyPlayed.js");
+const { updateRecentlyUploaded } = require("../updaters/updateRecentlyUploaded.js");
 
 /**
  * Creates a dictionary of arrays for the categories

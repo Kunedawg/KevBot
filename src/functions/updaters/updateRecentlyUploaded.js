@@ -1,4 +1,4 @@
-var { sqlDatabase, recentlyUploadedList } = require("../data");
+var { sqlDatabase, recentlyUploadedList } = require("../../data");
 
 /**
  * Updates recently uploaded list

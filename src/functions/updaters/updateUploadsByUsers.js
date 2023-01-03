@@ -1,4 +1,4 @@
-var { sqlDatabase, uploadsByDiscordId } = require("../data");
+var { sqlDatabase, uploadsByDiscordId } = require("../../data");
 
 /**
  * Updates the lists of uploads by user
@@ -6,9 +6,9 @@ var { sqlDatabase, uploadsByDiscordId } = require("../data");
 async function updateUploadsByUsers() {
   let results = await sqlDatabase.asyncQuery(
     `SELECT audio.audio_name, player_info.discord_id
-      FROM audio
-      INNER JOIN player_info
-      ON audio.player_id = player_info.player_id;`
+    FROM audio
+    INNER JOIN player_info
+    ON audio.player_id = player_info.player_id;`
   );
   uploadsByDiscordId = {};
   results.forEach((result) => {

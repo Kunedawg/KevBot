@@ -1,4 +1,4 @@
-var { sqlDatabase, mostPlayedList } = require("../data");
+var { sqlDatabase, mostPlayedList } = require("../../data");
 
 /**
  * Updates the most played list.
