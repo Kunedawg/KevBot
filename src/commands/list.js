@@ -1,6 +1,74 @@
-var gd = require("../globaldata.js");
-const hf = require("../helperfcns.js");
 const { Message } = require("discord.js");
+const { getList } = require("../functions/helpers/getList");
+
+/**
+ * Splits an array into equal chunks based on the given size
+ * @param {Array} array
+ * @param {Number} size
+ */
+function chunk(array, size) {
+  const chunkedArray = [];
+  let index = 0;
+  while (index < array.length) {
+    chunkedArray.push(array.slice(index, size + index));
+    index += size;
+  }
+  return chunkedArray;
+}
+
+/**
+ * Sorts list of strings into columns
+ * @param {Array.<String>} listArr
+ */
+function sortAlphaAndIntoColumns(listArr) {
+  // Sort the list (alphabetically)
+  listArr.sort();
+
+  // Finding the largest number of chars in a string of the list Array and then pad list with spaces
+  let maxNumOfChars = listArr.reduce((a, b) => Math.max(a, b.length), 0);
+  if (maxNumOfChars === 0) {
+    return reject("Couldn't get largest number of characters");
+  }
+  listArr = listArr.map((str) => str + " ".repeat(maxNumOfChars - str.length + 2));
+
+  // Split the list array into 4 arrays of roughly equal size (last array will be shorter potentially)
+  let numCols = 4;
+  const numRows = Math.ceil(listArr.length / numCols);
+  colArr = chunk(listArr, numRows);
+
+  // Loop over the rows and concat the columns together
+  let response = "";
+  for (let row = 0; row < numRows; row++) {
+    response += colArr[0]?.[row] || "";
+    response += colArr[1]?.[row] || "";
+    response += colArr[2]?.[row] || "";
+    response += (colArr[3]?.[row] || "") + "\n";
+  }
+  return response;
+}
+
+/**
+ * Formats the most played list
+ * @param {Array.<String>} nameList
+ * @param {Array.<String>} supplementalDataList
+ */
+function formatTwoColumnList(nameList, supplementalDataList) {
+  // Finding the largest number of chars in a string of the list Array and then pad list with spaces
+  let maxNumOfChars = nameList.reduce((a, b) => Math.max(a, b.length), 0);
+  if (maxNumOfChars === 0) {
+    return reject("Couldn't get largest number of characters");
+  }
+  if (nameList.length !== supplementalDataList.length) {
+    return reject("nameList and supplementalDataList do not match");
+  }
+
+  // Package data into single string
+  let responseStr = "";
+  for (let i in nameList) {
+    responseStr += nameList[i] + " ".repeat(maxNumOfChars - nameList[i].length + 2) + supplementalDataList[i] + "\n";
+  }
+  return responseStr;
+}
 
 module.exports = {
   name: "list",
@@ -14,65 +82,6 @@ module.exports = {
    */
   execute({ message, args }) {
     return new Promise(async (resolve, reject) => {
-      // FUNCTION: Defines a function that splits an array into equal chunks based on the given size
-      function chunk(array, size) {
-        const chunkedArray = [];
-        let index = 0;
-        while (index < array.length) {
-          chunkedArray.push(array.slice(index, size + index));
-          index += size;
-        }
-        return chunkedArray;
-      }
-
-      // FUNCTION: Sort lists of strings
-      function sortAlphaAndIntoColumns(listArr) {
-        // Sort the list (alphabetically)
-        listArr.sort();
-
-        // Finding the largest number of chars in a string of the list Array and then pad list with spaces
-        let maxNumOfChars = listArr.reduce((a, b) => Math.max(a, b.length), 0);
-        if (maxNumOfChars === 0) {
-          return reject("Couldn't get largest number of characters");
-        }
-        listArr = listArr.map((str) => str + " ".repeat(maxNumOfChars - str.length + 2));
-
-        // Split the list array into 4 arrays of roughly equal size (last array will be shorter potentially)
-        let numCols = 4;
-        const numRows = Math.ceil(listArr.length / numCols);
-        colArr = chunk(listArr, numRows);
-
-        // Loop over the rows and concat the columns together
-        let response = "";
-        for (let row = 0; row < numRows; row++) {
-          response += colArr[0]?.[row] || "";
-          response += colArr[1]?.[row] || "";
-          response += colArr[2]?.[row] || "";
-          response += (colArr[3]?.[row] || "") + "\n";
-        }
-        return response;
-      }
-
-      // FUNCTION: Formats the most played list
-      function formatTwoColumnList(nameList, supplementalDataList) {
-        // Finding the largest number of chars in a string of the list Array and then pad list with spaces
-        let maxNumOfChars = nameList.reduce((a, b) => Math.max(a, b.length), 0);
-        if (maxNumOfChars === 0) {
-          return reject("Couldn't get largest number of characters");
-        }
-        if (nameList.length !== supplementalDataList.length) {
-          return reject("nameList and supplementalDataList do not match");
-        }
-
-        // Package data into single string
-        let responseStr = "";
-        for (let i in nameList) {
-          responseStr +=
-            nameList[i] + " ".repeat(maxNumOfChars - nameList[i].length + 2) + supplementalDataList[i] + "\n";
-        }
-        return responseStr;
-      }
-
       try {
         // Inputs
         let category = args?.[0] || "all";
@@ -80,7 +89,7 @@ module.exports = {
         let discordId = message?.author?.id;
 
         // Get the lists of data that should be listed and perform some checks
-        let lists = await hf.getList(category, discordId, listLength);
+        let lists = await getList(category, discordId, listLength);
         if ((!lists?.audioNameList && !lists?.categoryNameList) || (lists?.audioNameList && lists?.categoryNameList)) {
           return reject({
             userMess: "Something went wrong! Talk to Kevin.",

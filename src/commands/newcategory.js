@@ -1,6 +1,6 @@
-const gd = require("../globaldata.js");
 const { Message } = require("discord.js");
-const hf = require("../helperfcns.js");
+const { sqlDatabase, categoryList, protectedCategoryNames } = require("../data");
+const { kevbotStringOkay } = require("../functions/helpers/kevbotStringOkay");
 
 module.exports = {
   name: "newcategory",
@@ -26,17 +26,17 @@ module.exports = {
       }
 
       // Check that category name is unique
-      if (gd.categoryList.includes(category)) {
+      if (categoryList.includes(category)) {
         return reject({ userMess: `The category "${category}" already exists!` });
       }
 
       // check that the category name format is valid
-      if (!hf.kevbotStringOkay(category)) {
+      if (!kevbotStringOkay(category)) {
         return reject({ userMess: `The category name can only contain lower case letters and numbers.` });
       }
 
       // check that the category is not a resticted name
-      if (gd.protectedCategoryNames.includes(category)) {
+      if (protectedCategoryNames.includes(category)) {
         return reject({ userMess: `The category name "${category}" is restricted.` });
       }
 
@@ -49,11 +49,12 @@ module.exports = {
 
       // Calling the add category stored procedure
       try {
-        let queryStr = `CALL add_category('${discordId}','${category}', @message); SELECT @message;`;
-        let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
+        let results = await sqlDatabase.asyncQuery(
+          `CALL add_category('${discordId}','${category}', @message); SELECT @message;`
+        );
         let rtnMess = results[1][0]["@message"];
         if (rtnMess === "Success") {
-          gd.categoryList.push(category);
+          categoryList.push(category);
           return resolve({ userMess: `You have created the category "${category}"!` });
         } else {
           return reject({

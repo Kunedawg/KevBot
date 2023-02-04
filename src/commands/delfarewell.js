@@ -1,6 +1,5 @@
-var gd = require("../globaldata.js");
 const { Message } = require("discord.js");
-const hf = require("../helperfcns.js");
+const { sqlDatabase } = require("../data");
 
 module.exports = {
   name: "delfarewell",
@@ -20,8 +19,7 @@ module.exports = {
 
       // Call get_farewell stored procedure
       try {
-        let queryStr = `CALL del_farewell('${discordId}', @message); SELECT @message;`;
-        let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
+        let results = await sqlDatabase.asyncQuery(`CALL del_farewell('${discordId}', @message); SELECT @message;`);
         let rtnMess = results[1][0]["@message"];
         if (rtnMess === "Success") {
           return resolve({ userMess: `Your farewell has been deleted!` });

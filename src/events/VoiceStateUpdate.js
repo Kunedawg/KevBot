@@ -1,4 +1,6 @@
 const { Events, VoiceState, Client } = require("discord.js");
+const { GREETING_TYPE } = require("../enumerations/GreetingType");
+const { PLAY_TYPE } = require("../enumerations/PlayType");
 
 module.exports = {
   name: Events.VoiceStateUpdate,
@@ -27,20 +29,20 @@ module.exports = {
           return;
         }
         switch (response.greeting_type) {
-          case gd.GREETING_TYPE.FILE:
+          case GREETING_TYPE.FILE:
             await client.commands.get("p").execute({
               audio: response.greeting,
               voiceChannel: newUserChannel,
               discordId: _discordId,
-              playType: gd.PLAY_TYPE.GREETING,
+              playType: PLAY_TYPE.GREETING,
             });
             break;
-          case gd.GREETING_TYPE.CATEGORY:
+          case GREETING_TYPE.CATEGORY:
             await client.commands.get("pr").execute({
               category: response.greeting,
               voiceChannel: newUserChannel,
               discordId: _discordId,
-              playType: gd.PLAY_TYPE.CATEGORY_GREETING,
+              playType: PLAY_TYPE.CATEGORY_GREETING,
             });
             break;
           default:
@@ -62,7 +64,7 @@ module.exports = {
           audio: response.farewell,
           voiceChannel: oldUserChannel,
           discordId: _discordId,
-          playType: gd.PLAY_TYPE.FAREWELL,
+          playType: PLAY_TYPE.FAREWELL,
         });
       }
     } catch (err) {

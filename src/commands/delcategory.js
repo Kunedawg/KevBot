@@ -1,6 +1,5 @@
-const gd = require("../globaldata.js");
 const { Message } = require("discord.js");
-const hf = require("../helperfcns.js");
+const { sqlDatabase, categoryList, protectedCategoryNames, categoryDict } = require("../data");
 
 module.exports = {
   name: "delcategory",
@@ -26,17 +25,17 @@ module.exports = {
       }
 
       // Check that category name is in the existing list of categories
-      if (!gd.categoryList.includes(category)) {
+      if (!categoryList.includes(category)) {
         return reject({ userMess: `The category "${category}" does not exist, so it cannot be deleted!` });
       }
 
       // Check if category is protected
-      if (gd.protectedCategoryNames.includes(category)) {
+      if (protectedCategoryNames.includes(category)) {
         return reject({ userMess: `The category "${category}" is restricted!` });
       }
 
       // Check that category is not in the dictionary (meaning there are no entries added to the category yet)
-      if (Object.keys(gd.categoryDict).includes(category)) {
+      if (Object.keys(categoryDict).includes(category)) {
         return reject({
           userMess: `The category "${category}" has audio associated with it, so it cannot be deleted!`,
         });
@@ -51,8 +50,9 @@ module.exports = {
 
       // Check that the user originally created this category
       try {
-        let queryStr = `SELECT discord_id FROM categories INNER JOIN player_info ON player_info.player_id = categories.player_id WHERE category_name = '${category}';`;
-        let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
+        let results = await sqlDatabase.asyncQuery(
+          `SELECT discord_id FROM categories INNER JOIN player_info ON player_info.player_id = categories.player_id WHERE category_name = '${category}';`
+        );
         let rtnDiscordId = results[0]["discord_id"];
         if (![Number(rtnDiscordId), Number(process.env.MASTER_DISCORD_ID)].includes(Number(discordId))) {
           return reject({ userMess: `You did not create the category "${category}" so you may not delete it!` });
@@ -63,11 +63,13 @@ module.exports = {
 
       // Calling the delete category stored procedure
       try {
-        let queryStr = `CALL del_category('${category}', @message); SELECT @message;`;
-        let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
+        let results = await sqlDatabase.asyncQuery(`CALL del_category('${category}', @message); SELECT @message;`);
         let rtnMess = results[1][0]["@message"];
         if (rtnMess === "Success") {
-          hf.removeElementFromArray(gd.categoryList, category);
+          const categoryIndex = categoryList.indexOf(category);
+          if (categoryIndex > -1) {
+            categoryList.splice(categoryIndex, 1);
+          }
           return resolve({ userMess: `You have deleted the category "${category}"!` });
         } else {
           return reject({

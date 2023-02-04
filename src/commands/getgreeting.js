@@ -1,6 +1,6 @@
-var gd = require("../globaldata.js");
 const { Message, User } = require("discord.js");
-const hf = require("../helperfcns.js");
+const { sqlDatabase, audioDict, categoryDict } = require("../data");
+const { GREETING_TYPE } = require("../enumerations/GreetingType");
 
 module.exports = {
   name: "getgreeting",
@@ -22,16 +22,17 @@ module.exports = {
 
       // Call get_greeting stored procedure
       try {
-        let queryStr = `CALL get_greeting('${discordId}', @greeting, @greeting_type); SELECT @greeting, @greeting_type;`;
-        let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
+        let results = await sqlDatabase.asyncQuery(
+          `CALL get_greeting('${discordId}', @greeting, @greeting_type); SELECT @greeting, @greeting_type;`
+        );
         let greeting = results[1][0]["@greeting"];
         let greeting_type = results[1][0]["@greeting_type"];
         let greeting_type_string;
         switch (greeting_type) {
-          case gd.GREETING_TYPE.FILE:
+          case GREETING_TYPE.FILE:
             greeting_type_string = "file";
             break;
-          case gd.GREETING_TYPE.CATEGORY:
+          case GREETING_TYPE.CATEGORY:
             greeting_type_string = "category";
             break;
           default:
@@ -40,13 +41,13 @@ module.exports = {
         if (greeting !== null && greeting_type !== null) {
           var response = `Your current greeting is set to the ${greeting_type_string} "${greeting}"!`;
           switch (greeting_type) {
-            case gd.GREETING_TYPE.FILE:
-              if (!(greeting in gd.audioDict)) {
+            case GREETING_TYPE.FILE:
+              if (!(greeting in audioDict)) {
                 response += `\n"${greeting}" is not a valid file name. Consider changing it.`;
               }
               break;
-            case gd.GREETING_TYPE.CATEGORY:
-              if (!(greeting in gd.categoryDict)) {
+            case GREETING_TYPE.CATEGORY:
+              if (!(greeting in categoryDict)) {
                 response += `\n"${greeting}" is not a valid category name. Consider changing it.`;
               }
               break;
