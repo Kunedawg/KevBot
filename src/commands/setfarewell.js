@@ -1,7 +1,6 @@
-const gd = require("../globaldata.js");
 const { Message } = require("discord.js");
-const hf = require("../helperfcns.js");
 const { getAudioDurationInSeconds } = require("get-audio-duration");
+const { audioDict } = require("../data");
 
 module.exports = {
   name: "setfarewell",
@@ -22,14 +21,13 @@ module.exports = {
 
       // Get farewell from args and check that it is valid
       var farewell = args?.[0];
-      if (!(farewell in gd.audioDict)) {
+      if (!(farewell in audioDict)) {
         return reject({ userMess: `"${farewell}" is not a valid farewell name. Check your spelling.` });
       }
 
       // Check that the duration is less than the allowed amount
       const MAX_FAREWELL_CLIP_DURATION = 4; // sec
-
-      var duration = await getAudioDurationInSeconds(gd.audioDict[farewell]);
+      var duration = await getAudioDurationInSeconds(audioDict[farewell]);
       if (duration >= MAX_FAREWELL_CLIP_DURATION) {
         return reject({
           userMess: `"${farewell}" has a duration of ${duration} sec. Max duration is ${MAX_FAREWELL_CLIP_DURATION} sec. Talk to Kevin for exceptions to this rule.`,
@@ -38,8 +36,9 @@ module.exports = {
 
       // Call set_farewell stored procedure
       try {
-        let queryStr = `CALL set_farewell('${discordId}','${farewell}', @message); SELECT @message;`;
-        let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
+        let results = await sqlDatabase.asyncQuery(
+          `CALL set_farewell('${discordId}','${farewell}', @message); SELECT @message;`
+        );
         let rtnMess = results[1][0]["@message"];
         if (rtnMess === "Success") {
           return resolve({ userMess: `Your farewell has been set to "${farewell}"!` });

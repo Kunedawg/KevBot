@@ -1,6 +1,5 @@
-var gd = require("../globaldata.js");
 const { Message, User } = require("discord.js");
-const hf = require("../helperfcns.js");
+const { sqlDatabase, audioDict } = require("../data");
 
 module.exports = {
   name: "getfarewell",
@@ -22,12 +21,11 @@ module.exports = {
 
       // Call get_farewell stored procedure
       try {
-        let queryStr = `CALL get_farewell('${discordId}', @farewell); SELECT @farewell;`;
-        let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
+        let results = await sqlDatabase.asyncQuery(`CALL get_farewell('${discordId}', @farewell); SELECT @farewell;`);
         let farewell = results[1][0]["@farewell"];
         if (farewell !== null) {
           var response = `Your current farewell is set to "${farewell}"!`;
-          if (!(farewell in gd.audioDict)) {
+          if (!(farewell in audioDict)) {
             response += `\n"${farewell}" is not a valid command. Consider changing it.`;
           }
         } else {

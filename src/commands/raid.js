@@ -1,10 +1,10 @@
-var gd = require("../globaldata.js");
 const { Message, ChannelType } = require("discord.js");
+const { PLAY_TYPE } = require("../enumerations/PlayType");
 
 module.exports = {
   name: "raid",
   description: "Play audio in a voice channel (numbered top-down starting at 1)",
-  usage: "raid!file_name VoiceChannel#      e.g. raid!imback 3",
+  usage: "raid!file_name VoiceChannel# (ex: raid!imback 3)",
   /**
    * @param {Object} methodargs
    * @param {Message} methodargs.message
@@ -32,11 +32,11 @@ module.exports = {
 
       // Calling the play command
       try {
-        await gd.client.commands.get("p").execute({
+        await message.client.commands.get("p").execute({
           audio: args?.[0],
           voiceChannel: voiceChannelSelected,
           discordId: message?.author?.id,
-          playType: gd.PLAY_TYPE.RAID,
+          playType: PLAY_TYPE.RAID,
         });
       } catch (err) {
         return reject(err);

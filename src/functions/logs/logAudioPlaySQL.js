@@ -1,5 +1,4 @@
-const gd = require("../globaldata.js");
-const hf = require("../helperfcns.js");
+const { sqlDatabase } = require("../../data");
 
 /**
  * For logging plays of audio to sql. Note playType = (0: p!, 1 : pr!, 2 : greeting!, 3 : raid!, 4: farewell!)
@@ -7,11 +6,11 @@ const hf = require("../helperfcns.js");
  * @param {string} audio
  * @param {number} playType
  */
-function logAudioPlaySQL(discordId = 0, audio, playType) {
+function logAudioPlaySql(discordId = 0, audio, playType) {
   return new Promise(async (resolve, reject) => {
-    // Call stored procedure
-    let queryStr = `CALL log_audio_play('${discordId}', '${audio}', '${playType}', @message); SELECT @message;`;
-    let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
+    let results = await sqlDatabase.asyncQuery(
+      `CALL log_audio_play('${discordId}', '${audio}', '${playType}', @message); SELECT @message;`
+    );
     let rtnMess = results[1][0]["@message"];
     if (rtnMess === "Success") {
       return resolve("Logged audio successfully");
@@ -21,4 +20,4 @@ function logAudioPlaySQL(discordId = 0, audio, playType) {
   });
 }
 
-module.exports = { logAudioPlaySQL };
+module.exports = { logAudioPlaySql };

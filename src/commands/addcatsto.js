@@ -1,11 +1,11 @@
-const gd = require("../globaldata.js");
 const { Message } = require("discord.js");
-const hf = require("../helperfcns.js");
+const { updateCategoryDict } = require("../functions/updaters/updateCategoryDict");
+const { sqlDatabase, audioDict, categoryList, protectedCategoryNames, categoryDict } = require("../data");
 
 module.exports = {
   name: "addcatsto",
-  description: "Adds the given audio name to the specified categories.",
-  usage: "addtocat!audioName categoryName1 categoryName2 categoryName3...",
+  description: "Adds the given audio name(s) to the specified categories.",
+  usage: "addcatsto!audioName categoryName1 categoryName2 categoryName3...",
   /**
    * @param {Object} methodargs
    * @param {Message} methodargs.message
@@ -31,7 +31,7 @@ module.exports = {
       var categoryArray = args;
 
       // check that audio is in the audioDict
-      if (!Object.keys(gd.audioDict).includes(audio)) {
+      if (!Object.keys(audioDict).includes(audio)) {
         return reject({ userMess: `The audio name "${audio}" does not exist!` });
       }
 
@@ -39,7 +39,7 @@ module.exports = {
       try {
         for (let category of categoryArray) {
           // check that category is in the category list / if the category is restricted
-          if (!gd.categoryList.includes(category)) {
+          if (!categoryList.includes(category)) {
             message.author.send(
               `The category "${category}" does not exist, so the audio "${audio}" will not be added to it!`
             );
@@ -47,7 +47,7 @@ module.exports = {
           }
 
           // check if category is protected
-          if (gd.protectedCategoryNames.includes(category)) {
+          if (protectedCategoryNames.includes(category)) {
             message.author.send(
               `The category "${category}" is restricted, so the audio "${audio}" will not be added it!`
             );
@@ -55,8 +55,8 @@ module.exports = {
           }
 
           // Check if audio is already in the category
-          if (Object.keys(gd.categoryDict).includes(category)) {
-            if (gd.categoryDict[category].includes(audio)) {
+          if (Object.keys(categoryDict).includes(category)) {
+            if (categoryDict[category].includes(audio)) {
               message.author.send(
                 `Audio "${audio}" is already in the category "${category}", no need to add it again!`
               );
@@ -65,15 +65,16 @@ module.exports = {
           }
 
           // Call stored procedure
-          let queryStr = `CALL add_audio_category('${discordId}', '${audio}', '${category}', @message); SELECT @message;`;
-          let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
+          let results = await sqlDatabase.asyncQuery(
+            `CALL add_audio_category('${discordId}', '${audio}', '${category}', @message); SELECT @message;`
+          );
           let rtnMess = results[1][0]["@message"];
           if (rtnMess === "Success") {
-            hf.updateCategoryDict(gd.categoryDict, category, audio);
+            updateCategoryDict(categoryDict, category, audio);
             message.author.send(`Audio "${audio}" has been added to the category "${category}"!`);
           } else {
             return reject({
-              userMess: "Adding audio to catogories was aborted! Try again later or talk to Kevin.",
+              userMess: "Adding audio to categories was aborted! Try again later or talk to Kevin.",
               err: rtnMess,
             });
           }
@@ -83,7 +84,7 @@ module.exports = {
       }
 
       // Return resolve promise
-      return resolve({ userMess: `Adding audio to catogories complete!` });
+      return resolve({ userMess: `Adding audio to categories complete!` });
     });
   },
 };

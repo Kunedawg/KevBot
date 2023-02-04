@@ -1,7 +1,7 @@
-var gd = require("../globaldata.js");
 const { Message } = require("discord.js");
-const { logCategoryPlaySQL } = require("../functions/logCategoryPlaySQL.js");
-const hf = require("../helperfcns.js");
+const { logCategoryPlaySql } = require("../functions/logs/logCategoryPlaySql.js");
+const { getList } = require("../functions/helpers/getList");
+const { PLAY_TYPE } = require("../enumerations/PlayType");
 
 module.exports = {
   name: "pr",
@@ -24,10 +24,10 @@ module.exports = {
         var _category = category || args?.[0] || "all";
         var _voiceChannel = voiceChannel || message?.member?.voice?.channel;
         const _listLength = args?.[1]; // listLength argument is relevant to certain categories like most played or recent played.
-        var _playType = playType || gd.PLAY_TYPE.PLAY_RANDOM;
+        var _playType = playType || PLAY_TYPE.PLAY_RANDOM;
 
         // Get the audio name list from the given category name
-        let lists = await hf.getList(_category, _discordId, _listLength);
+        let lists = await getList(_category, _discordId, _listLength);
         if (!lists?.audioNameList) {
           return reject({
             userMess: `"${_category}" is not a valid category for random plays, ya dingus!`,
@@ -36,7 +36,7 @@ module.exports = {
 
         // Play a random file that category
         const indexToPlay = Math.floor(Math.random() * lists.audioNameList.length); // returns a random integer from 0 to amount of commands
-        await gd.client.commands.get("p").execute({
+        await message.client.commands.get("p").execute({
           audio: lists.audioNameList[indexToPlay],
           voiceChannel: _voiceChannel,
           discordId: _discordId,
@@ -48,7 +48,7 @@ module.exports = {
 
       // On every random play log it
       try {
-        await logCategoryPlaySQL(_discordId, _category);
+        await logCategoryPlaySql(_discordId, _category);
       } catch (err) {
         return reject({
           userMess: "SUPPRESS_GENERAL_ERR_MESSAGE",

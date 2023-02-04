@@ -1,6 +1,6 @@
-const gd = require("../globaldata.js");
 const { Message } = require("discord.js");
-const hf = require("../helperfcns.js");
+const { updateCategoryDict } = require("../functions/updaters/updateCategoryDict");
+const { sqlDatabase, audioDict, categoryList, protectedCategoryNames, categoryDict } = require("../data");
 
 module.exports = {
   name: "addtocat",
@@ -31,12 +31,12 @@ module.exports = {
       var audioArray = args;
 
       // Check that category name is in the categorylist
-      if (!gd.categoryList.includes(category)) {
+      if (!categoryList.includes(category)) {
         return reject({ userMess: `The category "${category}" does not exist!` });
       }
 
       // Check if category is protected
-      if (gd.protectedCategoryNames.includes(category)) {
+      if (protectedCategoryNames.includes(category)) {
         return reject({ userMess: `The category "${category}" is restricted!` });
       }
 
@@ -44,14 +44,14 @@ module.exports = {
       try {
         for (let audio of audioArray) {
           // check that audio is in the audioDict
-          if (!Object.keys(gd.audioDict).includes(audio)) {
+          if (!Object.keys(audioDict).includes(audio)) {
             message.author.send(`Audio "${audio}" does not exist so it will not be added to category "${category}"!`);
             continue;
           }
 
           // Check if audio is already in the category
-          if (Object.keys(gd.categoryDict).includes(category)) {
-            if (gd.categoryDict[category].includes(audio)) {
+          if (Object.keys(categoryDict).includes(category)) {
+            if (categoryDict[category].includes(audio)) {
               message.author.send(
                 `Audio "${audio}" is already in the category "${category}", no need to add it again!`
               );
@@ -60,11 +60,12 @@ module.exports = {
           }
 
           // Call stored procedure
-          let queryStr = `CALL add_audio_category('${discordId}', '${audio}', '${category}', @message); SELECT @message;`;
-          let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
+          let results = await sqlDatabase.asyncQuery(
+            `CALL add_audio_category('${discordId}', '${audio}', '${category}', @message); SELECT @message;`
+          );
           let rtnMess = results[1][0]["@message"];
           if (rtnMess === "Success") {
-            hf.updateCategoryDict(gd.categoryDict, category, audio);
+            updateCategoryDict(categoryDict, category, audio);
             message.author.send(`Audio "${audio}" has been added to the category "${category}"!`);
           } else {
             return reject({

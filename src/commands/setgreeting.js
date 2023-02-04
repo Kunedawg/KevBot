@@ -1,6 +1,6 @@
-var gd = require("../globaldata.js");
 const { Message } = require("discord.js");
-const hf = require("../helperfcns.js");
+const { audioDict, categoryDict } = require("../data");
+const { GREETING_TYPE } = require("../enumerations/GreetingType");
 
 module.exports = {
   name: "setgreeting",
@@ -22,8 +22,8 @@ module.exports = {
 
       // Get greeting from args and check whether it is a file or a category
       let greeting = args?.[0];
-      let isFile = greeting in gd.audioDict;
-      let isCategory = greeting in gd.categoryDict;
+      let isFile = greeting in audioDict;
+      let isCategory = greeting in categoryDict;
 
       // Check if it is both a file and category
       let type = args?.[2];
@@ -35,30 +35,31 @@ module.exports = {
           });
         }
         if (["file", "audio", "clip", "audioclip"].includes(type)) {
-          greeting_type = gd.GREETING_TYPE.FILE;
+          greeting_type = GREETING_TYPE.FILE;
         } else if (["cat", "category"].includes(type)) {
-          greeting_type = gd.GREETING_TYPE.CATEGORY;
+          greeting_type = GREETING_TYPE.CATEGORY;
         } else {
           return reject({ userMess: `"${type}" is not a valid type. Please use "cat" or "file".` });
         }
       } else if (isFile) {
-        greeting_type = gd.GREETING_TYPE.FILE;
+        greeting_type = GREETING_TYPE.FILE;
       } else if (isCategory) {
-        greeting_type = gd.GREETING_TYPE.CATEGORY;
+        greeting_type = GREETING_TYPE.CATEGORY;
       } else {
         return reject({ userMess: `"${greeting}" is not a valid greeting name. Check your spelling.` });
       }
 
       // Call set_greeting stored procedure
       try {
-        let queryStr = `CALL set_greeting('${discordId}','${greeting}', ${greeting_type}, @message); SELECT @message;`;
-        let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
+        let results = await sqlDatabase.asyncQuery(
+          `CALL set_greeting('${discordId}','${greeting}', ${greeting_type}, @message); SELECT @message;`
+        );
         let rtnMess = results[1][0]["@message"];
         if (rtnMess === "Success") {
           let greeting_type_string =
-            greeting_type == gd.GREETING_TYPE.FILE
+            greeting_type == GREETING_TYPE.FILE
               ? "file"
-              : greeting_type == gd.GREETING_TYPE.CATEGORY
+              : greeting_type == GREETING_TYPE.CATEGORY
               ? "category"
               : "undefined";
           return resolve({

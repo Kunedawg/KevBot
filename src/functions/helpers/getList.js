@@ -1,5 +1,13 @@
-const gd = require("./globaldata.js");
-
+const {
+  categoryList,
+  categoryDict,
+  protectedCategoryNames,
+  audioDict,
+  mostPlayedList,
+  uploadsByDiscordId,
+  recentlyPlayedList,
+  recentlyUploadedList,
+} = require("../../data");
 const DEFAULT_LIST_LENGTH = 25;
 
 /**
@@ -21,24 +29,24 @@ function getList(category, discordId, listLen) {
       switch (category) {
         case "categories":
         case "cats":
-          categoryNameList = Array.from(gd.categoryList); // Array.from makes a copy
+          categoryNameList = Array.from(categoryList); // Array.from makes a copy
           break;
         case "emptycats":
-          categoryNameList = Array.from(gd.categoryList);
-          for (let cat of Object.keys(gd.categoryDict)) {
+          categoryNameList = Array.from(categoryList);
+          for (let cat of Object.keys(categoryDict)) {
             spliceElement(categoryNameList, cat); // removes the non empty categories from the full list. non empty cats are in the dict
           }
-          for (let cat of gd.protectedCategoryNames) {
+          for (let cat of protectedCategoryNames) {
             spliceElement(categoryNameList, cat); // removes the protected names form the empty category
           }
           break;
         case "all":
-          audioNameList = Object.keys(gd.audioDict);
+          audioNameList = Object.keys(audioDict);
           break;
         case "mostplayed":
           audioNameList = [];
           supplementalDataList = [];
-          let mostPlayed = [...gd.mostPlayedList];
+          let mostPlayed = [...mostPlayedList];
           if (listLength < mostPlayed.length && listLength > 0) {
             mostPlayed.length = listLength;
           }
@@ -52,15 +60,15 @@ function getList(category, discordId, listLen) {
           if (!discordId) {
             return reject({ userMess: `Failed to retrieve discord id!` });
           }
-          if (!gd.uploadsByDiscordId[discordId]) {
+          if (!uploadsByDiscordId[discordId]) {
             return resolve({ userMess: "You have not uploaded any files!" });
           }
-          audioNameList = gd.uploadsByDiscordId[discordId];
+          audioNameList = uploadsByDiscordId[discordId];
           break;
         case "playhistory":
           audioNameList = [];
           supplementalDataList = [];
-          let recentlyPlayed = [...gd.recentlyPlayedList];
+          let recentlyPlayed = [...recentlyPlayedList];
           if (listLength < recentlyPlayed.length && listLength > 0) {
             recentlyPlayed.length = listLength;
           }
@@ -73,7 +81,7 @@ function getList(category, discordId, listLen) {
         case "uploadhistory":
           audioNameList = [];
           supplementalDataList = [];
-          let recentlyUploaded = [...gd.recentlyUploadedList];
+          let recentlyUploaded = [...recentlyUploadedList];
           if (listLength < recentlyUploaded.length && listLength > 0) {
             recentlyUploaded.length = listLength;
           }
@@ -84,9 +92,9 @@ function getList(category, discordId, listLen) {
           headers = ["audio_name", "date_time"];
           break;
         default:
-          if (category in gd.categoryDict) {
-            audioNameList = Array.from(gd.categoryDict[category]);
-          } else if (gd.categoryList.includes(category)) {
+          if (category in categoryDict) {
+            audioNameList = Array.from(categoryDict[category]);
+          } else if (categoryList.includes(category)) {
             return reject({
               userMess: `"${category}" is an empty category, nothing to list/play!`,
             });

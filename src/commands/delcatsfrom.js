@@ -1,6 +1,6 @@
-const gd = require("../globaldata.js");
 const { Message } = require("discord.js");
-const hf = require("../helperfcns.js");
+const { sqlDatabase, audioDict, categoryDict } = require("../data");
+const { updateCategoryDict } = require("../functions/updaters/updateCategoryDict");
 
 module.exports = {
   name: "delcatsfrom",
@@ -31,7 +31,7 @@ module.exports = {
       var categoryArray = args;
 
       // Check that audio name actually exists
-      if (!Object.keys(gd.audioDict).includes(audio)) {
+      if (!Object.keys(audioDict).includes(audio)) {
         return reject({ userMess: `The audio "${audio}" does not exist!` });
       }
 
@@ -39,24 +39,25 @@ module.exports = {
       try {
         for (let category of categoryArray) {
           // Check that category name is in the categoryDict
-          if (!Object.keys(gd.categoryDict).includes(category)) {
+          if (!Object.keys(categoryDict).includes(category)) {
             message.author.send(`The category "${category}" does not exist or it is empty!`);
             continue;
           }
 
           // Check if the audio is in the category
-          if (!gd.categoryDict[category].includes(audio)) {
+          if (!categoryDict[category].includes(audio)) {
             message.author.send(
               `Audio "${audio}" is not in the category "${category}", so it cannot be removed from that category!`
             );
             continue;
           }
 
-          // Check that the user orginally created this category or is the master user
+          // Check that the user originally created this category or is the master user
           try {
             if (Number(discordId) != Number(process.env.MASTER_DISCORD_ID)) {
-              let queryStr = `SELECT discord_id FROM categories INNER JOIN player_info ON player_info.player_id = categories.player_id WHERE category_name = '${category}';`;
-              let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
+              let results = await sqlDatabase.asyncQuery(
+                `SELECT discord_id FROM categories INNER JOIN player_info ON player_info.player_id = categories.player_id WHERE category_name = '${category}';`
+              );
               if (!results[0]) {
                 message.author.send(
                   `The creator of the category "${category}" could not be determined, so you may not remove audio "${audio}" from it!`
@@ -76,11 +77,12 @@ module.exports = {
           }
 
           // Call stored procedure
-          let queryStr = `CALL del_audio_category('${audio}', '${category}', @message); SELECT @message;`;
-          let results = await hf.asyncQuery(gd.sqlconnection, queryStr);
+          let results = await sqlDatabase.asyncQuery(
+            `CALL del_audio_category('${audio}', '${category}', @message); SELECT @message;`
+          );
           let rtnMess = results[1][0]["@message"];
           if (rtnMess === "Success") {
-            hf.updateCategoryDict(gd.categoryDict, category, audio, "remove");
+            updateCategoryDict(categoryDict, category, audio, "remove");
             message.author.send(`audio "${audio}" has been deleted from the category "${category}"!`);
           } else {
             return reject({

@@ -1,4 +1,3 @@
-var gd = require("../globaldata.js");
 const { Message } = require("discord.js");
 
 module.exports = {
@@ -25,11 +24,11 @@ module.exports = {
 
       // Header of response
       var response =
-        "Thanks for using kev-bot! This bot is for people who are ballsy and dont take shit from anyone.\n\n";
+        "Thanks for using kev-bot! This bot is for people who are ballsy and don't take shit from anyone.\n\n";
       response += 'General command format: "command!arg1 arg2 arg3".\n\n' + "!@#";
 
       // Loop over commands
-      for (let command of gd.client.commands.values()) {
+      for (let command of message.client.commands.values()) {
         response += `command:     ${command.name}\n`;
         response += `usage:       ${command.usage}\n`;
         response += `description: ${command.description}\n\n!@#`;
