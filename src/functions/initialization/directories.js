@@ -1,4 +1,4 @@
-const { audioPath, tempDataPath } = require("../../data");
+const { audioPath, tempDataPath, tempPath } = require("../../data");
 const fs = require("fs-extra");
 
 /**
@@ -7,6 +7,12 @@ const fs = require("fs-extra");
 async function directories() {
   try {
     console.log("Directories initializing...");
+    if (!fs.existsSync(tempPath)) {
+      fs.mkdirSync(tempPath);
+    }
+    if (!fs.existsSync(audioPath)) {
+      fs.mkdirSync(audioPath);
+    }
     if (!fs.existsSync(audioPath)) {
       fs.mkdirSync(audioPath);
     }

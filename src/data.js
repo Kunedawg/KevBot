@@ -30,6 +30,7 @@ var recentlyPlayedList = []; // List of recently played audio [{audio,datetime},
 var recentlyUploadedList = []; // List of the recently uploaded audio [{audio,datetime},{audio,datetime},..] (sorted by datetime)
 
 // paths
+const tempPath = path.join(__dirname, "./temp/");
 const audioPath = path.join(__dirname, "./temp/audio/");
 const tempDataPath = path.join(__dirname, "./temp/data/");
 
@@ -55,6 +56,7 @@ module.exports = {
   uploadsByDiscordId,
   recentlyPlayedList,
   recentlyUploadedList,
+  tempPath,
   audioPath,
   tempDataPath,
   protectedCategoryNames,
