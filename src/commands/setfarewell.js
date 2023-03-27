@@ -1,6 +1,6 @@
 const { Message } = require("discord.js");
 const { getAudioDurationInSeconds } = require("get-audio-duration");
-const { audioDict } = require("../data");
+const { audioDict, sqlDatabase } = require("../data");
 
 module.exports = {
   name: "setfarewell",

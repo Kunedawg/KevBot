@@ -1,5 +1,5 @@
 const { Message } = require("discord.js");
-const { audioDict, categoryDict } = require("../data");
+const { audioDict, categoryDict, sqlDatabase } = require("../data");
 const { GREETING_TYPE } = require("../enumerations/GreetingType");
 
 module.exports = {
