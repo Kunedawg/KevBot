@@ -3,7 +3,15 @@ const path = require("path");
 const fetch = require("node-fetch");
 const { getAudioDurationInSeconds } = require("get-audio-duration");
 const { Message } = require("discord.js");
-const { audioDict, categoryList, audioPath, tempDataPath, audioBucket, recentlyUploadedList } = require("../data");
+const {
+  audioDict,
+  categoryList,
+  audioPath,
+  tempDataPath,
+  audioBucket,
+  recentlyUploadedList,
+  sqlDatabase,
+} = require("../data");
 const { kevbotStringOkay } = require("../functions/helpers/kevbotStringOkay");
 const { getFiles } = require("../functions/helpers/getFiles");
 const { asyncPipe } = require("../functions/helpers/asyncPipe");
