@@ -1,4 +1,4 @@
-const { Message } = require("discord.js");
+const { Message, Client } = require("discord.js");
 const { logCategoryPlaySql } = require("../functions/logs/logCategoryPlaySql.js");
 const { getList } = require("../functions/helpers/getList");
 const { PLAY_TYPE } = require("../enumerations/PlayType");
@@ -15,8 +15,9 @@ module.exports = {
    * @param {VoiceChannel} methodargs.voiceChannel
    * @param {string} methodargs.discordId
    * @param {number} methodargs.playType
+   * @param {Client} methodargs.client
    */
-  execute({ message, args, category, voiceChannel, discordId, playType }) {
+  execute({ message, args, category, voiceChannel, discordId, playType, client }) {
     return new Promise(async (resolve, reject) => {
       try {
         // Get discord ID, category, voice channel, play type and list length
@@ -25,6 +26,7 @@ module.exports = {
         var _voiceChannel = voiceChannel || message?.member?.voice?.channel;
         const _listLength = args?.[1]; // listLength argument is relevant to certain categories like most played or recent played.
         var _playType = playType || PLAY_TYPE.PLAY_RANDOM;
+        var _client = client || message?.client;
 
         // Get the audio name list from the given category name
         let lists = await getList(_category, _discordId, _listLength);
@@ -36,7 +38,7 @@ module.exports = {
 
         // Play a random file that category
         const indexToPlay = Math.floor(Math.random() * lists.audioNameList.length); // returns a random integer from 0 to amount of commands
-        await message.client.commands.get("p").execute({
+        await _client.commands.get("p").execute({
           audio: lists.audioNameList[indexToPlay],
           voiceChannel: _voiceChannel,
           discordId: _discordId,
