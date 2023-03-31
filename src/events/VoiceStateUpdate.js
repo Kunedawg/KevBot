@@ -43,6 +43,7 @@ module.exports = {
               voiceChannel: newUserChannel,
               discordId: _discordId,
               playType: PLAY_TYPE.CATEGORY_GREETING,
+              client: client,
             });
             break;
           default:
