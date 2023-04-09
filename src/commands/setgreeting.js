@@ -26,7 +26,7 @@ module.exports = {
       let isCategory = greeting in categoryDict;
 
       // Check if it is both a file and category
-      let type = args?.[2];
+      let type = args?.[1];
       let greeting_type;
       if (isFile && isCategory) {
         if (!type) {
