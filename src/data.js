@@ -16,8 +16,12 @@ const sqlDatabase = new SqlDatabase({
   user: process.env.SQL_DB_USER,
   password: process.env.SQL_DB_PASSWORD,
   database: process.env.SQL_DB_DATABASE,
+  port: process.env.SQL_DB_PORT,
   multipleStatements: true,
   dateStrings: true,
+  ssl: {
+    ca: process.env.SQL_DB_SSL_CA,
+  },
 });
 
 // Data structures for use throughout code
