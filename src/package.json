@@ -30,7 +30,7 @@
     "fluent-ffmpeg": "^2.1.2",
     "fs-extra": "^9.0.1",
     "get-audio-duration": "^2.0.3",
-    "mysql": "^2.18.1",
+    "mysql2": "^3.7.0",
     "node-fetch": "^2.6.1",
     "sodium": "^3.0.2"
   }
