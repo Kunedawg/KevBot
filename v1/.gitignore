@@ -1,17 +1,15 @@
-#mac OS
-.DS_Store
-
 # exclude node modules
 node_modules
+
+# exclude all files in these folders
+audio/
+temp/
 
 # exlude .env file that contains sensitive data
 *.env
 *.ppk
 .env*
 !.env.example
-
-# large data
-/large-data
 
 # ignore vscode settings
 .vscode
