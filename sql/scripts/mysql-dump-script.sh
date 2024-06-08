@@ -27,17 +27,19 @@ if [ -n "$missing_variables" ]; then
     exit 1
   fi
   env_file="$1"
+
+  # Load missing environment variables from .env file
+  if [ -f "$env_file" ]; then
+    set -a
+    source "$env_file"
+    set -e
+  else
+    echo "Provided .env file does not exist: $env_file"
+    exit 1
+  fi
 fi
 
-# Load missing environment variables from .env file
-for var_name in $missing_variables; do
-  env_var_line=$(grep "^$var_name=" $env_file)
-  if [ -n "$env_var_line" ]; then
-    export "$env_var_line"
-  fi
-done
-
-# check if vars are populated now
+# Recheck for missing variables after sourcing .env file
 missing_variables=$(check_missing_variables "${expected_env_variables[@]}")
 if [ -n "$missing_variables" ]; then
   echo "Env vars still missing!!"
@@ -45,10 +47,10 @@ if [ -n "$missing_variables" ]; then
   exit 1
 fi
 
-# echo info
-echo Dumping...
-echo HOST: $MYSQL_HOST
-echo DATABASE: $MYSQL_DATABASE_NAME
+# Echo info
+echo "Dumping..."
+echo "HOST: $MYSQL_HOST"
+echo "DATABASE: $MYSQL_DATABASE_NAME"
 
 # Generate vars
 TIMESTAMP=$(date +"%Y%m%d%H%M%S")
@@ -59,26 +61,23 @@ COMPLETE_DUMP_FILE="$OUTPUT_DIR/complete_dump_$TIMESTAMP.sql"
 
 # Check if the output directory exists, create it if not
 if [ ! -d "$OUTPUT_DIR" ]; then
-  echo "making dir $OUTPUT_DIR"
+  echo "Making directory $OUTPUT_DIR"
   mkdir -p "$OUTPUT_DIR"
 fi
 
 # Data Dump
-mysqldump -h $MYSQL_HOST -u $MYSQL_USER \
-  --no-create-info --extended-insert $MYSQL_DATABASE_NAME > \
-  "$DATA_FILE"
+mysqldump -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PWD" \
+  --no-create-info --extended-insert "$MYSQL_DATABASE_NAME" >"$DATA_FILE"
 echo "Data dump here: $DATA_FILE"
 
-# Schema dump
-mysqldump -h $MYSQL_HOST -u $MYSQL_USER \
-  --no-data --routines --skip-triggers $MYSQL_DATABASE_NAME > \
-  "$SCHEMA_FILE"
-echo "schema dump here: $SCHEMA_FILE"
+# Schema Dump
+mysqldump -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PWD" \
+  --no-data --routines --skip-triggers "$MYSQL_DATABASE_NAME" >"$SCHEMA_FILE"
+echo "Schema dump here: $SCHEMA_FILE"
 
-# Complete dump
-mysqldump -h $MYSQL_HOST -u $MYSQL_USER \
-  --routines --triggers $MYSQL_DATABASE_NAME > \
-  "$COMPLETE_DUMP_FILE"
-echo "complete dump here: $SCHEMA_FILE"
+# Complete Dump
+mysqldump -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PWD" \
+  --routines --triggers "$MYSQL_DATABASE_NAME" >"$COMPLETE_DUMP_FILE"
+echo "Complete dump here: $COMPLETE_DUMP_FILE"
 
 echo "Dump completed!"
