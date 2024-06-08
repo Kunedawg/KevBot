@@ -13,7 +13,7 @@ check_missing_variables() {
 }
 
 # Specify the list of expected environment variables
-declare -a expected_env_variables=("MYSQL_HOST" "MYSQL_USER" "MYSQL_PWD" "MYSQL_DATABASE_NAME" "MYSQL_DUMP_DIR" "MYSQL_ENV")
+declare -a expected_env_variables=("SQL_DB_HOST" "SQL_DB_USER" "SQL_DB_PASSWORD" "SQL_DATABASE" "SQL_DUMP_DIR" "ENV")
 
 # Check for missing variables
 missing_variables=$(check_missing_variables "${expected_env_variables[@]}")
@@ -49,12 +49,12 @@ fi
 
 # Echo info
 echo "Dumping..."
-echo "HOST: $MYSQL_HOST"
-echo "DATABASE: $MYSQL_DATABASE_NAME"
+echo "HOST: $SQL_DB_HOST"
+echo "DATABASE: $SQL_DATABASE"
 
 # Generate vars
 TIMESTAMP=$(date +"%Y%m%d%H%M%S")
-OUTPUT_DIR="$MYSQL_DUMP_DIR/$MYSQL_ENV"
+OUTPUT_DIR="$SQL_DUMP_DIR/$ENV"
 DATA_FILE="$OUTPUT_DIR/data_dump_$TIMESTAMP.sql"
 SCHEMA_FILE="$OUTPUT_DIR/schema_dump_$TIMESTAMP.sql"
 COMPLETE_DUMP_FILE="$OUTPUT_DIR/complete_dump_$TIMESTAMP.sql"
@@ -66,18 +66,18 @@ if [ ! -d "$OUTPUT_DIR" ]; then
 fi
 
 # Data Dump
-mysqldump -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PWD" \
-  --no-create-info --extended-insert "$MYSQL_DATABASE_NAME" >"$DATA_FILE"
+mysqldump -h "$SQL_DB_HOST" -u "$SQL_DB_USER" -p"$SQL_DB_PASSWORD" \
+  --no-create-info --extended-insert "$SQL_DATABASE" >"$DATA_FILE"
 echo "Data dump here: $DATA_FILE"
 
 # Schema Dump
-mysqldump -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PWD" \
-  --no-data --routines --skip-triggers "$MYSQL_DATABASE_NAME" >"$SCHEMA_FILE"
+mysqldump -h "$SQL_DB_HOST" -u "$SQL_DB_USER" -p"$SQL_DB_PASSWORD" \
+  --no-data --routines --skip-triggers "$SQL_DATABASE" >"$SCHEMA_FILE"
 echo "Schema dump here: $SCHEMA_FILE"
 
 # Complete Dump
-mysqldump -h "$MYSQL_HOST" -u "$MYSQL_USER" -p"$MYSQL_PWD" \
-  --routines --triggers "$MYSQL_DATABASE_NAME" >"$COMPLETE_DUMP_FILE"
+mysqldump -h "$SQL_DB_HOST" -u "$SQL_DB_USER" -p"$SQL_DB_PASSWORD" \
+  --routines --triggers "$SQL_DATABASE" >"$COMPLETE_DUMP_FILE"
 echo "Complete dump here: $COMPLETE_DUMP_FILE"
 
 echo "Dump completed!"
