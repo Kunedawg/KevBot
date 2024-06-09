@@ -70,19 +70,26 @@ else
     exit 1
 fi
 
-# Zip the downloaded files
-zip -r "$ZIP_FILE" "$TEMP_DIR"
+# Create a directory named after the zip file
+ZIP_FOLDER="${ZIP_FILE%.zip}"
+mkdir "$ZIP_FOLDER"
+
+# Move downloaded files into the new folder
+mv "$TEMP_DIR"/* "$ZIP_FOLDER"
+
+# Zip the new folder
+zip -r "$ZIP_FILE" "$ZIP_FOLDER"
 
 # Verify if the zip was successful
 if [ $? -eq 0 ]; then
     echo "All files have been successfully zipped into $ZIP_FILE."
 else
     echo "An error occurred while zipping the files."
-    rm -r $TEMP_DIR
+    rm -r "$ZIP_FOLDER"
     rm /tmp/google_credentials.json
     exit 1
 fi
 
 # Clean up the temporary credentials file and the temporary directory
 rm /tmp/google_credentials.json
-rm -r $TEMP_DIR
+rm -r "$ZIP_FOLDER"
