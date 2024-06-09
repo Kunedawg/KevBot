@@ -60,20 +60,26 @@ echo "DATABASE: $SQL_DB_DATABASE"
 SSL_CA_FILE=$(mktemp)
 echo -e "$SQL_DB_SSL_CA" >"$SSL_CA_FILE"
 
+# Set the MYSQL_PWD environment variable to suppress the password warning
+export MYSQL_PWD="$SQL_DB_PASSWORD"
+
 # Data Dump
-mysqldump -h "$SQL_DB_HOST" -P "$SQL_DB_PORT" --ssl-ca="$SSL_CA_FILE" -u "$SQL_DB_USER" -p"$SQL_DB_PASSWORD" \
+mysqldump -h "$SQL_DB_HOST" -P "$SQL_DB_PORT" --ssl-ca="$SSL_CA_FILE" -u "$SQL_DB_USER" \
   --single-transaction --set-gtid-purged=OFF --no-create-info --extended-insert "$SQL_DB_DATABASE" >"$DATA_FILE"
 echo "Data dump completed: $DATA_FILE"
 
 # Schema Dump
-mysqldump -h "$SQL_DB_HOST" -P "$SQL_DB_PORT" --ssl-ca="$SSL_CA_FILE" -u "$SQL_DB_USER" -p"$SQL_DB_PASSWORD" \
+mysqldump -h "$SQL_DB_HOST" -P "$SQL_DB_PORT" --ssl-ca="$SSL_CA_FILE" -u "$SQL_DB_USER" \
   --no-data --routines --skip-triggers --set-gtid-purged=OFF "$SQL_DB_DATABASE" >"$SCHEMA_FILE"
 echo "Schema dump completed: $SCHEMA_FILE"
 
-# Complete Dump
-mysqldump -h "$SQL_DB_HOST" -P "$SQL_DB_PORT" --ssl-ca="$SSL_CA_FILE" -u "$SQL_DB_USER" -p"$SQL_DB_PASSWORD" \
+# Full Dump
+mysqldump -h "$SQL_DB_HOST" -P "$SQL_DB_PORT" --ssl-ca="$SSL_CA_FILE" -u "$SQL_DB_USER" \
   --single-transaction --routines --triggers --set-gtid-purged=OFF "$SQL_DB_DATABASE" >"$FULL_DUMP_FILE"
-echo "Complete dump completed: $FULL_DUMP_FILE"
+echo "Full dump completed: $FULL_DUMP_FILE"
+
+# Unset the MYSQL_PWD environment variable after use
+unset MYSQL_PWD
 
 # Clean up the temporary SSL CA file
 rm "$SSL_CA_FILE"
