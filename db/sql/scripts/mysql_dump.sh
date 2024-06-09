@@ -58,21 +58,21 @@ echo "DATABASE: $SQL_DB_DATABASE"
 
 # Write SSL CA string to a temporary file
 SSL_CA_FILE=$(mktemp)
-echo "$SQL_DB_SSL_CA" >"$SSL_CA_FILE"
+echo -e "$SQL_DB_SSL_CA" >"$SSL_CA_FILE"
 
 # Data Dump
 mysqldump -h "$SQL_DB_HOST" -P "$SQL_DB_PORT" --ssl-ca="$SSL_CA_FILE" -u "$SQL_DB_USER" -p"$SQL_DB_PASSWORD" \
-  --no-create-info --extended-insert "$SQL_DB_DATABASE" >"$DATA_FILE"
+  --single-transaction --set-gtid-purged=OFF --no-create-info --extended-insert "$SQL_DB_DATABASE" >"$DATA_FILE"
 echo "Data dump completed: $DATA_FILE"
 
 # Schema Dump
 mysqldump -h "$SQL_DB_HOST" -P "$SQL_DB_PORT" --ssl-ca="$SSL_CA_FILE" -u "$SQL_DB_USER" -p"$SQL_DB_PASSWORD" \
-  --no-data --routines --skip-triggers "$SQL_DB_DATABASE" >"$SCHEMA_FILE"
+  --no-data --routines --skip-triggers --set-gtid-purged=OFF "$SQL_DB_DATABASE" >"$SCHEMA_FILE"
 echo "Schema dump completed: $SCHEMA_FILE"
 
 # Complete Dump
 mysqldump -h "$SQL_DB_HOST" -P "$SQL_DB_PORT" --ssl-ca="$SSL_CA_FILE" -u "$SQL_DB_USER" -p"$SQL_DB_PASSWORD" \
-  --routines --triggers "$SQL_DB_DATABASE" >"$FULL_DUMP_FILE"
+  --single-transaction --routines --triggers --set-gtid-purged=OFF "$SQL_DB_DATABASE" >"$FULL_DUMP_FILE"
 echo "Complete dump completed: $FULL_DUMP_FILE"
 
 # Clean up the temporary SSL CA file
