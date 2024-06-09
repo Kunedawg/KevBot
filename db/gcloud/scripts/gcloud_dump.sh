@@ -13,16 +13,28 @@ load_env_file() {
     fi
 }
 
-# Check if the zip file path argument is provided
-if [ -z "$1" ]; then
-    echo "Usage: $0 <zip-file-path> [env-file]"
-    exit 1
+# Function to print usage instructions
+print_usage() {
+    echo "Usage: $0 [zip-file-path] [env-file] [--help]"
+    echo "Both zip-file-path and env-file are optional."
+    echo "If zip-file-path is not provided, a default path will be used."
+    echo "If env-file is provided, environment variables will be loaded from it."
+    echo "--help        Display this help message."
+}
+
+# Check for --help switch
+if [ "$1" == "--help" ]; then
+    print_usage
+    exit 0
 fi
 
-# Assign the zip file path from the argument
+# Get the current timestamp
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+
+# Optional first argument for the zip file path
 ZIP_FILE=$1
 
-# Optional second argument for environment file
+# Optional second argument for the environment file
 ENV_FILE=$2
 
 # Load environment variables from file if provided
@@ -36,10 +48,23 @@ if [ -z "$GOOGLE_CLOUD_BUCKET_NAME" ]; then
     exit 1
 fi
 
+if [ -z "$ENV" ]; then
+    echo "ENV environment variable is not set."
+    exit 1
+fi
+
 if [ -z "$GOOGLE_CLOUD_CREDENTIALS" ]; then
     echo "GOOGLE_CLOUD_CREDENTIALS environment variable is not set."
     exit 1
 fi
+
+# Set the default zip file path if not provided
+if [ -z "$ZIP_FILE" ]; then
+    ZIP_FILE="dumps/${ENV}/${TIMESTAMP}_dump/${GOOGLE_CLOUD_BUCKET_NAME}_dump.zip"
+fi
+
+# Create the directory if it doesn't exist
+mkdir -p "$(dirname "$ZIP_FILE")"
 
 # Write the GOOGLE_CLOUD_CREDENTIALS JSON string to a temporary file
 echo "$GOOGLE_CLOUD_CREDENTIALS" >/tmp/google_credentials.json
