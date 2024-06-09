@@ -13,14 +13,14 @@ load_env_file() {
     fi
 }
 
-# Check if the local directory argument is provided
+# Check if the zip file path argument is provided
 if [ -z "$1" ]; then
-    echo "Usage: $0 <local-directory> [env-file]"
+    echo "Usage: $0 <zip-file-path> [env-file]"
     exit 1
 fi
 
-# Assign the local directory from the argument
-LOCAL_DIRECTORY=$1
+# Assign the zip file path from the argument
+ZIP_FILE=$1
 
 # Optional second argument for environment file
 ENV_FILE=$2
@@ -41,10 +41,6 @@ if [ -z "$GOOGLE_CLOUD_CREDENTIALS" ]; then
     exit 1
 fi
 
-# Debug: Print the environment variables
-echo "GOOGLE_CLOUD_BUCKET_NAME: $GOOGLE_CLOUD_BUCKET_NAME"
-echo "GOOGLE_CLOUD_CREDENTIALS: $GOOGLE_CLOUD_CREDENTIALS"
-
 # Write the GOOGLE_CLOUD_CREDENTIALS JSON string to a temporary file
 echo "$GOOGLE_CLOUD_CREDENTIALS" >/tmp/google_credentials.json
 
@@ -58,20 +54,35 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Create the local directory if it doesn't exist
-mkdir -p "$LOCAL_DIRECTORY"
+# Create a temporary directory for the downloads
+TEMP_DIR=$(mktemp -d)
 
-# Download all files from the bucket to the local directory using gsutil
-gsutil -m cp -r gs://$GOOGLE_CLOUD_BUCKET_NAME/* $LOCAL_DIRECTORY
+# Download all files from the bucket to the temporary directory using gsutil
+gsutil -m cp -r gs://$GOOGLE_CLOUD_BUCKET_NAME/* $TEMP_DIR
 
 # Verify if the download was successful
 if [ $? -eq 0 ]; then
-    echo "All files have been successfully downloaded from gs://$GOOGLE_CLOUD_BUCKET_NAME to $LOCAL_DIRECTORY."
+    echo "All files have been successfully downloaded from gs://$GOOGLE_CLOUD_BUCKET_NAME to $TEMP_DIR."
 else
     echo "An error occurred while downloading the files."
+    rm -r $TEMP_DIR
     rm /tmp/google_credentials.json
     exit 1
 fi
 
-# Clean up the temporary credentials file
+# Zip the downloaded files
+zip -r "$ZIP_FILE" "$TEMP_DIR"
+
+# Verify if the zip was successful
+if [ $? -eq 0 ]; then
+    echo "All files have been successfully zipped into $ZIP_FILE."
+else
+    echo "An error occurred while zipping the files."
+    rm -r $TEMP_DIR
+    rm /tmp/google_credentials.json
+    exit 1
+fi
+
+# Clean up the temporary credentials file and the temporary directory
 rm /tmp/google_credentials.json
+rm -r $TEMP_DIR
