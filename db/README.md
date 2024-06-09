@@ -8,8 +8,24 @@ A shell script has been created for quickly taking backups. You can call it be p
 ./scripts/db_dump.sh prod.env
 ```
 
-Note `mysqldump` is needed which can installed with homebrew.
+`mysqldump` is needed which can installed with homebrew.
 
 ```sh
 brew install mysql
+```
+
+`gcloud` is needed which can be installed with homebrew.
+
+```sh
+brew install --cask google-cloud-sdk
+```
+
+```sh
+gcloud init
+```
+
+Make sure to give scripts the proper permissions
+
+```sh
+chmod +x script.sh
 ```

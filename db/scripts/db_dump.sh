@@ -47,7 +47,7 @@ TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
 # Arguments
 DUMP_FOLDER=${2:-./dumps/${ENV}/${TIMESTAMP}_dump/}
-MYSQL_DUMP_SCRIPT=${3:-./sql/scripts/mysql_dump.sh}
+MYSQL_DUMP_SCRIPT=${3:-./mysql/scripts/mysql_dump.sh}
 
 # Create dump folder if it doesn't exist
 mkdir -p "$DUMP_FOLDER"
