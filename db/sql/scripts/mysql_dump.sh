@@ -13,7 +13,7 @@ check_missing_variables() {
 }
 
 # Specify the list of expected environment variables
-declare -a expected_env_variables=("SQL_DB_HOST" "SQL_DB_USER" "SQL_DB_PASSWORD" "SQL_DATABASE" "ENV")
+declare -a expected_env_variables=("SQL_DB_HOST" "SQL_DB_USER" "SQL_DB_PASSWORD" "SQL_DB_DATABASE" "SQL_DB_PORT" "SQL_DB_SSL_CA" "ENV")
 
 # Check for missing variables
 missing_variables=$(check_missing_variables "${expected_env_variables[@]}")
@@ -54,22 +54,28 @@ FULL_DUMP_FILE="$3"
 
 # Echo info
 echo "Dumping..."
-echo "HOST: $SQL_DB_HOST"
-echo "DATABASE: $SQL_DATABASE"
+echo "DATABASE: $SQL_DB_DATABASE"
+
+# Write SSL CA string to a temporary file
+SSL_CA_FILE=$(mktemp)
+echo "$SQL_DB_SSL_CA" >"$SSL_CA_FILE"
 
 # Data Dump
-mysqldump -h "$SQL_DB_HOST" -u "$SQL_DB_USER" -p"$SQL_DB_PASSWORD" \
-  --no-create-info --extended-insert "$SQL_DATABASE" >"$DATA_FILE"
+mysqldump -h "$SQL_DB_HOST" -P "$SQL_DB_PORT" --ssl-ca="$SSL_CA_FILE" -u "$SQL_DB_USER" -p"$SQL_DB_PASSWORD" \
+  --no-create-info --extended-insert "$SQL_DB_DATABASE" >"$DATA_FILE"
 echo "Data dump completed: $DATA_FILE"
 
 # Schema Dump
-mysqldump -h "$SQL_DB_HOST" -u "$SQL_DB_USER" -p"$SQL_DB_PASSWORD" \
-  --no-data --routines --skip-triggers "$SQL_DATABASE" >"$SCHEMA_FILE"
+mysqldump -h "$SQL_DB_HOST" -P "$SQL_DB_PORT" --ssl-ca="$SSL_CA_FILE" -u "$SQL_DB_USER" -p"$SQL_DB_PASSWORD" \
+  --no-data --routines --skip-triggers "$SQL_DB_DATABASE" >"$SCHEMA_FILE"
 echo "Schema dump completed: $SCHEMA_FILE"
 
 # Complete Dump
-mysqldump -h "$SQL_DB_HOST" -u "$SQL_DB_USER" -p"$SQL_DB_PASSWORD" \
-  --routines --triggers "$SQL_DATABASE" >"$FULL_DUMP_FILE"
+mysqldump -h "$SQL_DB_HOST" -P "$SQL_DB_PORT" --ssl-ca="$SSL_CA_FILE" -u "$SQL_DB_USER" -p"$SQL_DB_PASSWORD" \
+  --routines --triggers "$SQL_DB_DATABASE" >"$FULL_DUMP_FILE"
 echo "Complete dump completed: $FULL_DUMP_FILE"
+
+# Clean up the temporary SSL CA file
+rm "$SSL_CA_FILE"
 
 echo "Dump completed!"
