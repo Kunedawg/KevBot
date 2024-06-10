@@ -32,7 +32,7 @@ fi
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
 # Optional first argument for the zip file path
-ZIP_FILE=$1
+ZIP_FILE_FULL_PATH=$1
 
 # Optional second argument for the environment file
 ENV_FILE=$2
@@ -59,12 +59,15 @@ if [ -z "$GOOGLE_CLOUD_CREDENTIALS" ]; then
 fi
 
 # Set the default zip file path if not provided
-if [ -z "$ZIP_FILE" ]; then
-    ZIP_FILE="dumps/${ENV}/${TIMESTAMP}_dump/${GOOGLE_CLOUD_BUCKET_NAME}_dump.zip"
+if [ -z "$ZIP_FILE_FULL_PATH" ]; then
+    ZIP_FILE_FULL_PATH="dumps/${ENV}/${TIMESTAMP}_dump/${TIMESTAMP}_${GOOGLE_CLOUD_BUCKET_NAME}_dump.zip"
 fi
 
+# Extract the file name from the full path
+ZIP_FILE_NAME=$(basename "$ZIP_FILE_FULL_PATH")
+
 # Create the directory if it doesn't exist
-mkdir -p "$(dirname "$ZIP_FILE")"
+mkdir -p "$(dirname "$ZIP_FILE_FULL_PATH")"
 
 # Write the GOOGLE_CLOUD_CREDENTIALS JSON string to a temporary file
 echo "$GOOGLE_CLOUD_CREDENTIALS" >/tmp/google_credentials.json
@@ -96,18 +99,21 @@ else
 fi
 
 # Create a directory named after the zip file
-ZIP_FOLDER="${ZIP_FILE%.zip}"
+ZIP_FOLDER="${ZIP_FILE_FULL_PATH%.zip}"
 mkdir "$ZIP_FOLDER"
 
 # Move downloaded files into the new folder
 mv "$TEMP_DIR"/* "$ZIP_FOLDER"
 
-# Zip the new folder
-zip -r "$ZIP_FILE" "$ZIP_FOLDER"
+# Change to the zip folder directory and create the zip file in a subshell
+(
+    cd "$ZIP_FOLDER"
+    zip -r "../$ZIP_FILE_NAME" *
+)
 
 # Verify if the zip was successful
 if [ $? -eq 0 ]; then
-    echo "All files have been successfully zipped into $ZIP_FILE."
+    echo "All files have been successfully zipped into $ZIP_FILE_FULL_PATH."
 else
     echo "An error occurred while zipping the files."
     rm -r "$ZIP_FOLDER"
@@ -118,3 +124,4 @@ fi
 # Clean up the temporary credentials file and the temporary directory
 rm /tmp/google_credentials.json
 rm -r "$ZIP_FOLDER"
+rm -r "$TEMP_DIR"
