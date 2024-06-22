@@ -1,0 +1,68 @@
+{
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "prettier.printWidth": 120,
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "terminal.integrated.defaultProfile.windows": "Git Bash",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true,
+    "editor.rulers": [88],
+    "rewrap.autoWrap.enabled": true,
+    "rewrap.wrappingColumn": 72,
+    "editor.formatOnType": true
+  },
+  "python.linting.pylintEnabled": false,
+  "python.linting.flake8Enabled": true,
+  "python.linting.flake8Args": ["--max-line-length=88", "--max-doc-length=72"],
+  "python.linting.enabled": true,
+  "cSpell.userWords": [
+    "autopep",
+    "Coalescer",
+    "cooldown",
+    "datetime",
+    "dotenv",
+    "esbenp",
+    "figsize",
+    "iterrows",
+    "jsons",
+    "kevbot",
+    "logix",
+    "networkx",
+    "NOFILL",
+    "openpyxl",
+    "Permissives",
+    "pylint",
+    "rslogix",
+    "setpoint",
+    "setpoints",
+    "sheetnames",
+    "xdot",
+    "xlutils",
+    "xlwt",
+    "yapf"
+  ],
+  "python.formatting.autopep8Args": ["--max-line-length", "79", "--aggressive", "--aggressive"],
+  "python.formatting.provider": "black",
+  "python.formatting.yapfArgs": ["style", "google"],
+  "python.formatting.blackArgs": ["--preview"],
+  "editor.minimap.enabled": false,
+  "cSpell.ignoreWords": ["Ffprobe"],
+  "explorer.confirmDragAndDrop": false,
+  "redhat.telemetry.enabled": true,
+  "editor.renderWhitespace": "all",
+  "black-formatter.args": ["--line-length", "79", "--preview", "--experimental-string-processing"],
+  "[ignore]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  },
+  "[shellscript]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  },
+  "[dockerfile]": {
+    "editor.defaultFormatter": "ms-azuretools.vscode-docker"
+  }
+}
