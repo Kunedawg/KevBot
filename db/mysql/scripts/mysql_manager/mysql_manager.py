@@ -3,6 +3,7 @@ import os
 import re
 import subprocess
 import mysql.connector
+import time
 from mysql.connector import Error
 from dotenv import dotenv_values
 from packaging.version import parse as parse_version
@@ -56,6 +57,10 @@ def run_mysql_container(env):
             f"MYSQL_ROOT_PASSWORD={env['SQL_DB_PASSWORD']}",
             "-e",
             f"MYSQL_DATABASE={env['SQL_DB_DATABASE']}",
+            "-e",
+            f"MYSQL_USER={env['SQL_DB_USER']}",
+            "-e",
+            f"MYSQL_PASSWORD={env['SQL_DB_PASSWORD']}",
             "-p",
             f"{env['SQL_DB_PORT']}:3306",
             "-d",
@@ -86,9 +91,8 @@ def wait_for_mysql_container(env):
             print("MySQL container is ready.")
             break
         else:
+            print(result.stdout)
             print("Waiting for MySQL to be ready...")
-            import time
-
             time.sleep(2)
 
 
@@ -143,14 +147,10 @@ def apply_sql_scripts(connection, script_files):
 
 def get_sorted_sql_files(directory, target_version=None):
     sql_files = [
-        os.path.join(directory, f)
-        for f in os.listdir(directory)
-        if f.endswith(".sql")
+        os.path.join(directory, f) for f in os.listdir(directory) if f.endswith(".sql")
     ]
     sql_files = [
-        f
-        for f in sql_files
-        if re.match(r"^\d+\.\d+\.\d+_", os.path.basename(f))
+        f for f in sql_files if re.match(r"^\d+\.\d+\.\d+_", os.path.basename(f))
     ]
     sql_files.sort()
 
@@ -168,9 +168,7 @@ def get_sorted_sql_files(directory, target_version=None):
     return sql_files
 
 
-def perform_action(
-    env, script_dir, data_dir, dockerfile_path, version, action
-):
+def perform_action(env, script_dir, data_dir, dockerfile_path, version, action):
     check_docker_image(dockerfile_path)
     check_docker_container()
 
@@ -212,19 +210,19 @@ def setup_parser():
         subparser.add_argument(
             "--script-dir",
             type=str,
-            default=os.path.join(SCRIPT_DIR, "../scripts/schema"),
+            default=os.path.join(SCRIPT_DIR, "../schema"),
             help="Directory containing schema SQL scripts",
         )
         subparser.add_argument(
             "--data-dir",
             type=str,
-            default=os.path.join(SCRIPT_DIR, "../scripts/data"),
+            default=os.path.join(SCRIPT_DIR, "../data"),
             help="Directory containing data SQL scripts",
         )
         subparser.add_argument(
             "--dockerfile",
             type=str,
-            default=os.path.join(SCRIPT_DIR, "../Dockerfile"),
+            default=os.path.join(SCRIPT_DIR, "../../Dockerfile"),
             help="Path to the Dockerfile",
         )
         subparser.add_argument(
