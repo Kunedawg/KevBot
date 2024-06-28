@@ -91,7 +91,6 @@ def wait_for_mysql_container(env):
             print("MySQL container is ready.")
             break
         else:
-            print(result.stdout)
             print("Waiting for MySQL to be ready...")
             time.sleep(2)
 
@@ -135,27 +134,31 @@ def connect_to_database(env):
         return None
 
 
-def apply_sql_scripts(connection, script_files):
-    cursor = connection.cursor()
+def apply_sql_scripts(env, script_files):
     for script_file in script_files:
-        with open(script_file, "r") as file:
-            sql_script = file.read()
-
-        # Filter out DELIMITER lines
-        filtered_script = "\n".join(
-            line
-            for line in sql_script.splitlines()
-            if not line.strip().startswith("DELIMITER")
-        )
-
+        script_file = os.path.normpath(script_file)
         print(f"Applying {script_file}...")
-        for result in cursor.execute(filtered_script, multi=True):
-            try:
-                print(result)
-            except mysql.connector.errors.InterfaceError:
-                pass
-
-    connection.commit()
+        new_env = os.environ.copy()
+        new_env["MYSQL_PWD"] = env["SQL_DB_PASSWORD"]
+        with open(script_file, "r") as file:
+            script_file_handle = file.read()
+        subprocess.run(
+            [
+                "docker",
+                "exec",
+                "-i",
+                "-e",
+                f"MYSQL_PWD={env['SQL_DB_PASSWORD']}",
+                "kevbot_mysql_container",
+                "mysql",
+                "-u",
+                "root",
+                # env["SQL_DB_USER"],
+                env["SQL_DB_DATABASE"],
+            ],
+            input=script_file_handle,
+            text=True,
+        )
 
 
 def extract_version(string):
@@ -186,11 +189,6 @@ def get_sorted_sql_files(directory, target_version=None):
 
 def custom_sort(files):
     def sort_key(file):
-        print(
-            os.path.basename(file),
-            "schema" not in os.path.basename(os.path.dirname(file)),
-            extract_version(file),
-        )
         return (
             extract_version(os.path.basename(file)),
             "schema" not in os.path.basename(os.path.dirname(file)),
@@ -217,14 +215,7 @@ def perform_action(env, script_dir, data_dir, dockerfile_path, version, action):
     data_files = get_sorted_sql_files(data_dir, version)
     sorted_files = custom_sort(schema_files + data_files)
 
-    print("\nSORTED FILES")
-    for file in sorted_files:
-        print(os.path.basename(file))
-    apply_sql_scripts(connection, sorted_files)
-    print("")
-
-    connection.close()
-    print(f"Database {action} completed successfully.")
+    apply_sql_scripts(env, sorted_files)
 
 
 def setup_parser():
