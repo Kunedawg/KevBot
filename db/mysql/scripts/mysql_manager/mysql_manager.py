@@ -122,7 +122,8 @@ def connect_to_database(env):
     try:
         connection = mysql.connector.connect(
             host=env["SQL_DB_HOST"],
-            user=env["SQL_DB_USER"],
+            user="root",
+            # user=env["SQL_DB_USER"],
             password=env["SQL_DB_PASSWORD"],
             database=env["SQL_DB_DATABASE"],
             port=env["SQL_DB_PORT"],
@@ -139,33 +140,63 @@ def apply_sql_scripts(connection, script_files):
     for script_file in script_files:
         with open(script_file, "r") as file:
             sql_script = file.read()
+
+        # Filter out DELIMITER lines
+        filtered_script = "\n".join(
+            line
+            for line in sql_script.splitlines()
+            if not line.strip().startswith("DELIMITER")
+        )
+
         print(f"Applying {script_file}...")
-        for result in cursor.execute(sql_script, multi=True):
-            pass
+        for result in cursor.execute(filtered_script, multi=True):
+            try:
+                print(result)
+            except mysql.connector.errors.InterfaceError:
+                pass
+
     connection.commit()
 
 
+def extract_version(string):
+    match = re.match(r"^(\d+\.\d+\.\d+)(_|$)", string)
+    return parse_version(match.group(1)) if match else None
+
+
 def get_sorted_sql_files(directory, target_version=None):
-    sql_files = [
-        os.path.join(directory, f) for f in os.listdir(directory) if f.endswith(".sql")
-    ]
-    sql_files = [
-        f for f in sql_files if re.match(r"^\d+\.\d+\.\d+_", os.path.basename(f))
-    ]
-    sql_files.sort()
+    # Filters
+    def is_sql_file(f):
+        return f.endswith(".sql")
 
+    def is_valid_format(f):
+        return extract_version(os.path.basename(f)) is not None
+
+    def is_target_version_or_less(f):
+        return extract_version(os.path.basename(f)) <= parse_version(target_version)
+
+    # Get files and apply filters
+    all_files = [os.path.join(directory, f) for f in os.listdir(directory)]
+    files = filter(is_sql_file, all_files)
+    files = filter(is_valid_format, files)
     if target_version:
-        target_version_parsed = parse_version(target_version)
-        sql_files = [
-            f
-            for f in sql_files
-            if parse_version(
-                re.match(r"^(\d+\.\d+\.\d+)_", os.path.basename(f)).group(1)
-            )
-            <= target_version_parsed
-        ]
+        files = filter(is_target_version_or_less, files)
+    files = sorted(files, key=lambda f: extract_version(os.path.basename(f)))
+    return files
 
-    return sql_files
+
+def custom_sort(files):
+    def sort_key(file):
+        print(
+            os.path.basename(file),
+            "schema" not in os.path.basename(os.path.dirname(file)),
+            extract_version(file),
+        )
+        return (
+            extract_version(os.path.basename(file)),
+            "schema" not in os.path.basename(os.path.dirname(file)),
+        )
+
+    return sorted(files, key=sort_key)
 
 
 def perform_action(env, script_dir, data_dir, dockerfile_path, version, action):
@@ -181,14 +212,16 @@ def perform_action(env, script_dir, data_dir, dockerfile_path, version, action):
         print("Failed to connect to the database.")
         return
 
+    # Get schema and data files and sort accordingly, then apply scripts
     schema_files = get_sorted_sql_files(script_dir, version)
     data_files = get_sorted_sql_files(data_dir, version)
+    sorted_files = custom_sort(schema_files + data_files)
 
-    # Combine schema and data files in the correct order
-    all_files = schema_files + data_files
-    all_files.sort()
-
-    apply_sql_scripts(connection, all_files)
+    print("\nSORTED FILES")
+    for file in sorted_files:
+        print(os.path.basename(file))
+    apply_sql_scripts(connection, sorted_files)
+    print("")
 
     connection.close()
     print(f"Database {action} completed successfully.")
@@ -253,3 +286,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # files = [os.path.join("../schema", f) for f in os.listdir("../schema")]
+
+    # for file in files:
+    #     print(file)
+    #     print(extract_version(os.path.basename(file)))
