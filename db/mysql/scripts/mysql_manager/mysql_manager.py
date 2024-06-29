@@ -2,20 +2,20 @@ import argparse
 import os
 import re
 import subprocess
-import mysql.connector
 import time
-from mysql.connector import Error
 from dotenv import dotenv_values
 from packaging.version import parse as parse_version
 
 # Get the directory of the current script
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+KEVBOT_MYSQL_DOCKER_IMAGE_NAME = "kevbot_mysql_image"
+KEVBOT_MYSQL_DOCKER_CONTAINER_NAME = "kevbot_mysql_container"
 
 
 def build_docker_image(dockerfile_path):
     dockerfile_dir = os.path.dirname(os.path.abspath(dockerfile_path))
     print(
-        "Building Docker image kevbot_mysql_image from Dockerfile at"
+        f"Building Docker image {KEVBOT_MYSQL_DOCKER_IMAGE_NAME} from Dockerfile at"
         f" {dockerfile_path}..."
     )
     subprocess.run(
@@ -23,7 +23,7 @@ def build_docker_image(dockerfile_path):
             "docker",
             "build",
             "-t",
-            "kevbot_mysql_image",
+            KEVBOT_MYSQL_DOCKER_IMAGE_NAME,
             "-f",
             dockerfile_path,
             dockerfile_dir,
@@ -33,7 +33,7 @@ def build_docker_image(dockerfile_path):
 
 def check_docker_image(dockerfile_path):
     result = subprocess.run(
-        ["docker", "images", "-q", "kevbot_mysql_image"],
+        ["docker", "images", "-q", KEVBOT_MYSQL_DOCKER_IMAGE_NAME],
         capture_output=True,
         text=True,
     )
@@ -42,7 +42,7 @@ def check_docker_image(dockerfile_path):
 
 
 def remove_docker_container():
-    subprocess.run(["docker", "rm", "-f", "kevbot_mysql_container"])
+    subprocess.run(["docker", "rm", "-f", KEVBOT_MYSQL_DOCKER_CONTAINER_NAME])
 
 
 def run_mysql_container(env):
@@ -52,7 +52,7 @@ def run_mysql_container(env):
             "docker",
             "run",
             "--name",
-            "kevbot_mysql_container",
+            KEVBOT_MYSQL_DOCKER_CONTAINER_NAME,
             "-e",
             f"MYSQL_ROOT_PASSWORD={env['SQL_DB_PASSWORD']}",
             "-e",
@@ -64,7 +64,7 @@ def run_mysql_container(env):
             "-p",
             f"{env['SQL_DB_PORT']}:3306",
             "-d",
-            "kevbot_mysql_image",
+            KEVBOT_MYSQL_DOCKER_IMAGE_NAME,
         ]
     )
 
@@ -76,7 +76,7 @@ def wait_for_mysql_container(env):
             [
                 "docker",
                 "exec",
-                "kevbot_mysql_container",
+                KEVBOT_MYSQL_DOCKER_CONTAINER_NAME,
                 "mysql",
                 "-u",
                 env["SQL_DB_USER"],
@@ -97,15 +97,22 @@ def wait_for_mysql_container(env):
 
 def check_docker_container():
     result = subprocess.run(
-        ["docker", "ps", "-a", "-q", "-f", "name=kevbot_mysql_container"],
+        [
+            "docker",
+            "ps",
+            "-a",
+            "-q",
+            "-f",
+            f"name={KEVBOT_MYSQL_DOCKER_CONTAINER_NAME}",
+        ],
         capture_output=True,
         text=True,
     )
     if result.stdout.strip():
         user_input = (
             input(
-                "Container kevbot_mysql_container already exists. Do you want"
-                " to replace it? (yes/no): "
+                f"Container {KEVBOT_MYSQL_DOCKER_CONTAINER_NAME} already exists. Do you"
+                " want to replace it? (yes/no): "
             )
             .strip()
             .lower()
@@ -115,23 +122,6 @@ def check_docker_container():
         else:
             print("Aborting operation.")
             exit()
-
-
-def connect_to_database(env):
-    try:
-        connection = mysql.connector.connect(
-            host=env["SQL_DB_HOST"],
-            user="root",
-            # user=env["SQL_DB_USER"],
-            password=env["SQL_DB_PASSWORD"],
-            database=env["SQL_DB_DATABASE"],
-            port=env["SQL_DB_PORT"],
-        )
-        if connection.is_connected():
-            return connection
-    except Error as e:
-        print(f"Error: {e}")
-        return None
 
 
 def apply_sql_scripts(env, script_files):
@@ -149,7 +139,7 @@ def apply_sql_scripts(env, script_files):
                 "-i",
                 "-e",
                 f"MYSQL_PWD={env['SQL_DB_PASSWORD']}",
-                "kevbot_mysql_container",
+                KEVBOT_MYSQL_DOCKER_CONTAINER_NAME,
                 "mysql",
                 "-u",
                 "root",
@@ -204,11 +194,6 @@ def perform_action(env, script_dir, data_dir, dockerfile_path, version, action):
     if action == "setup":
         run_mysql_container(env)
         wait_for_mysql_container(env)
-
-    connection = connect_to_database(env)
-    if connection is None:
-        print("Failed to connect to the database.")
-        return
 
     # Get schema and data files and sort accordingly, then apply scripts
     schema_files = get_sorted_sql_files(script_dir, version)
@@ -277,8 +262,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # files = [os.path.join("../schema", f) for f in os.listdir("../schema")]
-
-    # for file in files:
-    #     print(file)
-    #     print(extract_version(os.path.basename(file)))
