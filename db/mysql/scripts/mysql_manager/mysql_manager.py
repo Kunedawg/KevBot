@@ -127,7 +127,7 @@ def check_docker_container():
 def apply_sql_scripts(env, script_files):
     for script_file in script_files:
         script_file = os.path.normpath(script_file)
-        print(f"Applying {script_file}...")
+        print(f"Applying: {os.path.basename(script_file)}")
         new_env = os.environ.copy()
         new_env["MYSQL_PWD"] = env["SQL_DB_PASSWORD"]
         with open(script_file, "r") as file:
@@ -143,7 +143,6 @@ def apply_sql_scripts(env, script_files):
                 "mysql",
                 "-u",
                 "root",
-                # env["SQL_DB_USER"],
                 env["SQL_DB_DATABASE"],
             ],
             input=script_file_handle,

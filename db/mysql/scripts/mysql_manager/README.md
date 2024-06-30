@@ -16,3 +16,9 @@ source venv/bin/activate
 ```sh
 deactivate
 ```
+
+## Using the Script
+
+```
+python3 mysql_manager.py setup --env-file dev.env --version 1.1.0
+```
