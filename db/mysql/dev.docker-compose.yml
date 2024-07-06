@@ -1,0 +1,11 @@
+services:
+  pythondev:
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
+    container_name: python-dev-server
+    command:
+    ports:
+      - 80:80 # needed?
+    volumes:
+      - .:/code

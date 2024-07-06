@@ -1,0 +1,11 @@
+services:
+  deploy:
+    build:
+      context: ../
+      dockerfile: ./deploy/Dockerfile.dev
+    container_name: deploy
+    command: sleep infinity
+    ports:
+      - 80:80 # needed?
+    volumes:
+      - ..:/src

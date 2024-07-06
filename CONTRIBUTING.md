@@ -1,5 +1,37 @@
 # Contributing to kev-bot API
 
+## Docker structure
+
+```text
+project-root/
+│
+├── .devcontainer/
+│   ├── deploy/
+│   │   └── devcontainer.json
+│   ├── api/
+│   │   └── devcontainer.json
+│   ├── bot/
+│   │   └── devcontainer.json
+│   ├── frontend/
+│   │   └── devcontainer.json
+│   └── docker-compose.dev.yml
+│
+├── api/
+│   └── Dockerfile
+├── db/
+│   ├── mysql/
+│   │   └── scripts/
+│   └── Dockerfile
+├── bot/
+│   └── Dockerfile
+├── frontend/
+│   └── Dockerfile
+├── deploy/
+│   └── Dockerfile
+├── docker-compose.prod.yml
+
+```
+
 Here is a guide for contributing to kev-bot api
 
 - [Project Workflow](#project-workflow)

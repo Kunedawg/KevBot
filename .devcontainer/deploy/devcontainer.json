@@ -1,0 +1,7 @@
+{
+  "name": "deploy-dev",
+  "dockerComposeFile": "../docker-compose.dev.yml",
+  "service": "deploy",
+  "workspaceFolder": "/src",
+  "shutdownAction": "stopCompose"
+}
