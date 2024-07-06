@@ -1,7 +1,0 @@
-{
-  "name": "python-dev-container",
-  "dockerComposeFile": "../db/mysql/dev.docker-compose.yml",
-  "service": "pythondev",
-  "workspaceFolder": "/code",
-  "shutdownAction": "stopCompose"
-}
