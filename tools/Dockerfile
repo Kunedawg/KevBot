@@ -8,7 +8,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     default-mysql-client \
-    && apt-get install -y git \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -16,7 +15,7 @@ RUN apt-get update && \
 WORKDIR /src
 
 # Copy requirements.txt file
-COPY ./db/mysql/scripts/mysql_manager/requirements.txt .
+COPY ./db/mysql_manager/requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt

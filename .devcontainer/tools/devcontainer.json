@@ -1,7 +1,7 @@
 {
-  "name": "deploy-dev",
+  "name": "tools-dev",
   "dockerComposeFile": "../docker-compose.dev.yml",
-  "service": "deploy",
+  "service": "tools",
   "workspaceFolder": "/src",
   "shutdownAction": "stopCompose"
 }

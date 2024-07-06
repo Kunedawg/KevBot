@@ -1,9 +1,9 @@
 services:
-  deploy:
+  tools:
     build:
-      context: ../
-      dockerfile: ./deploy/Dockerfile.dev
-    container_name: deploy
+      context: ../tools
+      dockerfile: ./Dockerfile.dev
+    container_name: tools
     command: sleep infinity
     ports:
       - 80:80 # needed?
