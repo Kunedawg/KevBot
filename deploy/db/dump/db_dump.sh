@@ -54,8 +54,8 @@ TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
 # Arguments
 DUMP_FOLDER=${2:-./dumps/${ENV}/${TIMESTAMP}_dump/}
-MYSQL_DUMP_SCRIPT=${3:-./mysql/scripts/mysql_dump.sh}
-GCLOUD_DUMP_SCRIPT=${4:-./gcloud/scripts/gcloud_dump.sh}
+MYSQL_DUMP_SCRIPT=${3:-./mysql_dump.sh}
+GCLOUD_DUMP_SCRIPT=${4:-./gcloud_dump.sh}
 
 # Create dump folder if it doesn't exist
 mkdir -p "$DUMP_FOLDER"

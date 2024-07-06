@@ -23,5 +23,5 @@ __pycache__/
 *$py.class
 
 # database dumps and data
-*/dumps/
-*/data/
+**/dumps/
+**/data/
