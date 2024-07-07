@@ -2,6 +2,8 @@
 
 ## Docker structure
 
+needs to be updated
+
 ```text
 project-root/
 │
@@ -32,11 +34,37 @@ project-root/
 
 ```
 
-## symbolic link
+## Development Environment Setup
+
+Install docker.
+
+### Environment File
+
+Create a `.env` at the root directory of the project. It can be convenient for this file to actually be a symbolic link to another env file like `dev.env` or `staging.env`. A symbolic link can be created with the following:
 
 ```sh
 ln -s dev.env .env
 ```
+
+### Starting containers
+
+```sh
+docker compose -f docker-compose.dev.yml up -d
+```
+
+### Stopping containers
+
+```sh
+docker compose -f docker-compose.dev.yml down
+```
+
+### Dev Containers
+
+Make sure to install the [VS Code Dev Containers Extension](https://code.visualstudio.com/docs/devcontainers/containers).
+
+Run VS Code command `Dev Containers: Attach to Running Containers...` to easily run code or even development within the docker environment.
+
+## Old Content
 
 Here is a guide for contributing to kev-bot api
 
