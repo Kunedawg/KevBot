@@ -32,6 +32,12 @@ project-root/
 
 ```
 
+## symbolic link
+
+```sh
+ln -s dev.env .env
+```
+
 Here is a guide for contributing to kev-bot api
 
 - [Project Workflow](#project-workflow)

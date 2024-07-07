@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  tools:
+    build:
+      context: ./tools
+      dockerfile: ./Dockerfile.dev
+    container_name: kevbot_tools_dev
+    command: sleep infinity
+    volumes:
+      - .:/src
+    depends_on:
+      - db
+    env_file:
+      - .env
+
+  db:
+    build:
+      context: ./db/mysql
+      dockerfile: Dockerfile
+    container_name: kevbot_mysql_db_dev
+    ports:
+      - ${MYSQL_TCP_PORT}:${MYSQL_TCP_PORT}
+    volumes:
+      - kevbot_db_data:/var/lib/mysql
+    env_file:
+      - .env
+
+volumes:
+  kevbot_db_data:

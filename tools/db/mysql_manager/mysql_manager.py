@@ -5,82 +5,26 @@ import subprocess
 import time
 from dotenv import dotenv_values
 from packaging.version import parse as parse_version
+import sys
 
 # Get the directory of the current script
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-KEVBOT_MYSQL_DOCKER_IMAGE_NAME = "kevbot_mysql_image"
-KEVBOT_MYSQL_DOCKER_CONTAINER_NAME = "kevbot_mysql_container"
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-def build_docker_image(dockerfile_path):
-    dockerfile_dir = os.path.dirname(os.path.abspath(dockerfile_path))
-    print(
-        f"Building Docker image {KEVBOT_MYSQL_DOCKER_IMAGE_NAME} from Dockerfile at"
-        f" {dockerfile_path}..."
-    )
-    subprocess.run(
-        [
-            "docker",
-            "build",
-            "-t",
-            KEVBOT_MYSQL_DOCKER_IMAGE_NAME,
-            "-f",
-            dockerfile_path,
-            dockerfile_dir,
-        ]
-    )
-
-
-def check_docker_image(dockerfile_path):
-    result = subprocess.run(
-        ["docker", "images", "-q", KEVBOT_MYSQL_DOCKER_IMAGE_NAME],
-        capture_output=True,
-        text=True,
-    )
-    if not result.stdout.strip():
-        build_docker_image(dockerfile_path)
-
-
-def remove_docker_container():
-    subprocess.run(["docker", "rm", "-f", KEVBOT_MYSQL_DOCKER_CONTAINER_NAME])
-
-
-def run_mysql_container(env):
-    print("Running MySQL Docker container...")
-    subprocess.run(
-        [
-            "docker",
-            "run",
-            "--name",
-            KEVBOT_MYSQL_DOCKER_CONTAINER_NAME,
-            "-e",
-            f"MYSQL_ROOT_PASSWORD={env['SQL_DB_PASSWORD']}",
-            "-e",
-            f"MYSQL_DATABASE={env['SQL_DB_DATABASE']}",
-            "-e",
-            f"MYSQL_USER={env['SQL_DB_USER']}",
-            "-e",
-            f"MYSQL_PASSWORD={env['SQL_DB_PASSWORD']}",
-            "-p",
-            f"{env['SQL_DB_PORT']}:3306",
-            "-d",
-            KEVBOT_MYSQL_DOCKER_IMAGE_NAME,
-        ]
-    )
-
-
-def wait_for_mysql_container(env):
-    print("Waiting for MySQL container to initialize...")
+def check_mysql_connection(env):
+    print("Testing MySQL database connection...")
+    attempts = 0
     while True:
         result = subprocess.run(
             [
-                "docker",
-                "exec",
-                KEVBOT_MYSQL_DOCKER_CONTAINER_NAME,
                 "mysql",
+                "-h",
+                env["MYSQL_HOST"],
                 "-u",
-                env["SQL_DB_USER"],
-                f"-p{env['SQL_DB_PASSWORD']}",
+                env["MYSQL_ROOT_USER"],
+                f"-p{env['MYSQL_ROOT_PASSWORD']}",
+                "-P",
+                env["MYSQL_TCP_PORT"],
                 "-e",
                 "SELECT 1",
             ],
@@ -88,66 +32,44 @@ def wait_for_mysql_container(env):
             text=True,
         )
         if result.returncode == 0:
-            print("MySQL container is ready.")
+            print("MySQL database is ready.")
             break
         else:
+            print(result.stderr)
+            if attempts >= 5:
+                print(
+                    "Number of attempts exceeded. Could not connect to MySql Database."
+                )
+                sys.exit(1)
             print("Waiting for MySQL to be ready...")
+            attempts += 1
             time.sleep(2)
 
 
-def check_docker_container():
-    result = subprocess.run(
-        [
-            "docker",
-            "ps",
-            "-a",
-            "-q",
-            "-f",
-            f"name={KEVBOT_MYSQL_DOCKER_CONTAINER_NAME}",
-        ],
-        capture_output=True,
-        text=True,
-    )
-    if result.stdout.strip():
-        user_input = (
-            input(
-                f"Container {KEVBOT_MYSQL_DOCKER_CONTAINER_NAME} already exists. Do you"
-                " want to replace it? (yes/no): "
-            )
-            .strip()
-            .lower()
-        )
-        if user_input == "yes":
-            remove_docker_container()
-        else:
-            print("Aborting operation.")
-            exit()
-
-
-def apply_sql_scripts(env, script_files):
-    for script_file in script_files:
-        script_file = os.path.normpath(script_file)
-        print(f"Applying: {os.path.basename(script_file)}")
-        new_env = os.environ.copy()
-        new_env["MYSQL_PWD"] = env["SQL_DB_PASSWORD"]
-        with open(script_file, "r") as file:
-            script_file_handle = file.read()
-        subprocess.run(
-            [
-                "docker",
-                "exec",
-                "-i",
-                "-e",
-                f"MYSQL_PWD={env['SQL_DB_PASSWORD']}",
-                KEVBOT_MYSQL_DOCKER_CONTAINER_NAME,
-                "mysql",
-                "-u",
-                "root",
-                env["SQL_DB_DATABASE"],
-            ],
-            input=script_file_handle,
-            text=True,
-        )
+# def apply_sql_scripts(env, script_files):
+#     for script_file in script_files:
+#         script_file = os.path.normpath(script_file)
+#         print(f"Applying: {os.path.basename(script_file)}")
+#         new_env = os.environ.copy()
+#         new_env["MYSQL_PWD"] = env["SQL_DB_PASSWORD"]
+#         with open(script_file, "r") as file:
+#             script_file_handle = file.read()
+#         subprocess.run(
+#             [
+#                 "docker",
+#                 "exec",
+#                 "-i",
+#                 "-e",
+#                 f"MYSQL_PWD={env['SQL_DB_PASSWORD']}",
+#                 KEVBOT_MYSQL_DOCKER_CONTAINER_NAME,
+#                 "mysql",
+#                 "-u",
+#                 "root",
+#                 env["SQL_DB_DATABASE"],
+#             ],
+#             input=script_file_handle,
+#             text=True,
+#         )
 
 
 def extract_version(string):
@@ -186,20 +108,24 @@ def custom_sort(files):
     return sorted(files, key=sort_key)
 
 
-def perform_action(env, script_dir, data_dir, dockerfile_path, version, action):
-    check_docker_image(dockerfile_path)
-    check_docker_container()
+def perform_action(env, action, schema_dir, add_on_dirs, target_version):
+    if action == "migrate":
+        check_mysql_connection(env)
+        # current_version = get_current_version(env)
+        # scripts = get_scripts_to_apply(
+        #     schema_dir, add_on_dirs, current_version, target_version
+        # )
+        # apply_scripts(env, scripts)
 
-    if action == "setup":
-        run_mysql_container(env)
-        wait_for_mysql_container(env)
+    #     run_mysql_container(env)
+    #     wait_for_mysql_container(env)
 
-    # Get schema and data files and sort accordingly, then apply scripts
-    schema_files = get_sorted_sql_files(script_dir, version)
-    data_files = get_sorted_sql_files(data_dir, version)
-    sorted_files = custom_sort(schema_files + data_files)
+    # # Get schema and data files and sort accordingly, then apply scripts
+    # schema_files = get_sorted_sql_files(script_dir, version)
+    # data_files = get_sorted_sql_files(data_dir, version)
+    # sorted_files = custom_sort(schema_files + data_files)
 
-    apply_sql_scripts(env, sorted_files)
+    # apply_sql_scripts(env, sorted_files)
 
 
 def setup_parser():
@@ -208,31 +134,35 @@ def setup_parser():
     )
     subparsers = parser.add_subparsers(dest="action", required=True)
 
-    for action in ["setup", "migrate"]:
+    for action in ["migrate"]:
         subparser = subparsers.add_parser(
             action, help=f"{action.capitalize()} the database"
         )
         subparser.add_argument(
-            "--env-file", type=str, required=True, help="Path to the .env file"
+            "--env-file",
+            type=str,
+            default=".env",
+            help="Path to the .env file",
         )
         subparser.add_argument(
-            "--script-dir",
+            "--schema-dir",
             type=str,
-            default=os.path.join(SCRIPT_DIR, "../schema"),
+            default=os.path.join(THIS_DIR, "../../db/mysql/schema"),
             help="Directory containing schema SQL scripts",
         )
         subparser.add_argument(
-            "--data-dir",
+            "--add-on-dirs",
             type=str,
-            default=os.path.join(SCRIPT_DIR, "../data"),
-            help="Directory containing data SQL scripts",
+            nargs="+",
+            default=None,
+            help="List of directories containing additional scripts to be applied",
         )
-        subparser.add_argument(
-            "--dockerfile",
-            type=str,
-            default=os.path.join(SCRIPT_DIR, "../../Dockerfile"),
-            help="Path to the Dockerfile",
-        )
+        # subparser.add_argument(
+        #     "--dockerfile",
+        #     type=str,
+        #     default=os.path.join(THIS_DIR, "../../Dockerfile"),
+        #     help="Path to the Dockerfile",
+        # )
         subparser.add_argument(
             "--version",
             type=str,
@@ -246,17 +176,8 @@ def setup_parser():
 def main():
     parser = setup_parser()
     args = parser.parse_args()
-
     env = dotenv_values(args.env_file)
-
-    perform_action(
-        env,
-        args.script_dir,
-        args.data_dir,
-        args.dockerfile,
-        args.version,
-        args.action,
-    )
+    perform_action(env, args.action, args.schema_dir, args.add_on_dirs, args.version)
 
 
 if __name__ == "__main__":
