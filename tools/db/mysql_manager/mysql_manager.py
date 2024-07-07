@@ -2,6 +2,7 @@ import argparse
 import os
 import re
 import subprocess
+import shlex
 import time
 from dotenv import dotenv_values
 from packaging.version import parse as parse_version
@@ -11,121 +12,128 @@ import sys
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-def check_mysql_connection(env):
+def run_mysql_cli_cmd(connection, sql_cmd):
+    host = connection["host"]
+    user = connection["user"]
+    pw = connection["pw"]
+    db = connection["db"]
+    port = connection["port"]
+    cmd = f"mysql -h {host} -u {user} -p{pw} -D {db} -P {port}"
+    result = subprocess.run(
+        shlex.split(cmd), capture_output=True, text=True, input=sql_cmd
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"SQL command failed!\n{result.stderr}")
+    return result
+
+
+def check_mysql_connection(connection):
     print("Testing MySQL database connection...")
     attempts = 0
-    while True:
-        result = subprocess.run(
-            [
-                "mysql",
-                "-h",
-                env["MYSQL_HOST"],
-                "-u",
-                env["MYSQL_ROOT_USER"],
-                f"-p{env['MYSQL_ROOT_PASSWORD']}",
-                "-P",
-                env["MYSQL_TCP_PORT"],
-                "-e",
-                "SELECT 1",
-            ],
-            capture_output=True,
-            text=True,
-        )
-        if result.returncode == 0:
-            print("MySQL database is ready.")
-            break
-        else:
-            print(result.stderr)
-            if attempts >= 5:
-                print(
-                    "Number of attempts exceeded. Could not connect to MySql Database."
-                )
-                sys.exit(1)
+    while attempts < 5:
+        try:
+            result = run_mysql_cli_cmd(connection, "SELECT 1")
+        except Exception:
             print("Waiting for MySQL to be ready...")
             attempts += 1
             time.sleep(2)
+        print("MySQL database is ready.")
+        return
+    print(result.stderr)
+    print("Number of attempts exceeded. Could not connect to MySql Database.")
+    sys.exit(1)
 
 
-# def apply_sql_scripts(env, script_files):
-#     for script_file in script_files:
-#         script_file = os.path.normpath(script_file)
-#         print(f"Applying: {os.path.basename(script_file)}")
-#         new_env = os.environ.copy()
-#         new_env["MYSQL_PWD"] = env["SQL_DB_PASSWORD"]
-#         with open(script_file, "r") as file:
-#             script_file_handle = file.read()
-#         subprocess.run(
-#             [
-#                 "docker",
-#                 "exec",
-#                 "-i",
-#                 "-e",
-#                 f"MYSQL_PWD={env['SQL_DB_PASSWORD']}",
-#                 KEVBOT_MYSQL_DOCKER_CONTAINER_NAME,
-#                 "mysql",
-#                 "-u",
-#                 "root",
-#                 env["SQL_DB_DATABASE"],
-#             ],
-#             input=script_file_handle,
-#             text=True,
-#         )
+def get_current_version(connection):
+    def get_version(connection):
+        db = connection["db"]
+        try:
+            cmd = (
+                f"SELECT version FROM {db}.db_version ORDER BY applied_at DESC LIMIT 1;"
+            )
+            result = run_mysql_cli_cmd(connection, cmd)
+            if result.stdout != "":
+                return result.stdout.split("\n")[1]
+        except Exception:
+            pass
+        try:
+            result = run_mysql_cli_cmd(connection, 'SHOW TABLES LIKE "audio";')
+            if result.stdout:
+                return "1.0.0"
+        except Exception:
+            raise RuntimeError("Failed to get MySQL version.")
+        return "0.0.0"
+
+    version = get_version(connection)
+    print(f"Current KevBot MySQL version: {version}")
+    return parse_version(version)
 
 
-def extract_version(string):
-    match = re.match(r"^(\d+\.\d+\.\d+)(_|$)", string)
-    return parse_version(match.group(1)) if match else None
+def get_scripts_to_apply(schema_dir, add_on_dirs, current_version, target_version):
+    def extract_version(string):
+        match = re.match(r"^(\d+\.\d+\.\d+)(_|$)", string)
+        return parse_version(match.group(1)) if match else None
+
+    def get_filtered_scripts(directory, current_version, target_version):
+        def version_filter(f):
+            version = extract_version(os.path.basename(f))
+            return (
+                version is not None
+                and version <= target_version
+                and version > current_version
+            )
+
+        files = [os.path.join(directory, f) for f in os.listdir(directory)]
+        files = filter(version_filter, files)
+        return list(files)
+
+    schema_files = get_filtered_scripts(schema_dir, current_version, target_version)
+    add_on_files = []
+    for dir in add_on_dirs:
+        add_on_files += get_filtered_scripts(dir, current_version, target_version)
+
+    return sorted(
+        schema_files + add_on_files,
+        key=lambda f: (
+            extract_version(os.path.basename(f)),
+            f not in schema_files,
+        ),
+    )
 
 
-def get_sorted_sql_files(directory, target_version=None):
-    # Filters
-    def is_sql_file(f):
-        return f.endswith(".sql")
-
-    def is_valid_format(f):
-        return extract_version(os.path.basename(f)) is not None
-
-    def is_target_version_or_less(f):
-        return extract_version(os.path.basename(f)) <= parse_version(target_version)
-
-    # Get files and apply filters
-    all_files = [os.path.join(directory, f) for f in os.listdir(directory)]
-    files = filter(is_sql_file, all_files)
-    files = filter(is_valid_format, files)
-    if target_version:
-        files = filter(is_target_version_or_less, files)
-    files = sorted(files, key=lambda f: extract_version(os.path.basename(f)))
-    return files
+def apply_scripts(connection, script_files, dry_run):
+    if not script_files:
+        print("No scripts to apply!")
+    for script_file in script_files:
+        script_file = os.path.normpath(script_file)
+        _, file_extension = os.path.splitext(script_file)
+        print(f"Applying: {os.path.basename(script_file)}")
+        if not dry_run:
+            with open(script_file, "r") as file:
+                script_str = file.read()
+            if file_extension == ".sql":
+                run_mysql_cli_cmd(connection, script_str)
+            else:
+                raise RuntimeError(
+                    f"File extension '{file_extension}', is not supported. Aborting!"
+                )
 
 
-def custom_sort(files):
-    def sort_key(file):
-        return (
-            extract_version(os.path.basename(file)),
-            "schema" not in os.path.basename(os.path.dirname(file)),
-        )
-
-    return sorted(files, key=sort_key)
-
-
-def perform_action(env, action, schema_dir, add_on_dirs, target_version):
+def perform_action(env, action, schema_dir, add_on_dirs, target_version, dry_run):
     if action == "migrate":
-        check_mysql_connection(env)
-        # current_version = get_current_version(env)
-        # scripts = get_scripts_to_apply(
-        #     schema_dir, add_on_dirs, current_version, target_version
-        # )
-        # apply_scripts(env, scripts)
-
-    #     run_mysql_container(env)
-    #     wait_for_mysql_container(env)
-
-    # # Get schema and data files and sort accordingly, then apply scripts
-    # schema_files = get_sorted_sql_files(script_dir, version)
-    # data_files = get_sorted_sql_files(data_dir, version)
-    # sorted_files = custom_sort(schema_files + data_files)
-
-    # apply_sql_scripts(env, sorted_files)
+        connection = {
+            "host": env["MYSQL_HOST"],
+            "user": env["MYSQL_ROOT_USER"],
+            "pw": env["MYSQL_ROOT_PASSWORD"],
+            "db": env["MYSQL_DATABASE"],
+            "port": env["MYSQL_TCP_PORT"],
+        }
+        check_mysql_connection(connection)
+        current_version = get_current_version(connection)
+        scripts = get_scripts_to_apply(
+            schema_dir, add_on_dirs, current_version, target_version
+        )
+        apply_scripts(connection, scripts, dry_run)
 
 
 def setup_parser():
@@ -147,29 +155,28 @@ def setup_parser():
         subparser.add_argument(
             "--schema-dir",
             type=str,
-            default=os.path.join(THIS_DIR, "../../db/mysql/schema"),
+            default=os.path.join(THIS_DIR, "../../../db/mysql/schema"),
             help="Directory containing schema SQL scripts",
         )
         subparser.add_argument(
             "--add-on-dirs",
             type=str,
             nargs="+",
-            default=None,
+            default=[],
             help="List of directories containing additional scripts to be applied",
         )
-        # subparser.add_argument(
-        #     "--dockerfile",
-        #     type=str,
-        #     default=os.path.join(THIS_DIR, "../../Dockerfile"),
-        #     help="Path to the Dockerfile",
-        # )
         subparser.add_argument(
             "--version",
+            "-v",
             type=str,
             required=True,
             help="Target database version",
         )
-
+        subparser.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Set to true to not actually apply scripts",
+        )
     return parser
 
 
@@ -177,7 +184,16 @@ def main():
     parser = setup_parser()
     args = parser.parse_args()
     env = dotenv_values(args.env_file)
-    perform_action(env, args.action, args.schema_dir, args.add_on_dirs, args.version)
+    if args.dry_run:
+        print("DRY RUN. Scripts will not actually be applied.")
+    perform_action(
+        env,
+        args.action,
+        args.schema_dir,
+        args.add_on_dirs,
+        parse_version(args.version),
+        args.dry_run,
+    )
 
 
 if __name__ == "__main__":

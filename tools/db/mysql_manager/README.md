@@ -19,6 +19,6 @@ deactivate
 
 ## Using the Script
 
-```
-python3 mysql_manager.py setup --env-file dev.env --version 1.1.0
+```sh
+python tools/db/mysql_manager/mysql_manager.py migrate -v 1.1.0 --add-on-dirs db/mysql/data/
 ```
