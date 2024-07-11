@@ -64,6 +64,22 @@ Make sure to install the [VS Code Dev Containers Extension](https://code.visuals
 
 Run VS Code command `Dev Containers: Attach to Running Containers...` to easily run code or even development within the docker environment.
 
+## Python
+
+### Pipenv
+
+```sh
+pip install pipenv
+```
+
+```sh
+pipenv install
+```
+
+```sh
+pipenv run python script.py
+```
+
 ## Old Content
 
 Here is a guide for contributing to kev-bot api
