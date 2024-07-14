@@ -1,5 +1,17 @@
 # Contributing to kev-bot API
 
+## Poetry
+
+Install [poetry](https://python-poetry.org/docs/#installing-with-pipx)
+
+The following user setting is recommended
+
+```sh
+ poetry config virtualenvs.in-project true
+```
+
+This user setting will create a `.venv` directory at the root of any poetry project.
+
 ## Docker structure
 
 needs to be updated

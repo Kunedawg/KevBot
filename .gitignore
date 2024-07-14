@@ -17,7 +17,7 @@ node_modules
 .vscode
 
 # python
-venv/
+**/.venv/
 __pycache__/
 *.py[cod]
 *$py.class
