@@ -1,22 +1,28 @@
 # Use the official Python base image
-FROM python:3.9-slim
+FROM python:3.12.3-slim
 
 # Set environment variables to avoid prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Update and install necessary packages
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    default-mysql-client \
-    && apt-get install -y git \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    apt-get install -y --no-install-recommends default-mysql-client && \
+    apt-get install -y git && \
+    apt-get install -y curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# Set the working directory
+# Set the working directory and copy code
 WORKDIR /src
+COPY . .
 
-# Copy requirements.txt file
-COPY ./db/mysql_manager/requirements.txt .
+# Install poetry
+RUN curl -sSL https://install.python-poetry.org > install-poetry.py
+RUN python3 install-poetry.py --version 1.8.3
+RUN rm install-poetry.py
+ENV PATH="/root/.local/bin:$PATH"
 
-# Install Python dependencies
+# Generate requirements with poetry and install with pip
+RUN ./generate_requirements.sh
 RUN pip install --no-cache-dir -r requirements.txt
+RUN rm requirements.txt
