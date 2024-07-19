@@ -25,3 +25,6 @@ __pycache__/
 # database dumps and data
 **/dumps/
 **/data/
+
+# logs
+**/logs/

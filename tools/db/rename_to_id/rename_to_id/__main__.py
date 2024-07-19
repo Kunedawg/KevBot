@@ -8,6 +8,8 @@ from itertools import zip_longest
 import sys
 import concurrent.futures
 import argparse
+import datetime
+import logging
 
 
 def get_gloud_client():
@@ -81,7 +83,31 @@ def is_gcloud_and_mysql_in_sync(audio_data, gcloud_file_names, id_to_name):
     return in_sync
 
 
-def rename_gcloud_files(bucket, audio_data, id_to_name):
+def get_logger():
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    # Define the log file path relative to the script location
+    log_file_path = os.path.join(
+        os.path.dirname(__file__), "./logs/", f"{timestamp}_rename_to_id.log"
+    )
+    log_file_path = os.path.normpath(log_file_path)
+
+    # Create the directory if it doesn't exist
+    os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
+
+    # Create a local logger
+    local_logger = logging.getLogger(__name__)
+    local_logger.setLevel(logging.DEBUG)
+    file_handler = logging.FileHandler(log_file_path)
+    file_handler.setFormatter(
+        logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+    )
+    local_logger.addHandler(file_handler)
+    print(f"Check '{log_file_path}' for results")
+    return local_logger
+
+
+def rename_gcloud_files(bucket, audio_data, gcloud_names, id_to_name, logger):
     print("Renaming gcloud files...")
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
         futures = []
@@ -90,22 +116,41 @@ def rename_gcloud_files(bucket, audio_data, id_to_name):
             id_name = str(audio_dict["id"]) + ".mp3"
             old_name = id_name if id_to_name else name_name
             new_name = name_name if id_to_name else id_name
-            futures.append(
-                executor.submit(rename_gcloud_file, bucket, old_name, new_name)
-            )
 
+            if new_name not in gcloud_names:
+                future = executor.submit(
+                    rename_gcloud_file, bucket, old_name, new_name, logger
+                )
+                futures.append(future)
+            else:
+                if logger:
+                    logger.info(
+                        f"Skipped: {old_name:<20} -> {new_name}, {new_name} already"
+                        " exists"
+                    )
+        completed_count = 0
+        total_count = len(futures)
         for _ in concurrent.futures.as_completed(futures):
+            completed_count += 1
+            if completed_count % 100 == 0:
+                print(
+                    f"{completed_count}/{total_count} gcloud files have been renamed!"
+                )
             pass
-    print(f"Renamed {len(audio_data)} files!")
+    print(f"{completed_count} renames processed!")
 
 
-def rename_gcloud_file(bucket, old_name, new_name):
+def rename_gcloud_file(bucket, old_name, new_name, logger):
     try:
         blob = bucket.blob(old_name)
         bucket.rename_blob(blob, new_name)
+        if logger:
+            logger.info(f"Success: {old_name:<20} -> {new_name}")
     except Exception as e:
         print(f"Failed to rename '{old_name}' to '{new_name}' ")
         print(f"Error: {e}")
+        if logger:
+            logger.info(f"Failed: {old_name:<20} -> {new_name}")
 
 
 def verify_gcloud_file_rename(bucket, audio_data, id_to_name):
@@ -129,18 +174,24 @@ def parse_args():
         action="store_true",
         help="IDs are renamed to names if this switch is present",
     )
+    parser.add_argument(
+        "-y",
+        action="store_true",
+        help="prompts are auto accepted if this switch is present",
+    )
     args = parser.parse_args()
     return args
 
 
 def main():
     load_dotenv()
-    id_to_name = parse_args().id_to_name
+    args = parse_args()
+    id_to_name = args.id_to_name
     bucket = get_gloud_client().get_bucket(os.getenv("GOOGLE_CLOUD_BUCKET_NAME"))
     mysql_audio_data = get_mysql_audio_data()
     gcloud_file_names = get_gcloud_file_names(bucket)
     if not is_gcloud_and_mysql_in_sync(mysql_audio_data, gcloud_file_names, id_to_name):
-        while True:
+        while True and not args.y:
             prompt = (
                 "Warning: MySQL and gcloud not in sync, do you want to continue?"
                 " (yes/no): "
@@ -152,7 +203,8 @@ def main():
                 sys.exit(1)
             else:
                 print("Please enter 'yes' or 'no'.")
-    rename_gcloud_files(bucket, mysql_audio_data, id_to_name)
+    logger = get_logger()
+    rename_gcloud_files(bucket, mysql_audio_data, gcloud_file_names, id_to_name, logger)
     verify_gcloud_file_rename(bucket, mysql_audio_data, id_to_name)
 
 
