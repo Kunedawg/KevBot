@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "mysql-manager"
+name = "migration-manager"
 version = "0.1.0"
 description = ""
 authors = ["Kunedawg <Kevin.Kuney@gmail.com>"]
