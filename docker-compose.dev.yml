@@ -17,8 +17,8 @@ services:
 
   db:
     build:
-      context: ./db/mysql
-      dockerfile: Dockerfile
+      context: ./db
+      dockerfile: Dockerfile.mysql.dev
     container_name: kevbot_mysql_db_dev
     ports:
       - ${MYSQL_TCP_PORT}:${MYSQL_TCP_PORT}
