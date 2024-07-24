@@ -155,7 +155,9 @@ def setup_parser():
         subparser.add_argument(
             "--schema-dir",
             type=str,
-            default=os.path.join(THIS_DIR, "../../../db/mysql/schema"),
+            default=os.path.join(
+                THIS_DIR, "../../../db/migration/mysql_schema_change_scripts"
+            ),
             help="Directory containing schema SQL scripts",
         )
         subparser.add_argument(
