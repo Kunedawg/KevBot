@@ -168,7 +168,7 @@ def verify_gcloud_file_rename(bucket, audio_data, id_to_name):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Process some integers.")
+    parser = argparse.ArgumentParser(description="Rename audio files on gcloud.")
     parser.add_argument(
         "--id-to-name",
         action="store_true",

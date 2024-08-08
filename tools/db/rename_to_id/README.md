@@ -31,10 +31,4 @@ MYSQL_SSL_CA (only if needed)
 python rename_to_id
 ```
 
-### Poetry
-
-```sh
-poetry run python rename_to_id
-```
-
 The script also supports the command line flag `--id-to-name`, which does the opposite of the above. This is useful for testing purposes and for undoing, just in case that is needed.

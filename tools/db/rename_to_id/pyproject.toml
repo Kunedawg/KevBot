@@ -1,17 +1,19 @@
-[tool.poetry]
+[project]
 name = "rename-to-id"
 version = "0.1.0"
-description = ""
-authors = ["Kunedawg <Kevin.Kuney@gmail.com>"]
+description = "script for renaming gcloud audio files from name to id"
+authors = [{ name = "Kunedawg", email = "Kevin.Kuney@gmail.com" }]
 readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "google-cloud-storage",
+    "mysql-connector-python",
+    "python-dotenv",
+]
 
-[tool.poetry.dependencies]
-python = "^3.12"
-google-cloud-storage = "^2.17.0"
-mysql-connector-python = "^9.0.0"
-python-dotenv = "^1.0.1"
-
+# [project.optional-dependencies]
+# dev = ["pytest"]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"

@@ -8,21 +8,24 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y --no-install-recommends default-mysql-client && \
     apt-get install -y git && \
-    apt-get install -y curl && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Set the working directory and copy code
+# Set the working directory and copy code, note, docker-compose mounts host src to src-dev
 WORKDIR /src
 COPY . .
 
-# Install poetry
-RUN curl -sSL https://install.python-poetry.org > install-poetry.py
-RUN python3 install-poetry.py --version 1.8.3
-RUN rm install-poetry.py
-ENV PATH="/root/.local/bin:$PATH"
+# install virtualenv
+RUN pip install virtualenv
 
-# Generate requirements with poetry and install with pip
-RUN ./generate_requirements.sh
-RUN pip install --no-cache-dir -r requirements.txt
-RUN rm requirements.txt
+# setup venv for migration_manager
+RUN cd ./db/migration_manager && \
+    rm -rf .venv && \
+    python -m virtualenv .venv && \
+    .venv/bin/python -m pip install --no-cache-dir -r requirements.txt
+
+# setup venv for rename_to_id
+RUN cd ./db/rename_to_id && \
+    rm -rf .venv && \
+    virtualenv .venv && \
+    .venv/bin/python -m pip install --no-cache-dir -r requirements.txt

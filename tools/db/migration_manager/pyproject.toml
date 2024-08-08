@@ -1,16 +1,15 @@
-[tool.poetry]
+[project]
 name = "migration-manager"
 version = "0.1.0"
-description = ""
-authors = ["Kunedawg <Kevin.Kuney@gmail.com>"]
+description = "script for migrating KevBot databases"
+authors = [{ name = "Kunedawg", email = "Kevin.Kuney@gmail.com" }]
 readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["packaging", "python-dotenv"]
 
-[tool.poetry.dependencies]
-python = "^3.12"
-packaging = "^24.1"
-python-dotenv = "^1.0.1"
-
+# [project.optional-dependencies]
+# dev = ["pytest"]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"

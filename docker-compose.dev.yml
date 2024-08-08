@@ -8,7 +8,7 @@ services:
     container_name: kevbot_tools_dev
     command: sleep infinity
     volumes:
-      - .:/src
+      - .:/src-dev
     depends_on:
       - db
     env_file:
