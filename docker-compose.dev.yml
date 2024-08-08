@@ -4,7 +4,7 @@ services:
   tools:
     build:
       context: ./tools
-      dockerfile: ./Dockerfile.dev
+      dockerfile: Dockerfile.dev
     container_name: kevbot_tools_dev
     command: sleep infinity
     volumes:
@@ -18,7 +18,7 @@ services:
   db:
     build:
       context: ./db
-      dockerfile: Dockerfile.mysql.dev
+      dockerfile: Dockerfile.dev
     container_name: kevbot_mysql_db_dev
     ports:
       - ${MYSQL_TCP_PORT}:${MYSQL_TCP_PORT}
