@@ -23,9 +23,9 @@ services:
     ports:
       - ${MYSQL_TCP_PORT}:${MYSQL_TCP_PORT}
     volumes:
-      - kevbot_db_data:/var/lib/mysql
+      - kevbot_mysql_db_data:/var/lib/mysql
     env_file:
       - .env
 
 volumes:
-  kevbot_db_data:
+  kevbot_mysql_db_data:

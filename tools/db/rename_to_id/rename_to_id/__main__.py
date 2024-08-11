@@ -52,13 +52,6 @@ class EnvVars:
             else:
                 raise AttributeError(f"Unknown attribute: {attr}")
 
-    def __repr__(self):
-        return (
-            f"<EnvVars: {self.__dict__}>"
-            if self.debug
-            else "Must be in debug mode to see config"
-        )
-
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -86,8 +79,7 @@ def parse_args():
         help="Path to the .env file",
     )
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
 
 
 def get_gloud_bucket(env_vars: EnvVars):
