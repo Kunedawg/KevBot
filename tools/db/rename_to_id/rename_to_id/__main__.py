@@ -10,19 +10,96 @@ import concurrent.futures
 import argparse
 import datetime
 import logging
+from dataclasses import dataclass, field
+from pathlib import Path
 
 
-def get_gloud_client():
+@dataclass
+class EnvVars:
+    env_file: str = field(default=".env")
+    mysql_host: str = field(default=None, init=False)
+    mysql_database: str = field(default=None, init=False)
+    mysql_root_user: str = field(default=None, init=False)
+    mysql_root_password: str = field(default=None, init=False)
+    mysql_tcp_port: str = field(default=None, init=False)
+    google_cloud_credentials: str = field(default=None, init=False)
+    google_cloud_bucket_name: str = field(default=None, init=False)
+
+    @staticmethod
+    def get_required_env_vars():
+        required_env_vars = [
+            "MYSQL_HOST",
+            "MYSQL_DATABASE",
+            "MYSQL_ROOT_USER",
+            "MYSQL_ROOT_PASSWORD",
+            "MYSQL_TCP_PORT",
+            "GOOGLE_CLOUD_CREDENTIALS",
+            "GOOGLE_CLOUD_BUCKET_NAME",
+        ]
+        return required_env_vars
+
+    def __post_init__(self):
+        load_dotenv(self.env_file)
+        for env_var in self.get_required_env_vars():
+            value = os.getenv(env_var)
+            attr = env_var.lower()
+            if value is None:
+                raise EnvironmentError(
+                    f"Missing required environment variable: {env_var}"
+                )
+            if hasattr(self, attr):
+                setattr(self, attr, value)
+            else:
+                raise AttributeError(f"Unknown attribute: {attr}")
+
+    def __repr__(self):
+        return (
+            f"<EnvVars: {self.__dict__}>"
+            if self.debug
+            else "Must be in debug mode to see config"
+        )
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Rename audio files on gcloud.",
+        epilog=(
+            "Required environment variables:"
+            f" {', '.join(EnvVars.get_required_env_vars())}"
+        ),
+    )
+    parser.add_argument(
+        "--id-to-name",
+        action="store_true",
+        help="IDs are renamed to names if this switch is present",
+    )
+    parser.add_argument(
+        "-y",
+        action="store_true",
+        help="prompts are auto accepted if this switch is present",
+    )
+    parser.add_argument(
+        "--env-file",
+        "-e",
+        type=lambda s: Path(s).resolve(),
+        default=".env",
+        help="Path to the .env file",
+    )
+    parser.add_argument("--debug", action="store_true", help="Enable debug mode")
+    args = parser.parse_args()
+    return args
+
+
+def get_gloud_bucket(env_vars: EnvVars):
     try:
         # Note a temporary json file has to be created
-        temp_credentials_path = os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = (
-            "temp_credentials.json"
-        )
+        temp_credentials_path = "temp_credentials.json"
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = temp_credentials_path
         with open(temp_credentials_path, "w") as temp_file:
-            json.dump(json.loads(os.getenv("GOOGLE_CLOUD_CREDENTIALS")), temp_file)
-        return storage.Client()
+            json.dump(json.loads(env_vars.google_cloud_credentials), temp_file)
+        return storage.Client().get_bucket(env_vars.google_cloud_bucket_name)
     except Error as e:
-        print("Failed to get gcloud client")
+        print("Failed to get gcloud bucket")
         raise e
     finally:
         # Ensure the temp file gets cleaned up
@@ -30,14 +107,14 @@ def get_gloud_client():
             os.remove(temp_credentials_path)
 
 
-def get_mysql_audio_data():
+def get_mysql_audio_data(env_vars: EnvVars):
     try:
         connection = mysql.connector.connect(
-            host=os.getenv("MYSQL_HOST"),
-            database=os.getenv("MYSQL_DATABASE"),
-            user=os.getenv("MYSQL_ROOT_USER"),
-            password=os.getenv("MYSQL_ROOT_PASSWORD"),
-            port=os.getenv("MYSQL_TCP_PORT"),
+            host=env_vars.mysql_host,
+            database=env_vars.mysql_database,
+            user=env_vars.mysql_root_user,
+            password=env_vars.mysql_root_password,
+            port=env_vars.mysql_tcp_port,
         )
         query = "SELECT audio_name, audio_id FROM defaultdb.audio;"
         if connection.is_connected():
@@ -52,6 +129,11 @@ def get_mysql_audio_data():
             cursor.close()
             connection.close()
             print("MySQL connection closed")
+
+
+def debug_get_mysql_audio_data():
+    print("Debug mode: Using mysql dummy data (make sure gcloud test bucket matches)")
+    return [{"name": "00monk", "id": 1}, {"name": "00sniper", "id": 2}]
 
 
 def get_gcloud_file_names(bucket):
@@ -167,30 +249,17 @@ def verify_gcloud_file_rename(bucket, audio_data, id_to_name):
         raise RuntimeError("Renaming FAILED. Bad news lol")
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Rename audio files on gcloud.")
-    parser.add_argument(
-        "--id-to-name",
-        action="store_true",
-        help="IDs are renamed to names if this switch is present",
-    )
-    parser.add_argument(
-        "-y",
-        action="store_true",
-        help="prompts are auto accepted if this switch is present",
-    )
-    args = parser.parse_args()
-    return args
-
-
 def main():
-    load_dotenv()
     args = parse_args()
-    id_to_name = args.id_to_name
-    bucket = get_gloud_client().get_bucket(os.getenv("GOOGLE_CLOUD_BUCKET_NAME"))
-    mysql_audio_data = get_mysql_audio_data()
+    env_vars = EnvVars(env_file=args.env_file)
+    mysql_audio_data = get_mysql_audio_data(env_vars)
+    if args.debug:
+        mysql_audio_data = debug_get_mysql_audio_data()
+    bucket = get_gloud_bucket(env_vars)
     gcloud_file_names = get_gcloud_file_names(bucket)
-    if not is_gcloud_and_mysql_in_sync(mysql_audio_data, gcloud_file_names, id_to_name):
+    if not is_gcloud_and_mysql_in_sync(
+        mysql_audio_data, gcloud_file_names, args.id_to_name
+    ):
         while True and not args.y:
             prompt = (
                 "Warning: MySQL and gcloud not in sync, do you want to continue?"
@@ -204,8 +273,10 @@ def main():
             else:
                 print("Please enter 'yes' or 'no'.")
     logger = get_logger()
-    rename_gcloud_files(bucket, mysql_audio_data, gcloud_file_names, id_to_name, logger)
-    verify_gcloud_file_rename(bucket, mysql_audio_data, id_to_name)
+    rename_gcloud_files(
+        bucket, mysql_audio_data, gcloud_file_names, args.id_to_name, logger
+    )
+    verify_gcloud_file_rename(bucket, mysql_audio_data, args.id_to_name)
 
 
 if __name__ == "__main__":
