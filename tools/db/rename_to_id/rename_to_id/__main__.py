@@ -78,7 +78,11 @@ def parse_args():
         default=".env",
         help="Path to the .env file",
     )
-    parser.add_argument("--debug", action="store_true", help="Enable debug mode")
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug mode (turns on mysql dummy data)",
+    )
     return parser.parse_args()
 
 
