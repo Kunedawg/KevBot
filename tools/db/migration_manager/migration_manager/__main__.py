@@ -117,13 +117,12 @@ def perform_action(env_vars, args):
         client = MySQLClient(env_vars)
         check_mysql_connection(client)
         current_version = get_current_version(client)
+        target_version = parse_version(args.version)
         scripts = get_scripts_to_apply(
-            args.schema_dir,
-            args.supplemental_dirs,
-            current_version,
-            parse_version(args.version),
+            args.schema_dir, args.supplemental_dirs, current_version, target_version
         )
         apply_scripts(client, scripts, args.dry_run)
+        print(f"Database migration complete! {current_version} --> {target_version}")
 
 
 def check_mysql_connection(client: MySQLClient):
@@ -187,6 +186,7 @@ def get_scripts_to_apply(
             f for f in Path(directory).iterdir() if f.is_file() and version_filter(f)
         ]
 
+    print(f"Migrating to version: {target_version}")
     schema_files = get_filtered_scripts(schema_dir, current_version, target_version)
     supplemental_files = [
         f
@@ -207,19 +207,30 @@ def apply_scripts(client: MySQLClient, script_files, dry_run):
     if dry_run:
         print("DRY RUN. Scripts will not actually be applied.")
     if not script_files:
-        print("No scripts to apply!")
+        print("No scripts to apply! Database is already up to date.")
     for script_file in script_files:
+        print(f">>> {script_file.name} >>> executing script...")
         file_extension = script_file.suffix
-        print(f"Applying: {script_file.name}")
+        script_path = script_file.resolve()
         if not dry_run:
-            with open(script_file.resolve(), "r") as file:
+            with open(script_path, "r") as file:
                 script_str = file.read()
-            if file_extension == ".sql":
-                client.run_sql_command(script_str)
-            else:
-                raise RuntimeError(
-                    f"File extension '{file_extension}', is not supported. Aborting!"
-                )
+            match file_extension:
+                case ".sql":
+                    client.run_sql_command(script_str)
+                case ".sh":
+                    subprocess.run(
+                        shlex.split(str(script_path)),
+                        text=True,
+                        stdout=sys.stdout,
+                        stderr=sys.stderr,
+                    ).check_returncode()
+                case _:
+                    raise RuntimeError(
+                        f"File extension '{file_extension}', is not supported."
+                        " Aborting!"
+                    )
+        print(f"=== {script_file.name} === script was applied!")
 
 
 def main():
