@@ -46,6 +46,12 @@ Create a `.env` at the root directory of the project. It can be convenient for t
 ln -s dev.env .env
 ```
 
+## Containers
+
+### Tools Container
+
+Note the development docker compose file mounts the root of KevBot to `src-dev`, that way you can do live development there if needed, but there is another directory called `src` which is just a copy of `/tools/` and `db/migration/`.
+
 ### Starting containers
 
 ```sh
@@ -63,22 +69,6 @@ docker compose -f docker-compose.dev.yml down
 Make sure to install the [VS Code Dev Containers Extension](https://code.visualstudio.com/docs/devcontainers/containers).
 
 Run VS Code command `Dev Containers: Attach to Running Containers...` to easily run code or even development within the docker environment.
-
-## Python
-
-### Pipenv
-
-```sh
-pip install pipenv
-```
-
-```sh
-pipenv install
-```
-
-```sh
-pipenv run python script.py
-```
 
 ## Old Content
 

@@ -48,5 +48,5 @@ options:
 ## Example Call
 
 ```sh
-python migration_manager migrate --schema-dir ../../../db/migration/mysql_schema_change_scripts -v 1.1.0 -e ../../../.env --supplemental-dirs ../../../db/migration/sensitive_supplemental_scripts ../../../db/migration/supplemental_scripts
+python migration_manager migrate -v 1.1.0 -e ../../../.env --schema-dir ../../../db/migration/mysql_schema_change_scripts --supplemental-dirs ../../../db/migration/supplemental_scripts ../../../db/migration/sensitive_supplemental_scripts
 ```

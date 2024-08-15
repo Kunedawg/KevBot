@@ -11,7 +11,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Set the working directory and copy code, note, docker-compose mounts host src to src-dev
+# Set the working directory and copy code 
 WORKDIR /src
 COPY . .
 
