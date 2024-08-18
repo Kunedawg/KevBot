@@ -4,20 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "Select environment"
-        required: true
-        default: "develop"
-        type: string
-        options:
-          - development
-          # - staging
-          # - production
+        type: environment
+        description: Select environment
+  push:
 
 jobs:
   provision:
     runs-on: ubuntu-latest
 
-    environment: ${{ github.event.inputs.environment }}
+    environment: ${{ inputs.environment }}
 
     steps:
       - name: Set up SSH
