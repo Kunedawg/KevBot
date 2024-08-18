@@ -19,7 +19,7 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DIGITAL_OCEAN_DROPLET_PRIVATE_SSH_KEY }}
 
-      - name: Provision Droplet
+      - name: Set up Docker's apt repository
         # https://docs.docker.com/engine/install/ubuntu/
         run: |
           ssh -o StrictHostKeyChecking=no root@${{ secrets.DIGITAL_OCEAN_DROPLET_IP }} << 'EOF'
@@ -33,4 +33,18 @@ jobs:
               $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
               sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
             sudo apt-get update
+          EOF
+
+      - name: Intall the Docker packages
+        # https://docs.docker.com/engine/install/ubuntu/
+        run: |
+          ssh -o StrictHostKeyChecking=no root@${{ secrets.DIGITAL_OCEAN_DROPLET_IP }} << 'EOF'
+            sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+          EOF
+
+      - name: Verify that the Docker Engine installation is successful by running the hello-world image
+        # https://docs.docker.com/engine/install/ubuntu/
+        run: |
+          ssh -o StrictHostKeyChecking=no root@${{ secrets.DIGITAL_OCEAN_DROPLET_IP }} << 'EOF'
+            sudo docker run hello-world
           EOF
