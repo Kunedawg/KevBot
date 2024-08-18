@@ -6,7 +6,6 @@ on:
       environment:
         type: environment
         description: Select environment
-  push:
 
 jobs:
   provision:
