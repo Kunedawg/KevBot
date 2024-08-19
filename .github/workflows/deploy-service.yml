@@ -30,7 +30,7 @@ jobs:
         run: |
           echo "Deploying ref: ${{ github.ref }}"
           echo "Deploying env: ${{ inputs.environment }}"
-          echo "Deploying service: ${{ inputs.service_name}}"
+          echo "Deploying service: ${{ inputs.service_name }}"
 
       - name: Checkout the selected branch or tag
         uses: actions/checkout@v4
@@ -59,5 +59,5 @@ jobs:
             export MYSQL_ROOT_USER=${{ secrets.MYSQL_ROOT_USER }}
             export MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
             export MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
-            docker-compose up --build -d
+            docker compose up --build -d
           EOF
