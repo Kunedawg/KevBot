@@ -12,6 +12,8 @@ jobs:
   provision:
     runs-on: ubuntu-latest
 
+    environment: ${{ inputs.environment }}
+
     env:
       SSH_USER: root
       SSH_IP_OR_HOST: ${{ secrets.DIGITAL_OCEAN_DROPLET_IP }}
