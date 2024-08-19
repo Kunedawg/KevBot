@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       environment:
+        required: true
         type: environment
         description: Select environment
 
@@ -11,7 +12,9 @@ jobs:
   provision:
     runs-on: ubuntu-latest
 
-    environment: ${{ inputs.environment }}
+    env:
+      SSH_USER: root
+      SSH_IP_OR_HOST: ${{ secrets.DIGITAL_OCEAN_DROPLET_IP }}
 
     steps:
       - name: Set up SSH
@@ -22,7 +25,7 @@ jobs:
       - name: Set up Docker's apt repository
         # https://docs.docker.com/engine/install/ubuntu/
         run: |
-          ssh -o StrictHostKeyChecking=no root@${{ secrets.DIGITAL_OCEAN_DROPLET_IP }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_IP_OR_HOST << 'EOF'
             sudo apt-get update
             sudo apt-get install -y ca-certificates curl
             sudo install -m 0755 -d /etc/apt/keyrings
@@ -38,13 +41,13 @@ jobs:
       - name: Intall the Docker packages
         # https://docs.docker.com/engine/install/ubuntu/
         run: |
-          ssh -o StrictHostKeyChecking=no root@${{ secrets.DIGITAL_OCEAN_DROPLET_IP }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_IP_OR_HOST << 'EOF'
             sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
           EOF
 
       - name: Verify that the Docker Engine installation is successful by running the hello-world image
         # https://docs.docker.com/engine/install/ubuntu/
         run: |
-          ssh -o StrictHostKeyChecking=no root@${{ secrets.DIGITAL_OCEAN_DROPLET_IP }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_IP_OR_HOST << 'EOF'
             sudo docker run hello-world
           EOF
