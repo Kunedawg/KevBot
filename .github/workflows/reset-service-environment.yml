@@ -1,4 +1,4 @@
-name: Deploy Service
+name: Reset Service Environment (docker purge)
 
 on:
   workflow_dispatch:
@@ -32,32 +32,14 @@ jobs:
           echo "Environment: ${{ inputs.environment }}"
           echo "Service: ${{ inputs.service_name }}"
 
-      - name: Checkout the selected branch or tag
-        uses: actions/checkout@v4
-
       - name: Start SSH Agent
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.DIGITAL_OCEAN_DROPLET_PRIVATE_SSH_KEY }}
 
-      - name: Clean up existing files on DigitalOcean
+      - name: Stop docker service
         run: |
           ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_IP_OR_HOST << EOF
-            rm -rf $SERVICE_WORKSPACE
-          EOF
-
-      - name: Transfer new files to DigitalOcean
-        run: |
-          scp -o StrictHostKeyChecking=no -r $GITHUB_WORKSPACE/$SERVICE_NAME $SSH_USER@$SSH_IP_OR_HOST:$SERVICE_WORKSPACE
-
-      - name: Deploy service on DigitalOcean
-        if: ${{ inputs.service_name == 'db' }}
-        run: |
-          ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_IP_OR_HOST << EOF
-            cd $SERVICE_WORKSPACE
-            export MYSQL_TCP_PORT=${{ secrets.MYSQL_TCP_PORT }}
-            export MYSQL_ROOT_USER=${{ secrets.MYSQL_ROOT_USER }}
-            export MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
-            export MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
-            docker compose up --build -d
+            docker stop $(docker ps -q)
+            docker system prune --all --volumes --force
           EOF
