@@ -1,4 +1,4 @@
-name: Reset Service Environment (docker purge)
+name: Reset Service Environment
 
 on:
   workflow_dispatch:
@@ -30,8 +30,9 @@ jobs:
 
       - name: Stop docker service
         # system prune doesn't seem to remove named volumes
+        # note `EOF` makes command sub $() occur on remote machine
         run: |
-          ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_IP_OR_HOST << EOF
+          ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_IP_OR_HOST << 'EOF'
             docker stop $(docker ps -q)
             docker system prune --all --volumes --force
             docker volume prune --all --force
