@@ -65,5 +65,5 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_IP_OR_HOST << EOF
             cd $SERVICE_WORKSPACE
-            docker compose up --build -d --env-file .env
+            docker compose --env-file .env up --build -d
           EOF
