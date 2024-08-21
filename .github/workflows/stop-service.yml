@@ -14,7 +14,7 @@ on:
         options:
           - db
 jobs:
-  deploy-service:
+  stop-service:
     runs-on: ubuntu-latest
 
     environment: ${{ inputs.environment }}

@@ -14,7 +14,7 @@ on:
         options:
           - db
 jobs:
-  deploy-service:
+  stop-and-clean-up-service:
     runs-on: ubuntu-latest
 
     environment: ${{ inputs.environment }}
@@ -41,5 +41,5 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_IP_OR_HOST << EOF
             cd $SERVICE_WORKSPACE
-            docker compose down --volumes --rmi all --env-file .env
+            docker compose --env-file .env down --volumes --rmi all 
           EOF
