@@ -41,5 +41,5 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_IP_OR_HOST << EOF
             cd $SERVICE_WORKSPACE
-            docker compose down
+            docker compose down --env-file .env
           EOF

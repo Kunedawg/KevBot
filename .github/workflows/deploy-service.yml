@@ -50,14 +50,20 @@ jobs:
         run: |
           scp -o StrictHostKeyChecking=no -r $GITHUB_WORKSPACE/$SERVICE_NAME $SSH_USER@$SSH_IP_OR_HOST:$SERVICE_WORKSPACE
 
-      - name: Deploy service on DigitalOcean
+      - name: Create .env file
         if: ${{ inputs.service_name == 'db' }}
         run: |
           ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_IP_OR_HOST << EOF
             cd $SERVICE_WORKSPACE
-            export MYSQL_TCP_PORT=${{ secrets.MYSQL_TCP_PORT }}
-            export MYSQL_ROOT_USER=${{ secrets.MYSQL_ROOT_USER }}
-            export MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
-            export MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
-            docker compose up --build -d
+            echo "MYSQL_TCP_PORT=${{ secrets.MYSQL_TCP_PORT }}" > .env
+            echo "MYSQL_ROOT_USER=${{ secrets.MYSQL_ROOT_USER }}" >> .env
+            echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" >> .env
+            echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env
+          EOF
+
+      - name: Deploy service on DigitalOcean
+        run: |
+          ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_IP_OR_HOST << EOF
+            cd $SERVICE_WORKSPACE
+            docker compose up --build -d --env-file .env
           EOF
