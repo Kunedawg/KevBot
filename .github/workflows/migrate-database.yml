@@ -56,9 +56,9 @@ jobs:
           echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" >> .env
           echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env
           echo "MYSQL_HOST=${{ secrets.MYSQL_HOST }}" >> .env
-          echo "GCP_SERVICE_ACCOUNT_JSON=${{ secrets.GCP_SERVICE_ACCOUNT_JSON }} >> .env
-          echo "GCP_AUDIO_BUCKET=${{ secrets.GCP_AUDIO_BUCKET }} >> .env
-          echo "PATH_TO_RENAMETOID_MODULE=/src/db/rename_to_id >> .env
+          echo "GCP_SERVICE_ACCOUNT_JSON=${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}" >> .env
+          echo "GCP_AUDIO_BUCKET=${{ secrets.GCP_AUDIO_BUCKET }}" >> .env
+          echo "PATH_TO_RENAMETOID_MODULE=/src/db/rename_to_id" >> .env
 
       - name: Run migration
         run: |
