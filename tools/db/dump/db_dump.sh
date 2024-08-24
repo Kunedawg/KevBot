@@ -10,7 +10,7 @@ usage() {
     echo "  gcloud_dump_script    Optional: Path to the gcloud-dump script. Defaults to ./gcloud_dump.sh"
     echo "Environment Variables:"
     echo "  SQL_DB_DATABASE           Required: Name of the database to dump."
-    echo "  GOOGLE_CLOUD_BUCKET_NAME  Required: Name of the Google Cloud bucket."
+    echo "  GCP_AUDIO_BUCKET          Required: Name of the Google Cloud bucket."
     echo "  ENV                       Required: Environment name to include in the dump folder path."
     exit 0
 }
@@ -33,14 +33,14 @@ if [ -n "$ENV_FILE" ]; then
     fi
 fi
 
-# Check if SQL_DB_DATABASE, GOOGLE_CLOUD_BUCKET_NAME, and ENV are set after reading the env file
+# Check if SQL_DB_DATABASE, GCP_AUDIO_BUCKET, and ENV are set after reading the env file
 if [ -z "$SQL_DB_DATABASE" ]; then
     echo "Error: SQL_DB_DATABASE environment variable is not set."
     usage
 fi
 
-if [ -z "$GOOGLE_CLOUD_BUCKET_NAME" ]; then
-    echo "Error: GOOGLE_CLOUD_BUCKET_NAME environment variable is not set."
+if [ -z "$GCP_AUDIO_BUCKET" ]; then
+    echo "Error: GCP_AUDIO_BUCKET environment variable is not set."
     usage
 fi
 
@@ -64,7 +64,7 @@ mkdir -p "$DUMP_FOLDER"
 DATA_DUMP="${DUMP_FOLDER}${TIMESTAMP}_${SQL_DB_DATABASE}_data_dump.sql"
 SCHEMA_DUMP="${DUMP_FOLDER}${TIMESTAMP}_${SQL_DB_DATABASE}_schema_dump.sql"
 FULL_DUMP="${DUMP_FOLDER}${TIMESTAMP}_${SQL_DB_DATABASE}_full_dump.sql"
-GCLOUD_DUMP="${DUMP_FOLDER}${TIMESTAMP}_${GOOGLE_CLOUD_BUCKET_NAME}_gcloud_dump.zip"
+GCLOUD_DUMP="${DUMP_FOLDER}${TIMESTAMP}_${GCP_AUDIO_BUCKET}_gcloud_dump.zip"
 
 # Call the mysql-dump.sh script
 if [ -z "$ENV_FILE" ]; then

@@ -27,8 +27,8 @@ options:
   --debug               Enable debug mode (turns on mysql dummy data)
 
 Required environment variables: MYSQL_HOST, MYSQL_DATABASE, MYSQL_ROOT_USER,
-MYSQL_ROOT_PASSWORD, MYSQL_TCP_PORT, GOOGLE_CLOUD_CREDENTIALS,
-GOOGLE_CLOUD_BUCKET_NAME
+MYSQL_ROOT_PASSWORD, MYSQL_TCP_PORT, GCP_SERVICE_ACCOUNT_JSON,
+GCP_AUDIO_BUCKET
 ```
 
 ## Example Call

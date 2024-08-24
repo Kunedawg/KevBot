@@ -22,8 +22,8 @@ class EnvVars:
     mysql_root_user: str = field(default=None, init=False)
     mysql_root_password: str = field(default=None, init=False)
     mysql_tcp_port: str = field(default=None, init=False)
-    google_cloud_credentials: str = field(default=None, init=False)
-    google_cloud_bucket_name: str = field(default=None, init=False)
+    gcp_service_account_json: str = field(default=None, init=False)
+    gcp_audio_bucket: str = field(default=None, init=False)
 
     @staticmethod
     def get_required_env_vars():
@@ -33,8 +33,8 @@ class EnvVars:
             "MYSQL_ROOT_USER",
             "MYSQL_ROOT_PASSWORD",
             "MYSQL_TCP_PORT",
-            "GOOGLE_CLOUD_CREDENTIALS",
-            "GOOGLE_CLOUD_BUCKET_NAME",
+            "GCP_SERVICE_ACCOUNT_JSON",
+            "GCP_AUDIO_BUCKET",
         ]
         return required_env_vars
 
@@ -92,8 +92,8 @@ def get_gloud_bucket(env_vars: EnvVars):
         temp_credentials_path = "temp_credentials.json"
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = temp_credentials_path
         with open(temp_credentials_path, "w") as temp_file:
-            json.dump(json.loads(env_vars.google_cloud_credentials), temp_file)
-        return storage.Client().get_bucket(env_vars.google_cloud_bucket_name)
+            json.dump(json.loads(env_vars.gcp_service_account_json), temp_file)
+        return storage.Client().get_bucket(env_vars.gcp_audio_bucket)
     except Error as e:
         print("Failed to get gcloud bucket")
         raise e
