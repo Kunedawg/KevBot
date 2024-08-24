@@ -50,17 +50,15 @@ jobs:
 
       - name: Create .env file
         run: |
-          ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_IP_OR_HOST << EOF
-            cd $GITHUB_WORKSPACE/tools
-            echo "MYSQL_TCP_PORT=${{ secrets.MYSQL_TCP_PORT }}" > .env
-            echo "MYSQL_ROOT_USER=${{ secrets.MYSQL_ROOT_USER }}" >> .env
-            echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" >> .env
-            echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env
-            echo "MYSQL_HOST=${{ secrets.MYSQL_HOST }}" >> .env
-            echo "GCP_SERVICE_ACCOUNT_JSON=${{ secrets.GCP_SERVICE_ACCOUNT_JSON }} >> .env
-            echo "GCP_AUDIO_BUCKET=${{ secrets.GCP_AUDIO_BUCKET }} >> .env
-            echo "PATH_TO_RENAMETOID_MODULE=/src/db/rename_to_id >> .env
-          EOF
+          cd $GITHUB_WORKSPACE/tools
+          echo "MYSQL_TCP_PORT=${{ secrets.MYSQL_TCP_PORT }}" > .env
+          echo "MYSQL_ROOT_USER=${{ secrets.MYSQL_ROOT_USER }}" >> .env
+          echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" >> .env
+          echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env
+          echo "MYSQL_HOST=${{ secrets.MYSQL_HOST }}" >> .env
+          echo "GCP_SERVICE_ACCOUNT_JSON=${{ secrets.GCP_SERVICE_ACCOUNT_JSON }} >> .env
+          echo "GCP_AUDIO_BUCKET=${{ secrets.GCP_AUDIO_BUCKET }} >> .env
+          echo "PATH_TO_RENAMETOID_MODULE=/src/db/rename_to_id >> .env
 
       - name: Run migration
         run: |
