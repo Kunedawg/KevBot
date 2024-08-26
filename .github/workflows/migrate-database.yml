@@ -28,6 +28,9 @@ jobs:
           echo "Environment: ${{ inputs.environment }}"
           echo "Migration Version: ${{ inputs.migration_version}}"
 
+      - name: Decode base64 encoded secrets
+        run: echo "GCP_SERVICE_ACCOUNT_JSON_DECODE=$(echo '${{ secrets.GCP_SERVICE_ACCOUNT_JSON_64 }}' | base64 --decode)" >> $GITHUB_ENV
+
       - name: Checkout the selected branch or tag
         uses: actions/checkout@v4
 
@@ -39,7 +42,7 @@ jobs:
       - id: auth
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: "${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}"
+          credentials_json: ${{ env.GCP_SERVICE_ACCOUNT_JSON_DECODE }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
