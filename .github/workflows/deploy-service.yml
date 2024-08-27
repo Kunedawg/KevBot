@@ -36,7 +36,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Decode base64 encoded secrets
-        run: echo "DIGITAL_OCEAN_DROPLET_PRIVATE_SSH_KEY=$(echo '${{ secrets.DIGITAL_OCEAN_DROPLET_PRIVATE_SSH_KEY_64  }}' | base64 --decode)" >> $GITHUB_ENV
+        run: |
+          echo "DIGITAL_OCEAN_DROPLET_PRIVATE_SSH_KEY<<EOF" >> $GITHUB_ENV
+          echo "$(echo '${{ secrets.DIGITAL_OCEAN_DROPLET_PRIVATE_SSH_KEY_64  }}' | base64 --decode)" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Start SSH Agent
         uses: webfactory/ssh-agent@v0.5.3

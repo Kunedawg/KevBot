@@ -19,10 +19,16 @@ jobs:
       SSH_IP_OR_HOST: ${{ secrets.DIGITAL_OCEAN_DROPLET_IP }}
 
     steps:
-      - name: Set up SSH
+      - name: Decode base64 encoded secrets
+        run: |
+          echo "DIGITAL_OCEAN_DROPLET_PRIVATE_SSH_KEY<<EOF" >> $GITHUB_ENV
+          echo "$(echo '${{ secrets.DIGITAL_OCEAN_DROPLET_PRIVATE_SSH_KEY_64  }}' | base64 --decode)" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Start SSH Agent
         uses: webfactory/ssh-agent@v0.5.3
         with:
-          ssh-private-key: ${{ secrets.DIGITAL_OCEAN_DROPLET_PRIVATE_SSH_KEY }}
+          ssh-private-key: ${{ env.DIGITAL_OCEAN_DROPLET_PRIVATE_SSH_KEY }}
 
       - name: Set up Docker's apt repository
         # https://docs.docker.com/engine/install/ubuntu/
