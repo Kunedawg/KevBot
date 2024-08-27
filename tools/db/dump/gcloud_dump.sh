@@ -53,8 +53,8 @@ if [ -z "$ENV" ]; then
     exit 1
 fi
 
-if [ -z "$GCP_SERVICE_ACCOUNT_JSON" ]; then
-    echo "GCP_SERVICE_ACCOUNT_JSON environment variable is not set."
+if [ -z "$GCP_SERVICE_ACCOUNT_JSON_64" ]; then
+    echo "GCP_SERVICE_ACCOUNT_JSON_64 environment variable is not set."
     exit 1
 fi
 
@@ -69,8 +69,8 @@ ZIP_FILE_NAME=$(basename "$ZIP_FILE_FULL_PATH")
 # Create the directory if it doesn't exist
 mkdir -p "$(dirname "$ZIP_FILE_FULL_PATH")"
 
-# Write the GCP_SERVICE_ACCOUNT_JSON JSON string to a temporary file
-echo "$GCP_SERVICE_ACCOUNT_JSON" >/tmp/google_credentials.json
+# Write the GCP_SERVICE_ACCOUNT_JSON_64 JSON string to a temporary file
+echo "$GCP_SERVICE_ACCOUNT_JSON_64" | base64 --decode >/tmp/google_credentials.json
 
 # Authenticate with gcloud using the service account key
 gcloud auth activate-service-account --key-file=/tmp/google_credentials.json

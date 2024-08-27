@@ -35,10 +35,13 @@ jobs:
       - name: Checkout the selected branch or tag
         uses: actions/checkout@v4
 
+      - name: Decode base64 encoded secrets
+        run: echo "DIGITAL_OCEAN_DROPLET_PRIVATE_SSH_KEY=$(echo '${{ secrets.DIGITAL_OCEAN_DROPLET_PRIVATE_SSH_KEY_64  }}' | base64 --decode)" >> $GITHUB_ENV
+
       - name: Start SSH Agent
         uses: webfactory/ssh-agent@v0.5.3
         with:
-          ssh-private-key: ${{ secrets.DIGITAL_OCEAN_DROPLET_PRIVATE_SSH_KEY }}
+          ssh-private-key: ${{ env.DIGITAL_OCEAN_DROPLET_PRIVATE_SSH_KEY }}
 
       - name: Clean up existing files on DigitalOcean
         run: |
