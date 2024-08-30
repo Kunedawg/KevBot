@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 8.3.0, for macos13.6 (arm64)
 --
--- Host: db-mysql-nyc3-47003-do-user-15256280-0.c.db.ondigitalocean.com    Database: defaultdb
+-- Host: ******.db.ondigitalocean.com    Database: defaultdb
 -- ------------------------------------------------------
 -- Server version	8.0.30
 

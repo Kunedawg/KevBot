@@ -1,5 +1,5 @@
 /*
- * Script:      : 1.1.0_change.sql
+ * Script:      : 2.0.0_change.sql
  * Description  : Adds tables for tracking database version and change_log.
  */
 
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS change_log (
 );
 
 -- Update the db_version table
-INSERT INTO db_version (version) VALUES ('1.1.0');
+INSERT INTO db_version (version) VALUES ('2.0.0');
 
 -- Log this change script application
-INSERT INTO change_log (script_name) VALUES ('1.1.0_change.sql');
+INSERT INTO change_log (script_name) VALUES ('2.0.0_change.sql');
