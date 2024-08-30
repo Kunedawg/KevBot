@@ -1,4 +1,4 @@
-name: Migrate Database
+name: "[Database] Migrate"
 
 on:
   workflow_dispatch:

@@ -1,4 +1,4 @@
-name: Stop Service
+name: "[Service] Stop"
 
 on:
   workflow_dispatch:

@@ -1,4 +1,4 @@
-name: Provision Droplet
+name: "[Droplet] Provision"
 
 on:
   workflow_dispatch:

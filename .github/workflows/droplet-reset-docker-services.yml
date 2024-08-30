@@ -1,4 +1,4 @@
-name: Reset Service Environment
+name: "[Droplet] Reset docker services"
 
 on:
   workflow_dispatch:
@@ -34,7 +34,7 @@ jobs:
         with:
           ssh-private-key: ${{ env.DIGITAL_OCEAN_DROPLET_PRIVATE_SSH_KEY }}
 
-      - name: Stop docker service
+      - name: Stop docker service and delete all containers, images, and volumes
         # system prune doesn't seem to remove named volumes
         # note `EOF` makes command sub $() occur on remote machine
         run: |
