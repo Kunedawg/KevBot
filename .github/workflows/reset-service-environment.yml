@@ -1,11 +1,45 @@
-name: Nuke All Services
+name: Reset Service Environment
 
 on:
   workflow_dispatch:
-
+    inputs:
+      environment:
+        required: true
+        type: environment
+        description: Select environment
 jobs:
-  provision:
+  purge-docker-env:
     runs-on: ubuntu-latest
+
+    environment: ${{ inputs.environment }}
+
+    env:
+      SSH_USER: root
+      SSH_IP_OR_HOST: ${{ secrets.DIGITAL_OCEAN_DROPLET_IP }}
+
     steps:
-      - name: Say hello
-        run: echo "Hello, world!"
+      - name: Echo configuration
+        run: |
+          echo "GitHub ref: ${{ github.ref }}"
+          echo "Environment: ${{ inputs.environment }}"
+
+      - name: Decode base64 encoded secrets
+        run: |
+          echo "DIGITAL_OCEAN_DROPLET_PRIVATE_SSH_KEY<<EOF" >> $GITHUB_ENV
+          echo "$(echo '${{ secrets.DIGITAL_OCEAN_DROPLET_PRIVATE_SSH_KEY_64  }}' | base64 --decode)" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Start SSH Agent
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ env.DIGITAL_OCEAN_DROPLET_PRIVATE_SSH_KEY }}
+
+      - name: Stop docker service
+        # system prune doesn't seem to remove named volumes
+        # note `EOF` makes command sub $() occur on remote machine
+        run: |
+          ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_IP_OR_HOST << 'EOF'
+            docker stop $(docker ps -q)
+            docker system prune --all --volumes --force
+            docker volume prune --all --force
+          EOF

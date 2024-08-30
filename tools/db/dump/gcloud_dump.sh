@@ -43,8 +43,8 @@ if [ -n "$ENV_FILE" ]; then
 fi
 
 # Check if the required environment variables are set
-if [ -z "$GOOGLE_CLOUD_BUCKET_NAME" ]; then
-    echo "GOOGLE_CLOUD_BUCKET_NAME environment variable is not set."
+if [ -z "$GCP_AUDIO_BUCKET" ]; then
+    echo "GCP_AUDIO_BUCKET environment variable is not set."
     exit 1
 fi
 
@@ -53,14 +53,14 @@ if [ -z "$ENV" ]; then
     exit 1
 fi
 
-if [ -z "$GOOGLE_CLOUD_CREDENTIALS" ]; then
-    echo "GOOGLE_CLOUD_CREDENTIALS environment variable is not set."
+if [ -z "$GCP_SERVICE_ACCOUNT_JSON_64" ]; then
+    echo "GCP_SERVICE_ACCOUNT_JSON_64 environment variable is not set."
     exit 1
 fi
 
 # Set the default zip file path if not provided
 if [ -z "$ZIP_FILE_FULL_PATH" ]; then
-    ZIP_FILE_FULL_PATH="dumps/${ENV}/${TIMESTAMP}_dump/${TIMESTAMP}_${GOOGLE_CLOUD_BUCKET_NAME}_dump.zip"
+    ZIP_FILE_FULL_PATH="dumps/${ENV}/${TIMESTAMP}_dump/${TIMESTAMP}_${GCP_AUDIO_BUCKET}_dump.zip"
 fi
 
 # Extract the file name from the full path
@@ -69,8 +69,8 @@ ZIP_FILE_NAME=$(basename "$ZIP_FILE_FULL_PATH")
 # Create the directory if it doesn't exist
 mkdir -p "$(dirname "$ZIP_FILE_FULL_PATH")"
 
-# Write the GOOGLE_CLOUD_CREDENTIALS JSON string to a temporary file
-echo "$GOOGLE_CLOUD_CREDENTIALS" >/tmp/google_credentials.json
+# Write the GCP_SERVICE_ACCOUNT_JSON_64 JSON string to a temporary file
+echo "$GCP_SERVICE_ACCOUNT_JSON_64" | base64 --decode >/tmp/google_credentials.json
 
 # Authenticate with gcloud using the service account key
 gcloud auth activate-service-account --key-file=/tmp/google_credentials.json
@@ -86,11 +86,11 @@ fi
 TEMP_DIR=$(mktemp -d)
 
 # Download all files from the bucket to the temporary directory using gsutil
-gsutil -m cp -r gs://$GOOGLE_CLOUD_BUCKET_NAME/* $TEMP_DIR
+gsutil -m cp -r gs://$GCP_AUDIO_BUCKET/* $TEMP_DIR
 
 # Verify if the download was successful
 if [ $? -eq 0 ]; then
-    echo "All files have been successfully downloaded from gs://$GOOGLE_CLOUD_BUCKET_NAME to $TEMP_DIR."
+    echo "All files have been successfully downloaded from gs://$GCP_AUDIO_BUCKET to $TEMP_DIR."
 else
     echo "An error occurred while downloading the files."
     rm -r $TEMP_DIR

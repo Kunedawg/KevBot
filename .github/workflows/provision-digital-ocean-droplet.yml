@@ -2,10 +2,60 @@ name: Provision Droplet
 
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        required: true
+        type: environment
+        description: Select environment
 
 jobs:
   provision:
     runs-on: ubuntu-latest
+
+    environment: ${{ inputs.environment }}
+
+    env:
+      SSH_USER: root
+      SSH_IP_OR_HOST: ${{ secrets.DIGITAL_OCEAN_DROPLET_IP }}
+
     steps:
-      - name: Say hello
-        run: echo "Hello, world!"
+      - name: Decode base64 encoded secrets
+        run: |
+          echo "DIGITAL_OCEAN_DROPLET_PRIVATE_SSH_KEY<<EOF" >> $GITHUB_ENV
+          echo "$(echo '${{ secrets.DIGITAL_OCEAN_DROPLET_PRIVATE_SSH_KEY_64  }}' | base64 --decode)" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Start SSH Agent
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ env.DIGITAL_OCEAN_DROPLET_PRIVATE_SSH_KEY }}
+
+      - name: Set up Docker's apt repository
+        # https://docs.docker.com/engine/install/ubuntu/
+        run: |
+          ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_IP_OR_HOST << 'EOF'
+            sudo apt-get update
+            sudo apt-get install -y ca-certificates curl
+            sudo install -m 0755 -d /etc/apt/keyrings
+            sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+            sudo chmod a+r /etc/apt/keyrings/docker.asc
+            echo \
+              "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+              $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+              sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            sudo apt-get update
+          EOF
+
+      - name: Intall the Docker packages
+        # https://docs.docker.com/engine/install/ubuntu/
+        run: |
+          ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_IP_OR_HOST << 'EOF'
+            sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+          EOF
+
+      - name: Verify that the Docker Engine installation is successful by running the hello-world image
+        # https://docs.docker.com/engine/install/ubuntu/
+        run: |
+          ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_IP_OR_HOST << 'EOF'
+            sudo docker run hello-world
+          EOF

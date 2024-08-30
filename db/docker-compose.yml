@@ -1,0 +1,16 @@
+services:
+  db:
+    image: mysql:8.0.30
+    container_name: kevbot_mysql_db
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_USER: ${MYSQL_ROOT_USER}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_TCP_PORT: ${MYSQL_TCP_PORT}
+    ports:
+      - ${MYSQL_TCP_PORT}:${MYSQL_TCP_PORT}
+    volumes:
+      - kevbot_mysql_db_data:/var/lib/mysql
+
+volumes:
+  kevbot_mysql_db_data:

@@ -1,0 +1,15 @@
+[project]
+name = "migration-manager"
+version = "0.1.0"
+description = "script for migrating KevBot databases"
+authors = [{ name = "Kunedawg", email = "Kevin.Kuney@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["packaging", "python-dotenv"]
+
+# [project.optional-dependencies]
+# dev = ["pytest"]
+
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"

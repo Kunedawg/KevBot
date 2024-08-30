@@ -1,0 +1,19 @@
+[project]
+name = "rename-to-id"
+version = "0.1.0"
+description = "script for renaming gcloud audio files from name to id"
+authors = [{ name = "Kunedawg", email = "Kevin.Kuney@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "google-cloud-storage",
+    "mysql-connector-python",
+    "python-dotenv",
+]
+
+# [project.optional-dependencies]
+# dev = ["pytest"]
+
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"

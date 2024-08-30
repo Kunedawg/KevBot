@@ -1,0 +1,9 @@
+{
+  "name": "kevbot-tools-dev-container",
+  "dockerComposeFile": "../../docker-compose.dev.yml",
+  "service": "tools",
+  "workspaceFolder": "/src",
+  "shutdownAction": "stopCompose",
+  // "initializeCommand": "docker-compose -f docker-compose.dev.yml --env-file dev.env up -d"
+  "initializeCommand": "/bin/sh -c 'set -a; . dev.env; set +a; echo ${MYSQL_TCP_PORT}'"
+}
