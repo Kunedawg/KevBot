@@ -42,4 +42,4 @@ jobs:
       - name: Run migration
         run: |
           cd $GITHUB_WORKSPACE/tools
-          docker run --rm --env-file .env kevbot_tools bash -c "cd /src/db/reanme_to_id && .venv/bin/python rename_to_id -y"
+          docker run --rm --env-file .env kevbot_tools bash -c "cd /src/db/rename_to_id && .venv/bin/python rename_to_id -y"
