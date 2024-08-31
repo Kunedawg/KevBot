@@ -11,6 +11,7 @@ on:
         required: true
         type: string
         description: Migration version
+        default: latest
 
 jobs:
   migrate-database:
