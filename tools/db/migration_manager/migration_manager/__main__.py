@@ -80,8 +80,9 @@ def parse_args():
         "--version",
         "-v",
         type=str,
-        required=True,
+        required=False,
         help="Target database version",
+        default="latest",
     )
     subparser.add_argument(
         "--dry-run",
@@ -117,7 +118,10 @@ def perform_action(env_vars, args):
         client = MySQLClient(env_vars)
         check_mysql_connection(client)
         current_version = get_current_version(client)
-        target_version = parse_version(args.version)
+        if args.version == "latest":
+            target_version = get_latest_version(args.schema_dir)
+        else:
+            target_version = parse_version(args.version)
         scripts = get_scripts_to_apply(
             args.schema_dir, args.supplemental_dirs, current_version, target_version
         )
@@ -166,13 +170,21 @@ def get_current_version(client: MySQLClient):
     return parse_version(version)
 
 
+def extract_version(string) -> Version:
+    match = re.match(r"^(\d+\.\d+\.\d+)(_|$)", string)
+    return parse_version(match.group(1)) if match else None
+
+
+def get_latest_version(schema_dir) -> Version:
+    versions = [
+        extract_version(f.name) for f in Path(schema_dir).iterdir() if f.is_file()
+    ]
+    return max(versions)
+
+
 def get_scripts_to_apply(
     schema_dir, supplemental_dirs, current_version: Version, target_version: Version
 ):
-    def extract_version(string) -> Version:
-        match = re.match(r"^(\d+\.\d+\.\d+)(_|$)", string)
-        return parse_version(match.group(1)) if match else None
-
     def get_filtered_scripts(directory, current_version, target_version):
         def version_filter(f):
             version = extract_version(f.name)
