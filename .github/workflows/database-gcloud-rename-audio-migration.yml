@@ -1,4 +1,4 @@
-name: "[gcloud Database] Rename audio name to id"
+name: "[Database (gcloud)] Rename audio name to id"
 
 on:
   workflow_dispatch:
