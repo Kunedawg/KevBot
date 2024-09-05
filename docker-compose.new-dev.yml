@@ -1,8 +1,9 @@
 version: "3.8"
 
 include:
-  - db/docker-compose.yml
-  - gcloud/docker-compose.yml
+  - path: db/docker-compose.yml
+  - path: gcloud/docker-compose.yml
+  - path: api/docker-compose.dev.yml
 # services:
 #   tools:
 #     build:

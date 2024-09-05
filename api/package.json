@@ -8,7 +8,7 @@
     "test": "jest",
     "ci-test": "start-server-and-test start http://127.0.0.1:3000 test",
     "my-script": "echo ${HOST}",
-    "dev": "nodemon --watch [src docs] src/index.js"
+    "dev": "nodemon --watch ./src --watch ./docs/openapi.yaml src/index.js"
   },
   "engines": {
     "node": ">=20.17.0 <21.0.0"
@@ -17,8 +17,11 @@
   "author": "Kevin Kuney <kevin.kuney@gmail.com> (https://github.com/Kunedawg)",
   "license": "ISC",
   "dependencies": {
+    "@google-cloud/storage": "^7.12.1",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "knex": "^3.1.0",
+    "mysql2": "^3.11.0",
     "swagger-ui-express": "^5.0.1",
     "yamljs": "^0.3.0"
   },

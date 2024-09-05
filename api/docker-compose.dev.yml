@@ -1,0 +1,14 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: kevbot_api
+    environment:
+      PORT: ${PORT}
+      ADDRESS: ${ADDRESS}
+    volumes:
+      - .:/api
+    ports:
+      - ${PORT}:${PORT}
