@@ -26,7 +26,7 @@ jobs:
       - name: Build Docker image
         run: |
           cd $GITHUB_WORKSPACE/tools
-          docker build --tagert production -t kevbot_tools .
+          docker build --target production -t kevbot_tools .
 
       - name: Create .env file
         run: |
