@@ -8,6 +8,8 @@ services:
     environment:
       PORT: ${PORT}
       ADDRESS: ${ADDRESS}
+      DB_CONNECTION_STRING: ${DB_CONNECTION_STRING}
+      GCP_API_ENDPOINT: ${GCP_API_ENDPOINT}
     volumes:
       - .:/api
     ports:

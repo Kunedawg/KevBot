@@ -7,16 +7,24 @@ require("dotenv").config();
 
 const app = express();
 
+// env vars
+console.log("PORT:", process.env.PORT);
+console.log("ADDRESS:", process.env.ADDRESS);
+console.log("GCP_API_ENDPOINT:", process.env.GCP_API_ENDPOINT);
+console.log("DB_CONNECTION_STRING:", process.env.DB_CONNECTION_STRING);
+console.log("");
+
 // open api docs
-const yamlFilePath = path.join(__dirname, "..", "docs", "chatgptapi.yaml");
+const yamlFilePath = path.join(__dirname, "..", "docs", "openapi3.yml");
 const swaggerDocument = YAML.load(yamlFilePath);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // google cloud storage
+let audio_file;
 async function run() {
   // Creates a client
   const storage = new Storage({
-    apiEndpoint: "http://fake-gcs-server:4443",
+    apiEndpoint: process.env.GCP_API_ENDPOINT,
     projectId: "test",
   });
 
@@ -27,24 +35,31 @@ async function run() {
     console.log(bucket.id);
   });
 
-  const [content] = await storage.bucket("my-bucket").file("test.txt").download();
+  const [content] = await storage.bucket("kevbot-local-audio").file("test.txt").download();
   console.log("Contents:");
   console.log(content.toString());
 
   console.log("Exists:");
-  console.log(await storage.bucket("my-bucket").file("test.txt").exists());
-}
+  console.log(await storage.bucket("kevbot-local-audio").file("test.txt").exists());
 
+  [audio_file] = await storage.bucket("kevbot-local-audio").file("belt.mp3").download();
+}
+run().catch(console.error);
 // knex
+// const knex = require("knex")({
+//   client: "mysql2",
+//   connection: {
+//     host: "db",
+//     user: "root",
+//     password: "1",
+//     database: "defaultdb",
+//     port: 25060,
+//   },
+// });
+
 const knex = require("knex")({
   client: "mysql2",
-  connection: {
-    host: "db",
-    user: "root",
-    password: "1",
-    database: "defaultdb",
-    port: 25060,
-  },
+  connection: process.env.DB_CONNECTION_STRING,
 });
 
 // Fetch the audio_name for the audio_id 1551
@@ -119,8 +134,35 @@ app.get("/audio/:audioId/download", (req, res) => {
   });
 });
 
+app.get("/audio/:audioId/download2", (req, res) => {
+  try {
+    const storage = new Storage({
+      apiEndpoint: process.env.GCP_API_ENDPOINT,
+      projectId: "test",
+    });
+    // Get the file from the bucket
+    const bucket = storage.bucket("kevbot-local-audio");
+    const file = bucket.file("belt.mp3");
+
+    // Pipe the file as a readable stream to the response
+    res.setHeader("Content-Type", "audio/mpeg");
+    res.setHeader("Content-Disposition", `attachment; filename=belt.mp3`);
+    file
+      .createReadStream()
+      .on("error", (err) => {
+        console.error("Error downloading the file:", err);
+        res.status(500).send("Error downloading the file");
+      })
+      .pipe(res)
+      .on("finish", () => {
+        console.log("File successfully sent");
+      });
+  } catch (err) {
+    console.error("Error handling the request:", err);
+    res.status(500).send("Server error");
+  }
+});
+
 let server = app.listen(process.env.PORT, process.env.ADDRESS, () =>
   console.log(`API is listening on ${server.address().address}:${server.address().port}.`)
 );
-
-run().catch(console.error);
