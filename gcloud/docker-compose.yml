@@ -1,8 +1,8 @@
 services:
   fake-gcs-server:
     image: fsouza/fake-gcs-server
-    container_name: fake-gcs-server
-    command: ["-scheme", "http"]
+    container_name: kevbot_fake_gcs_server
+    command: ["-scheme", "http", "-filesystem-root", "/data"]
     ports:
       - 4443:4443
     volumes:

@@ -38,7 +38,7 @@ jobs:
       - name: Build Docker image
         run: |
           cd $GITHUB_WORKSPACE/tools
-          docker build -f Dockerfile.dev -t kevbot_tools .
+          docker build --target production -t kevbot_tools .
 
       - id: auth
         uses: google-github-actions/auth@v2
@@ -64,4 +64,4 @@ jobs:
       - name: Run migration
         run: |
           cd $GITHUB_WORKSPACE/tools
-          docker run --rm --env-file .env -v $GITHUB_WORKSPACE/db/migration:/src/db/migration_manager/migration kevbot_tools bash -c "cd /src/db/migration_manager && .venv/bin/python migration_manager migrate -v $MIGRATION_VERSION --schema-dir ./migration/schema_change_scripts --supplemental-dirs ./migration/supplemental_scripts ./migration/sensitive_supplemental_scripts"
+          docker run --rm --env-file .env -v $GITHUB_WORKSPACE/db/migration:/tools/db/migration_manager/migration kevbot_tools bash -c "cd /tools/db/migration_manager && /opt/migration_manager/.venv/bin/python migration_manager migrate -v $MIGRATION_VERSION --schema-dir ./migration/schema_change_scripts --supplemental-dirs ./migration/supplemental_scripts ./migration/sensitive_supplemental_scripts"
