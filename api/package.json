@@ -8,7 +8,7 @@
     "test": "jest",
     "ci-test": "start-server-and-test start http://127.0.0.1:3000 test",
     "my-script": "echo ${HOST}",
-    "dev": "nodemon --watch ./src --watch ./docs/openapi.yaml src/index.js"
+    "dev": "nodemon --watch ./src --watch ./docs/kevbot-api.yml src/index.js"
   },
   "engines": {
     "node": ">=20.17.0 <21.0.0"

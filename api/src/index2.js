@@ -3,9 +3,16 @@ const path = require("path");
 const swaggerUi = require("swagger-ui-express");
 const YAML = require("yamljs");
 const { Storage } = require("@google-cloud/storage");
-// require("dotenv").config();
+require("dotenv").config();
 
 const app = express();
+
+// env vars
+console.log("PORT:", process.env.PORT);
+console.log("ADDRESS:", process.env.ADDRESS);
+console.log("GCP_API_ENDPOINT:", process.env.GCP_API_ENDPOINT);
+console.log("DB_CONNECTION_STRING:", process.env.DB_CONNECTION_STRING);
+console.log("");
 
 // open api docs
 const yamlFilePath = path.join(__dirname, "..", "docs", "kevbot-api.yml");
