@@ -5,6 +5,9 @@ const trackController = require("../controllers/trackController");
 const router = express.Router();
 
 router.get("/", trackController.getTracks); // Public route
+router.get("/:id", trackController.getTrackById);
+router.get("/:id/download", trackController.getTrackDownloadById);
+router.get("/:id/stream", trackController.getTrackStreamById);
 // router.post("/", authMiddleware, trackController.createTrack); // Protected route
 // router.get("/:id", trackController.getTrackById);
 // router.patch("/:id", authMiddleware, trackController.updateTrack);

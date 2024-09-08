@@ -1,4 +1,5 @@
 const knex = require("../db/connection");
+const tracksBucket = require("../storage/tracksBucket");
 
 // const knex = require("knex")({
 //   client: "mysql2",
@@ -13,13 +14,32 @@ exports.getAllTracks = async () => {
   }
 };
 
-// exports.getTrackById = async (id) => {
-//   try {
-//     return await knex("tracks").where({ id }).first(); // Fetch track by ID
-//   } catch (error) {
-//     throw error;
-//   }
-// };
+exports.getTrackByName = async (name) => {
+  try {
+    return await knex("audio").where("audio_name", name).select("*"); // Fetch track by name
+  } catch (error) {
+    throw error;
+  }
+};
+
+exports.getTrackById = async (id) => {
+  try {
+    return await knex("audio").where("audio_id", id).first(); // Fetch track by ID
+  } catch (error) {
+    throw error;
+  }
+};
+
+exports.getTrackFile = async (track) => {
+  try {
+    const file = tracksBucket.file(`${track.audio_id}.mp3`);
+    const exists = await file.exists();
+    if (!exists[0]) return null;
+    return file;
+  } catch (error) {
+    throw error;
+  }
+};
 
 // exports.createTrack = async (trackData) => {
 //   try {

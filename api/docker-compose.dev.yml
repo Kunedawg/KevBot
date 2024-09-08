@@ -10,6 +10,7 @@ services:
       ADDRESS: ${ADDRESS}
       DB_CONNECTION_STRING: ${DB_CONNECTION_STRING}
       GCP_API_ENDPOINT: ${GCP_API_ENDPOINT}
+      GCP_AUDIO_BUCKET: ${GCP_AUDIO_BUCKET}
     volumes:
       - .:/api
     ports:

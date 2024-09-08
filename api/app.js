@@ -13,7 +13,7 @@ app.use(express.json());
 // app.use(morgan("dev")); // Logging middleware
 
 // Routes
-app.use("/tracks", trackRoutes);
+app.use("/v1/tracks", trackRoutes);
 // app.use("/api/users", userRoutes);
 
 // Global Error Handler
