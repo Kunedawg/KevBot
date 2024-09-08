@@ -4,11 +4,19 @@ info:
   description: API for managing KevBot tracks, playlists, and more!
   version: 1.0.0
 components:
+  parameters:
+    id:
+      in: path
+      name: id
+      required: true
+      schema:
+        type: integer
   schemas:
     Playlist:
+      type: object
       properties:
         id:
-          type: string
+          type: integer
         name:
           type: string
         dt_created:
@@ -20,8 +28,8 @@ components:
           items:
             $ref: "#/components/schemas/Track"
           type: array
-      type: object
     Track:
+      type: object
       properties:
         id:
           type: integer
@@ -34,7 +42,11 @@ components:
           type: integer
         duration:
           type: number
+    TrackPatch:
       type: object
+      properties:
+        name:
+          type: string
   securitySchemes:
     bearerAuth:
       bearerFormat: JWT
@@ -184,13 +196,9 @@ paths:
         - bearerAuth: []
       summary: Upload a new track
   /tracks/{id}:
+    parameters:
+      - $ref: "#/components/parameters/id"
     delete:
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
       responses:
         "204":
           description: Track deleted
@@ -198,12 +206,6 @@ paths:
         - bearerAuth: []
       summary: Delete a track
     get:
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
       responses:
         "200":
           content:
@@ -213,20 +215,11 @@ paths:
           description: Track metadata
       summary: Retrieve metadata for a specific track
     patch:
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
       requestBody:
         content:
           application/json:
             schema:
-              properties:
-                title:
-                  type: string
-              type: object
+              $ref: "#/components/schemas/TrackPatch"
       responses:
         "200":
           content:
@@ -239,36 +232,20 @@ paths:
       summary: Update track metadata
   /tracks/{id}/download:
     get:
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
       responses:
         "200":
           description: Track download initiated
       summary: Download a specific track
   /tracks/{id}/stream:
     get:
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
       responses:
         "200":
           description: Track stream initiated
       summary: Stream a specific track
   /users/{id}:
+    parameters:
+      - $ref: "#/components/parameters/id"
     get:
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
       responses:
         "200":
           content:
@@ -289,12 +266,6 @@ paths:
       summary: Retrieve user profile information
   /users/{id}/history:
     get:
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
       responses:
         "200":
           content:
@@ -307,12 +278,6 @@ paths:
       summary: Retrieve the user's listening history
   /users/{id}/playlists:
     get:
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
       responses:
         "200":
           content:
@@ -325,12 +290,6 @@ paths:
       summary: Retrieve the user's playlists
   /users/{id}/tracks:
     get:
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
       responses:
         "200":
           content:

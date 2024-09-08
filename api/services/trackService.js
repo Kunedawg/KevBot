@@ -1,11 +1,6 @@
 const knex = require("../db/connection");
 const tracksBucket = require("../storage/tracksBucket");
 
-// const knex = require("knex")({
-//   client: "mysql2",
-//   connection: process.env.DB_CONNECTION_STRING,
-// });
-
 exports.getAllTracks = async () => {
   try {
     return await knex("audio").select("*"); // Fetch all tracks
@@ -36,6 +31,15 @@ exports.getTrackFile = async (track) => {
     const exists = await file.exists();
     if (!exists[0]) return null;
     return file;
+  } catch (error) {
+    throw error;
+  }
+};
+
+exports.patchTrack = async (id, name) => {
+  try {
+    await knex("audio").where("audio_id", id).update({ audio_name: name });
+    return await this.getTrackById(id);
   } catch (error) {
     throw error;
   }

@@ -8,6 +8,7 @@ router.get("/", trackController.getTracks); // Public route
 router.get("/:id", trackController.getTrackById);
 router.get("/:id/download", trackController.getTrackDownloadById);
 router.get("/:id/stream", trackController.getTrackStreamById);
+router.patch("/:id", trackController.patchTrack);
 // router.post("/", authMiddleware, trackController.createTrack); // Protected route
 // router.get("/:id", trackController.getTrackById);
 // router.patch("/:id", authMiddleware, trackController.updateTrack);

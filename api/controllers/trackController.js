@@ -1,5 +1,6 @@
 const trackService = require("../services/trackService");
 const { z } = require("zod");
+const { trackNamingRegex } = require("../utils/utils");
 
 // Define the Zod schema for query parameters
 const getTracksQuerySchema = z.object({
@@ -114,6 +115,25 @@ exports.getTrackStreamById = async (req, res, next) => {
     }
   } catch (err) {
     next(err);
+  }
+};
+
+const patchTrackBodySchema = z.object({
+  name: z.string().regex(trackNamingRegex, { message: "Invalid track name. Only lower case and numbers are allowed." }),
+});
+
+exports.patchTrack = async (req, res, next) => {
+  try {
+    const track = await trackService.getTrackById(req.params.id);
+    if (!track) {
+      return res.status(404).json({ error: "Track not found" });
+    }
+    const result = patchTrackBodySchema.safeParse(req.body);
+    if (!result.success) return res.status(400).json(result.error.issues);
+    const updatedTrack = await trackService.patchTrack(req.params.id, result.data.name);
+    res.status(200).json(updatedTrack);
+  } catch (error) {
+    next(error);
   }
 };
 

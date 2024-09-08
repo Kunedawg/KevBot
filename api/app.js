@@ -1,6 +1,7 @@
 const express = require("express");
 // const cors = require("cors");
 // const morgan = require("morgan");
+const docRoutes = require("./routes/docRoutes");
 const trackRoutes = require("./routes/trackRoutes");
 // const userRoutes = require("./routes/userRoutes");
 // const errorHandler = require("./middlewares/errorHandler");
@@ -14,6 +15,7 @@ app.use(express.json());
 
 // Routes
 app.use("/v1/tracks", trackRoutes);
+app.use("/v1/docs", docRoutes);
 // app.use("/api/users", userRoutes);
 
 // Global Error Handler
