@@ -13,5 +13,6 @@ services:
       GCP_AUDIO_BUCKET: ${GCP_AUDIO_BUCKET}
     volumes:
       - .:/api
+      - /api/node_modules/
     ports:
       - ${PORT}:${PORT}

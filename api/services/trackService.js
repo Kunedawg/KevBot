@@ -45,6 +45,16 @@ exports.patchTrack = async (id, name) => {
   }
 };
 
+exports.postTrack = async (file, name) => {
+  try {
+    console.log(file);
+    console.log(name);
+    // return await knex("audio").insert(trackData).returning("*"); // Insert new track
+  } catch (error) {
+    throw error;
+  }
+};
+
 // exports.createTrack = async (trackData) => {
 //   try {
 //     return await knex("tracks").insert(trackData).returning("*"); // Insert new track

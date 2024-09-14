@@ -180,21 +180,52 @@ paths:
           description: List of tracks
       summary: Retrieve a list of available tracks
     post:
+      summary: Upload a new track
+      description: Upload a new audio track file along with a name.
       requestBody:
+        required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              $ref: "#/components/schemas/Track"
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: "The name of the track"
+                file:
+                  type: string
+                  format: binary
+                  description: "The audio file to upload"
+            encoding:
+              file:
+                contentType: audio/mpeg
       responses:
         "201":
+          description: "Track was created"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Track"
-          description: Track uploaded
-      security:
-        - bearerAuth: []
-      summary: Upload a new track
+        "400":
+          description: "Bad request, invalid input"
+        "500":
+          description: "Internal server error"
+    # post:
+    #   requestBody:
+    #     content:
+    #       application/json:
+    #         schema:
+    #           $ref: "#/components/schemas/Track"
+    #   responses:
+    #     "201":
+    #       content:
+    #         application/json:
+    #           schema:
+    #             $ref: "#/components/schemas/Track"
+    #       description: Track uploaded
+    #   security:
+    #     - bearerAuth: []
+    #   summary: Upload a new track
   /tracks/{id}:
     parameters:
       - $ref: "#/components/parameters/id"

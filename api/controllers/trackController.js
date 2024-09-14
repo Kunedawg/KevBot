@@ -1,6 +1,13 @@
 const trackService = require("../services/trackService");
 const { z } = require("zod");
-const { trackNamingRegex } = require("../utils/utils");
+const { getTrackMetaData, normalizeAudio } = require("../utils/utils");
+
+const MAX_TRACK_NAME_LENGTH = 15;
+const MAX_TRACK_DURATION = 15;
+const nameValidation = z
+  .string()
+  .regex(/^[a-z\d]+$/g, { message: "Invalid track name. Only lower case letters and numbers are allowed." })
+  .max(MAX_TRACK_NAME_LENGTH, { message: `Track name must be at most ${MAX_TRACK_NAME_LENGTH} characters long` });
 
 // Define the Zod schema for query parameters
 const getTracksQuerySchema = z.object({
@@ -119,7 +126,8 @@ exports.getTrackStreamById = async (req, res, next) => {
 };
 
 const patchTrackBodySchema = z.object({
-  name: z.string().regex(trackNamingRegex, { message: "Invalid track name. Only lower case and numbers are allowed." }),
+  //   name: z.string().regex(trackNamingRegex, { message: "Invalid track name. Only lower case and numbers are allowed." }),
+  name: nameValidation,
 });
 
 exports.patchTrack = async (req, res, next) => {
@@ -132,6 +140,49 @@ exports.patchTrack = async (req, res, next) => {
     if (!result.success) return res.status(400).json(result.error.issues);
     const updatedTrack = await trackService.patchTrack(req.params.id, result.data.name);
     res.status(200).json(updatedTrack);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// // Define a Zod schema for validating the text fields
+// const formSchema = z.object({
+//   name: z.string().min(1, "Name is required"),
+// });
+
+const postTrackBodySchema = z.object({
+  //   name: z.string().regex(trackNamingRegex, { message: "Invalid track name. Only lower case and numbers are allowed." }),
+  name: nameValidation,
+});
+
+exports.postTrack = async (req, res, next) => {
+  try {
+    const file = req.file;
+    if (!file) return res.status(400).json({ error: "File is required" });
+
+    metadata = await getTrackMetaData(file.path);
+    if (metadata.format.format_name !== "mp3")
+      return res.status(400).json({ error: "Invalid file format, must be mp3" });
+    if (metadata.format.duration > MAX_TRACK_DURATION)
+      return res.status(400).json({ error: `Track duration exceeds limit of ${MAX_TRACK_DURATION} seconds` });
+
+    const result = patchTrackBodySchema.safeParse(req.body);
+    if (!result.success) return res.status(400).json(result.error.issues);
+    const name = result.data.name;
+
+    const nameLookupResult = await trackService.getTrackByName(name);
+    if (nameLookupResult.length !== 0) return res.status(400).json({ error: "Track name is already taken" });
+
+    file.normalizedPath = file.path.replace(/\.mp3$/, "-normalized.mp3");
+    normalizeAudio(file.path, file.normalizedPath, metadata.format.duration);
+
+    //    const track = await trackService.postTrack(file, result.data.name);
+
+    // leaving this as placeholder
+    // just added validation logic, need to test it
+    // also need to make sure patch is still working as expected
+    // need to test that max chars is working too
+    res.status(201).json({ message: "success so far" });
   } catch (error) {
     next(error);
   }
