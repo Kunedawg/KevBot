@@ -45,12 +45,52 @@ exports.patchTrack = async (id, name) => {
   }
 };
 
-exports.postTrack = async (file, name) => {
+// exports.postTrack = async (filepath, name) => {
+//   let track;
+//   try {
+//     track = await knex("audio").insert({ audio_name: name }).returning("*");
+//   } catch (error) {
+//     console.log("Failed to insert track into database:", error);
+//     throw error;
+//   }
+
+//   try {
+//     await tracksBucket.upload(filepath, {
+//       destination: `${track.audio_id}.mp3`,
+//       resumable: false,
+//       metadata: {
+//         contentType: "audio/mpeg",
+//       },
+//     });
+//   } catch (error) {
+//     console.log("Failed to upload file to storage bucket:", error);
+//     throw error;
+//   }
+
+//   return track;
+// };
+
+exports.postTrack = async (filepath, name, duration, user_id) => {
+  if (!filepath || !name || !duration || !user_id) {
+    throw new Error("invalid args");
+  }
+
+  const trx = await knex.transaction();
   try {
-    console.log(file);
-    console.log(name);
-    // return await knex("audio").insert(trackData).returning("*"); // Insert new track
+    const [id] = await trx("audio").insert({ audio_name: name, duration: duration, player_id: user_id });
+    const track = await trx("audio").where("audio_id", id).first();
+    await tracksBucket.upload(filepath, {
+      destination: `${track.audio_id}.mp3`, // Use the track ID for the filename in the bucket
+      resumable: false,
+      metadata: {
+        contentType: "audio/mpeg", // Set the correct content type for MP3
+      },
+    });
+    await trx.commit();
+    return track;
   } catch (error) {
+    await trx.rollback();
+    console.error("Error occurred during postTrack operation:", error);
     throw error;
   }
 };

@@ -4,7 +4,7 @@ const express = require("express");
 const docRoutes = require("./routes/docRoutes");
 const trackRoutes = require("./routes/trackRoutes");
 // const userRoutes = require("./routes/userRoutes");
-// const errorHandler = require("./middlewares/errorHandler");
+const errorHandler = require("./middlewares/errorHandler");
 // const authMiddleware = require("./middlewares/authMiddleware");
 
 const app = express();
@@ -19,6 +19,6 @@ app.use("/v1/docs", docRoutes);
 // app.use("/api/users", userRoutes);
 
 // Global Error Handler
-// app.use(errorHandler);
+app.use(errorHandler);
 
 module.exports = app;

@@ -52,6 +52,8 @@ exports.getTrackMetaData = (filePath) => {
  * @param {number} duration
  */
 exports.normalizeAudio = (inputPath, outputPath, duration = 3.1) => {
+  // inputPath does not need an extension, but it needs to be a valid audio file
+  // outputPath needs a valid extension (.mp3, .wav, etc.)
   return new Promise((resolve, reject) => {
     ffmpeg(inputPath)
       .audioFilters(

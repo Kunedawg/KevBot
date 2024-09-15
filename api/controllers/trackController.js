@@ -1,13 +1,18 @@
-const trackService = require("../services/trackService");
 const { z } = require("zod");
+const fs = require("fs");
+const path = require("path");
+const trackService = require("../services/trackService");
 const { getTrackMetaData, normalizeAudio } = require("../utils/utils");
+const config = require("../config/config");
 
-const MAX_TRACK_NAME_LENGTH = 15;
-const MAX_TRACK_DURATION = 15;
+// const MAX_TRACK_NAME_LENGTH = 15;
+// const MAX_TRACK_DURATION = 15;
+const MAX_TRACK_NAME_LENGTH = config.maxTrackNameLength;
+const MAX_TRACK_DURATION = config.maxTrackDuration;
 const nameValidation = z
   .string()
   .regex(/^[a-z\d]+$/g, { message: "Invalid track name. Only lower case letters and numbers are allowed." })
-  .max(MAX_TRACK_NAME_LENGTH, { message: `Track name must be at most ${MAX_TRACK_NAME_LENGTH} characters long` });
+  .max(MAX_TRACK_NAME_LENGTH, { message: `Track name must be ${MAX_TRACK_NAME_LENGTH} characters or fewer.` });
 
 // Define the Zod schema for query parameters
 const getTracksQuerySchema = z.object({
@@ -18,7 +23,11 @@ exports.getTracks = async (req, res, next) => {
   try {
     const result = getTracksQuerySchema.safeParse(req.query);
     if (!result.success) {
-      return res.status(400).json(result.error.issues);
+      if (result?.error?.issues[0]?.message) {
+        return res.status(400).json({ error: result.error.issues[0].message });
+      } else {
+        return res.status(400).json(result.error.issues);
+      }
     }
     const { name } = result.data;
     if (name) {
@@ -137,7 +146,13 @@ exports.patchTrack = async (req, res, next) => {
       return res.status(404).json({ error: "Track not found" });
     }
     const result = patchTrackBodySchema.safeParse(req.body);
-    if (!result.success) return res.status(400).json(result.error.issues);
+    if (!result.success) {
+      if (result?.error?.issues[0]?.message) {
+        return res.status(400).json({ error: result.error.issues[0].message });
+      } else {
+        return res.status(400).json(result.error.issues);
+      }
+    }
     const updatedTrack = await trackService.patchTrack(req.params.id, result.data.name);
     res.status(200).json(updatedTrack);
   } catch (error) {
@@ -156,35 +171,70 @@ const postTrackBodySchema = z.object({
 });
 
 exports.postTrack = async (req, res, next) => {
+  const file = req.file;
   try {
-    const file = req.file;
-    if (!file) return res.status(400).json({ error: "File is required" });
-
-    metadata = await getTrackMetaData(file.path);
-    if (metadata.format.format_name !== "mp3")
-      return res.status(400).json({ error: "Invalid file format, must be mp3" });
-    if (metadata.format.duration > MAX_TRACK_DURATION)
-      return res.status(400).json({ error: `Track duration exceeds limit of ${MAX_TRACK_DURATION} seconds` });
-
     const result = patchTrackBodySchema.safeParse(req.body);
-    if (!result.success) return res.status(400).json(result.error.issues);
-    const name = result.data.name;
+    if (!result.success) {
+      if (result?.error?.issues[0]?.message) {
+        return res.status(400).json({ error: result.error.issues[0].message });
+      } else {
+        return res.status(400).json(result.error.issues);
+      }
+    }
 
-    const nameLookupResult = await trackService.getTrackByName(name);
-    if (nameLookupResult.length !== 0) return res.status(400).json({ error: "Track name is already taken" });
+    if (!file) {
+      return res.status(400).json({ error: "File is required" });
+    }
+    file.parsedPath = path.parse(file.path);
 
-    file.normalizedPath = file.path.replace(/\.mp3$/, "-normalized.mp3");
-    normalizeAudio(file.path, file.normalizedPath, metadata.format.duration);
+    const SUPPORTED_EXTENSIONS = [".mp3"];
+    if (!SUPPORTED_EXTENSIONS.includes(file.parsedPath.ext)) {
+      return res.status(400).json({
+        error: `Invalid file extension '${file.parsedPath.ext}'. Supported extensions: ${SUPPORTED_EXTENSIONS}`,
+      });
+    }
 
-    //    const track = await trackService.postTrack(file, result.data.name);
+    try {
+      metadata = await getTrackMetaData(file.path);
+      if (metadata.format.format_name !== "mp3") {
+        return res.status(400).json({ error: "Invalid file format, must be mp3" });
+      }
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ error: "Unsupported or corrupt file was received. Failed to parse track metadata from file." });
+    }
 
-    // leaving this as placeholder
-    // just added validation logic, need to test it
-    // also need to make sure patch is still working as expected
-    // need to test that max chars is working too
-    res.status(201).json({ message: "success so far" });
+    if (metadata.format.duration > MAX_TRACK_DURATION) {
+      return res.status(400).json({ error: `Track duration exceeds limit of ${MAX_TRACK_DURATION} seconds` });
+    }
+
+    const nameLookupResult = await trackService.getTrackByName(result.data.name);
+    if (nameLookupResult.length !== 0) {
+      return res.status(400).json({ error: "Track name is already taken" });
+    }
+
+    try {
+      //   const parsedPath = path.parse(file.path);
+      file.normalizedPath = `${file.parsedPath.dir}/${file.parsedPath.name}-normalized${file.parsedPath.ext}`;
+      await normalizeAudio(file.path, file.normalizedPath, metadata.format.duration);
+    } catch (error) {
+      console.error("Failed to normalize audio:", error);
+      return res.status(500).json({ error: "Failed to normalize audio" });
+    }
+
+    const track = await trackService.postTrack(file.normalizedPath, result.data.name, metadata.format.duration, 351);
+
+    res.status(201).json(track);
   } catch (error) {
     next(error);
+  } finally {
+    try {
+      if (file?.path) await fs.unlinkSync(file.path);
+      if (file?.normalizedPath) await fs.unlinkSync(file.normalizedPath);
+    } catch (error) {
+      console.error(`Failed to delete files during track post clean up`, error);
+    }
   }
 };
 
