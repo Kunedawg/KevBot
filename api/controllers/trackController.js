@@ -5,8 +5,6 @@ const trackService = require("../services/trackService");
 const { getTrackMetaData, normalizeAudio } = require("../utils/utils");
 const config = require("../config/config");
 
-// const MAX_TRACK_NAME_LENGTH = 15;
-// const MAX_TRACK_DURATION = 15;
 const MAX_TRACK_NAME_LENGTH = config.maxTrackNameLength;
 const MAX_TRACK_DURATION = config.maxTrackDuration;
 const nameValidation = z
@@ -14,9 +12,9 @@ const nameValidation = z
   .regex(/^[a-z\d]+$/g, { message: "Invalid track name. Only lower case letters and numbers are allowed." })
   .max(MAX_TRACK_NAME_LENGTH, { message: `Track name must be ${MAX_TRACK_NAME_LENGTH} characters or fewer.` });
 
-// Define the Zod schema for query parameters
 const getTracksQuerySchema = z.object({
   name: z.string().optional(),
+  include_deleted: z.coerce.boolean().optional().default(false),
 });
 
 exports.getTracks = async (req, res, next) => {
@@ -29,14 +27,9 @@ exports.getTracks = async (req, res, next) => {
         return res.status(400).json(result.error.issues);
       }
     }
-    const { name } = result.data;
-    if (name) {
-      const track = await trackService.getTrackByName(name);
-      return res.status(200).json(track);
-    } else {
-      const tracks = await trackService.getAllTracks();
-      return res.status(200).json(tracks);
-    }
+    const { name, include_deleted } = result.data;
+    const tracks = await trackService.getTracks({ name: name, include_deleted: include_deleted });
+    return res.status(200).json(tracks);
   } catch (error) {
     next(error);
   }
@@ -135,7 +128,6 @@ exports.getTrackStreamById = async (req, res, next) => {
 };
 
 const patchTrackBodySchema = z.object({
-  //   name: z.string().regex(trackNamingRegex, { message: "Invalid track name. Only lower case and numbers are allowed." }),
   name: nameValidation,
 });
 
@@ -153,6 +145,12 @@ exports.patchTrack = async (req, res, next) => {
         return res.status(400).json(result.error.issues);
       }
     }
+
+    const nameLookupResult = await trackService.getTracks({ name: result.data.name });
+    if (nameLookupResult.length !== 0) {
+      return res.status(400).json({ error: "Track name is already taken" });
+    }
+
     const updatedTrack = await trackService.patchTrack(req.params.id, result.data.name);
     res.status(200).json(updatedTrack);
   } catch (error) {
@@ -160,13 +158,7 @@ exports.patchTrack = async (req, res, next) => {
   }
 };
 
-// // Define a Zod schema for validating the text fields
-// const formSchema = z.object({
-//   name: z.string().min(1, "Name is required"),
-// });
-
 const postTrackBodySchema = z.object({
-  //   name: z.string().regex(trackNamingRegex, { message: "Invalid track name. Only lower case and numbers are allowed." }),
   name: nameValidation,
 });
 
@@ -209,13 +201,12 @@ exports.postTrack = async (req, res, next) => {
       return res.status(400).json({ error: `Track duration exceeds limit of ${MAX_TRACK_DURATION} seconds` });
     }
 
-    const nameLookupResult = await trackService.getTrackByName(result.data.name);
+    const nameLookupResult = await trackService.getTracks({ name: result.data.name });
     if (nameLookupResult.length !== 0) {
       return res.status(400).json({ error: "Track name is already taken" });
     }
 
     try {
-      //   const parsedPath = path.parse(file.path);
       file.normalizedPath = `${file.parsedPath.dir}/${file.parsedPath.name}-normalized${file.parsedPath.ext}`;
       await normalizeAudio(file.path, file.normalizedPath, metadata.format.duration);
     } catch (error) {
@@ -238,11 +229,15 @@ exports.postTrack = async (req, res, next) => {
   }
 };
 
-// exports.createTrack = async (req, res, next) => {
-//   try {
-//     const track = await trackService.createTrack(req.body);
-//     res.status(201).json(track);
-//   } catch (error) {
-//     next(error);
-//   }
-// };
+exports.deleteTrack = async (req, res, next) => {
+  try {
+    const track = await trackService.getTrackById(req.params.id);
+    if (!track) {
+      return res.status(404).json({ error: "Track not found" });
+    }
+    const updatedTrack = await trackService.deleteTrack(req.params.id);
+    res.status(200).json(updatedTrack);
+  } catch (error) {
+    next(error);
+  }
+};
