@@ -11,6 +11,7 @@ services:
       DB_CONNECTION_STRING: ${DB_CONNECTION_STRING}
       GCP_API_ENDPOINT: ${GCP_API_ENDPOINT}
       GCP_AUDIO_BUCKET: ${GCP_AUDIO_BUCKET}
+      API_JWT_SECRET: ${API_JWT_SECRET}
     volumes:
       - .:/api
       - /api/node_modules/
