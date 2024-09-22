@@ -25,5 +25,5 @@ DROP PROCEDURE IF EXISTS `update_discord_user_name`;
 DROP PROCEDURE IF EXISTS `update_discord_user_name`;
 
 -- Update the version and change_log tables
-INSERT INTO db_version (version) VALUES ('2.0.0');
-INSERT INTO change_log (script_name) VALUES ('2.0.0_add_db_version_tracking.sql');
+INSERT INTO db_version (version) VALUES ('2.1.0');
+INSERT INTO change_log (script_name) VALUES ('2.1.0_add_db_version_tracking.sql');
