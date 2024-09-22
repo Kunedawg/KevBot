@@ -1,5 +1,5 @@
 /*
- * Script:      : 2.0.0_change.sql
+ * Script:      : 2.0.0_add_db_version_tracking.sql
  * Description  : Adds tables for tracking database version and change_log.
  */
 
@@ -17,8 +17,6 @@ CREATE TABLE IF NOT EXISTS change_log (
     applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Update the db_version table
+-- Update the version and change_log tables
 INSERT INTO db_version (version) VALUES ('2.0.0');
-
--- Log this change script application
-INSERT INTO change_log (script_name) VALUES ('2.0.0_change.sql');
+INSERT INTO change_log (script_name) VALUES ('2.0.0_add_db_version_tracking.sql');
