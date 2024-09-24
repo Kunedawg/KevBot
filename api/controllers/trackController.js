@@ -57,7 +57,7 @@ exports.getTrackDownloadById = async (req, res, next) => {
     if (!file) {
       return res.status(404).json({ error: "Track file not found" });
     }
-    res.setHeader("Content-Disposition", `attachment; filename="${track.audio_name}.mp3"`);
+    res.setHeader("Content-Disposition", `attachment; filename="${track.name}.mp3"`);
     file
       .createReadStream()
       .on("error", (err) => {
@@ -95,7 +95,7 @@ exports.getTrackStreamById = async (req, res, next) => {
       // No range provided, send the entire file (default behavior)
       res.setHeader("Content-Type", "audio/mpeg");
       res.setHeader("Content-Length", fileSize);
-      res.setHeader("Content-Disposition", `inline; filename="${track.audio_name}.mp3"`);
+      res.setHeader("Content-Disposition", `inline; filename="${track.name}.mp3"`);
       file.createReadStream().pipe(res);
     } else {
       // Parse the Range header (e.g., "bytes=12345-")
@@ -116,7 +116,7 @@ exports.getTrackStreamById = async (req, res, next) => {
       res.setHeader("Accept-Ranges", "bytes");
       res.setHeader("Content-Length", chunkSize);
       res.setHeader("Content-Type", "audio/mpeg");
-      res.setHeader("Content-Disposition", `inline; filename="${track.audio_name}.mp3"`);
+      res.setHeader("Content-Disposition", `inline; filename="${track.name}.mp3"`);
       res.status(206); // HTTP status 206 for Partial Content
 
       // Stream the requested range of bytes from Google Cloud Storage
@@ -210,8 +210,8 @@ exports.postTrack = async (req, res, next) => {
       file.normalizedPath = `${file.parsedPath.dir}/${file.parsedPath.name}-normalized${file.parsedPath.ext}`;
       await normalizeAudio(file.path, file.normalizedPath, metadata.format.duration);
     } catch (error) {
-      console.error("Failed to normalize audio:", error);
-      return res.status(500).json({ error: "Failed to normalize audio" });
+      console.error("Failed to normalize track:", error);
+      return res.status(500).json({ error: "Failed to normalize track" });
     }
 
     const track = await trackService.postTrack(file.normalizedPath, result.data.name, metadata.format.duration, 351);

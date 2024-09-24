@@ -4,14 +4,14 @@ const tracksBucket = require("../storage/tracksBucket");
 exports.getTracks = async (options = {}) => {
   const { name, include_deleted = false } = options;
   try {
-    const query = knex("audio");
+    const query = knex("tracks");
     if (name) {
-      query.andWhere("audio_name", name);
+      query.andWhere("name", name);
     }
     if (!include_deleted) {
       query.andWhere("deleted_at", null);
     }
-    const fields = include_deleted ? ["*"] : ["audio_id", "audio_name", "dt_created", "player_id", "duration"];
+    const fields = include_deleted ? ["*"] : ["id", "name", "created_at", "user_id", "duration", "updated_at"];
     return await query.select(fields);
   } catch (error) {
     throw error;
@@ -20,7 +20,7 @@ exports.getTracks = async (options = {}) => {
 
 exports.getTrackById = async (id) => {
   try {
-    return await knex("audio").where("audio_id", id).first();
+    return await knex("tracks").where("id", id).first();
   } catch (error) {
     throw error;
   }
@@ -28,7 +28,7 @@ exports.getTrackById = async (id) => {
 
 exports.getTrackFile = async (track) => {
   try {
-    const file = tracksBucket.file(`${track.audio_id}.mp3`);
+    const file = tracksBucket.file(`${track.id}.mp3`);
     const exists = await file.exists();
     if (!exists[0]) return null;
     return file;
@@ -39,7 +39,7 @@ exports.getTrackFile = async (track) => {
 
 exports.patchTrack = async (id, name) => {
   try {
-    await knex("audio").where("audio_id", id).update({ audio_name: name });
+    await knex("tracks").where("id", id).update({ name: name });
     return await this.getTrackById(id);
   } catch (error) {
     throw error;
@@ -48,7 +48,7 @@ exports.patchTrack = async (id, name) => {
 
 exports.deleteTrack = async (id) => {
   try {
-    await knex("audio").where("audio_id", id).andWhere("deleted_at", null).update({ deleted_at: knex.fn.now() });
+    await knex("tracks").where("id", id).andWhere("deleted_at", null).update({ deleted_at: knex.fn.now() });
     return await this.getTrackById(id);
   } catch (error) {
     throw error;
@@ -62,10 +62,10 @@ exports.postTrack = async (filepath, name, duration, user_id) => {
 
   const trx = await knex.transaction();
   try {
-    const [id] = await trx("audio").insert({ audio_name: name, duration: duration, player_id: user_id });
-    const track = await trx("audio").where("audio_id", id).first();
+    const [id] = await trx("tracks").insert({ name: name, duration: duration, user_id: user_id });
+    const track = await trx("tracks").where("id", id).first();
     await tracksBucket.upload(filepath, {
-      destination: `${track.audio_id}.mp3`,
+      destination: `${track.id}.mp3`,
       resumable: false,
       metadata: {
         contentType: "audio/mpeg",
