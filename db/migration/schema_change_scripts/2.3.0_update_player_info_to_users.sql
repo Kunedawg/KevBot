@@ -15,7 +15,7 @@ ALTER TABLE `users`
     ADD COLUMN `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     ADD COLUMN `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     MODIFY COLUMN `discord_username` VARCHAR(32) NULL,
-    MODIFY COLUMN `discord_id` VARCHAR(20) NOT NULL,
+    MODIFY COLUMN `discord_id` VARCHAR(20) NULL,
     DROP INDEX `discord_id_UNIQUE`,
     ADD UNIQUE INDEX `unique_users_discord_id` (`discord_id`),
     ADD UNIQUE INDEX `unique_users_username` (`username`);
