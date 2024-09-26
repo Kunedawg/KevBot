@@ -2,7 +2,9 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { z } = require("zod");
 const { API_JWT_SECRET } = require("../config/secrets");
-const knex = require("../db/connection");
+// const knex = require("../db/connection");
+const userService = require("../services/userService");
+const authService = require("../services/authService");
 
 const postLoginBodySchema = z.object({
   username: z.string({ required_error: "Username is required" }),
@@ -60,17 +62,12 @@ exports.postRegister = async (req, res, next) => {
     }
     const { username, password } = result.data;
 
-    // need to check if user is unique
+    const userLookupResult = await userService.getUsers({ username: username });
+    if (userLookupResult.length !== 0) {
+      return res.status(400).json({ error: "Username is already taken" });
+    }
 
-    const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-    const [id] = await knex("users").insert({ username: username, password_hash: hashedPassword });
-    const user = await knex("users")
-      .select(["id", "discord_id", "discord_username", "username", "created_at", "updated_at"])
-      .where("id", id)
-      .first();
-
+    const user = await authService.registerUser(username, password);
     return res.status(201).json(user);
   } catch (error) {
     next(error);
