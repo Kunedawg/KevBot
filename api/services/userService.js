@@ -41,3 +41,15 @@ exports.getUserById = async (id) => {
     throw error;
   }
 };
+
+exports.getUserPasswordHash = async (username) => {
+  try {
+    const user = await knex("users").select(["password_hash"]).where("username", username).first();
+    if (!user?.password_hash) {
+      throw new Error("could not retrieve password hash");
+    }
+    return user.password_hash;
+  } catch (error) {
+    throw error;
+  }
+};
