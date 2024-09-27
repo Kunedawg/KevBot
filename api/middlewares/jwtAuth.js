@@ -1,5 +1,3 @@
-// const jwt = require("jsonwebtoken");
-// const { API_JWT_SECRET } = require("../config/secrets");
 const authService = require("../services/authService");
 
 async function jwtAuth(req, res, next) {
