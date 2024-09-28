@@ -55,6 +55,15 @@ exports.deleteTrack = async (id) => {
   }
 };
 
+exports.restoreTrack = async (id) => {
+  try {
+    await knex("tracks").where("id", id).whereNotNull("deleted_at").update({ deleted_at: null });
+    return await this.getTrackById(id);
+  } catch (error) {
+    throw error;
+  }
+};
+
 exports.postTrack = async (filepath, name, duration, user_id) => {
   if (!filepath || !name || !duration || !user_id) {
     throw new Error("invalid args");

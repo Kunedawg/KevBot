@@ -265,3 +265,52 @@ exports.deleteTrack = async (req, res, next) => {
     next(error);
   }
 };
+
+const restoreTrackBodySchema = z.object({
+  name: nameValidation.optional(),
+});
+
+exports.restoreTrack = async (req, res, next) => {
+  try {
+    const result = restoreTrackBodySchema.safeParse(req.body);
+    if (!result.success) {
+      if (result?.error?.issues[0]?.message) {
+        return res.status(400).json({ error: result.error.issues[0].message });
+      } else {
+        return res.status(400).json(result.error.issues);
+      }
+    }
+    const { name } = result.data;
+
+    const track = await trackService.getTrackById(req.params.id);
+    if (!track) {
+      return res.status(404).json({ error: "Track not found" });
+    }
+
+    if (track.deleted_at === null) {
+      return res.status(400).json({ error: "Track is not deleted, so it cannot be restored." });
+    }
+
+    const tracksWithSameName = await trackService.getTracks({ name: name ?? track.name });
+    if (tracksWithSameName.length !== 0) {
+      return res.status(400).json({ error: "Track name is already taken." });
+    }
+
+    if (!req.user?.id) {
+      return res.status(500).json({ error: "Unexpected issue" });
+    }
+
+    if (track.user_id !== req.user.id) {
+      return res.status(403).json({ error: "User does not have permission to restore this track." });
+    }
+
+    if (name) {
+      await trackService.patchTrack(track.id, name);
+    }
+
+    const updatedTrack = await trackService.restoreTrack(track.id);
+    res.status(200).json(updatedTrack);
+  } catch (error) {
+    next(error);
+  }
+};
