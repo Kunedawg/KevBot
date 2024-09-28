@@ -7,7 +7,7 @@ const authRoutes = require("./routes/authRoutes");
 // const userRoutes = require("./routes/userRoutes");
 const errorHandler = require("./middlewares/errorHandler");
 // const authMiddleware = require("./middlewares/authMiddleware");
-const jwtAuth = require("./middlewares/jwtAuth");
+const auth = require("./middlewares/auth");
 
 const app = express();
 
@@ -19,7 +19,7 @@ app.use(express.json());
 app.use("/v1/tracks", trackRoutes);
 app.use("/v1/docs", docRoutes);
 app.use("/v1/auth", authRoutes);
-app.get("/v1/protected", jwtAuth, (req, res) => {
+app.get("/v1/protected", auth.requireAuth, (req, res) => {
   res.send(`Hello ${req.user.username}`);
 });
 // app.use("/api/users", userRoutes);

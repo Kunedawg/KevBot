@@ -5,13 +5,6 @@ const trackService = require("../services/trackService");
 const { getTrackMetaData, normalizeAudio } = require("../utils/utils");
 const config = require("../config/config");
 
-const MAX_TRACK_NAME_LENGTH = config.maxTrackNameLength;
-const MAX_TRACK_DURATION = config.maxTrackDuration;
-const nameValidation = z
-  .string()
-  .regex(/^[a-z\d]+$/g, { message: "Invalid track name. Only lower case letters and numbers are allowed." })
-  .max(MAX_TRACK_NAME_LENGTH, { message: `Track name must be ${MAX_TRACK_NAME_LENGTH} characters or fewer.` });
-
 const getTracksQuerySchema = z.object({
   name: z.string().optional(),
   include_deleted: z.coerce.boolean().optional().default(false),
@@ -127,6 +120,11 @@ exports.getTrackStreamById = async (req, res, next) => {
   }
 };
 
+const nameValidation = z
+  .string()
+  .regex(/^[a-z\d]+$/g, { message: "Invalid track name. Only lower case letters and numbers are allowed." })
+  .max(config.maxTrackNameLength, { message: `Track name must be ${config.maxTrackNameLength} characters or fewer.` });
+
 const patchTrackBodySchema = z.object({
   name: nameValidation,
 });
@@ -137,6 +135,15 @@ exports.patchTrack = async (req, res, next) => {
     if (!track) {
       return res.status(404).json({ error: "Track not found" });
     }
+
+    if (!req.user?.id) {
+      return res.status(500).json({ error: "Unexpected issue" });
+    }
+
+    if (track.user_id !== req.user.id) {
+      return res.status(403).json({ error: "User does not have permission to change this track." });
+    }
+
     const result = patchTrackBodySchema.safeParse(req.body);
     if (!result.success) {
       if (result?.error?.issues[0]?.message) {
@@ -165,7 +172,7 @@ const postTrackBodySchema = z.object({
 exports.postTrack = async (req, res, next) => {
   const file = req.file;
   try {
-    const result = patchTrackBodySchema.safeParse(req.body);
+    const result = postTrackBodySchema.safeParse(req.body);
     if (!result.success) {
       if (result?.error?.issues[0]?.message) {
         return res.status(400).json({ error: result.error.issues[0].message });
@@ -179,10 +186,9 @@ exports.postTrack = async (req, res, next) => {
     }
     file.parsedPath = path.parse(file.path);
 
-    const SUPPORTED_EXTENSIONS = [".mp3"];
-    if (!SUPPORTED_EXTENSIONS.includes(file.parsedPath.ext)) {
+    if (!config.supportedTrackExtensions.includes(file.parsedPath.ext)) {
       return res.status(400).json({
-        error: `Invalid file extension '${file.parsedPath.ext}'. Supported extensions: ${SUPPORTED_EXTENSIONS}`,
+        error: `Invalid file extension '${file.parsedPath.ext}'. Supported extensions: ${config.supportedTrackExtensions}`,
       });
     }
 
@@ -197,13 +203,17 @@ exports.postTrack = async (req, res, next) => {
         .json({ error: "Unsupported or corrupt file was received. Failed to parse track metadata from file." });
     }
 
-    if (metadata.format.duration > MAX_TRACK_DURATION) {
-      return res.status(400).json({ error: `Track duration exceeds limit of ${MAX_TRACK_DURATION} seconds` });
+    if (metadata.format.duration > config.maxTrackDuration) {
+      return res.status(400).json({ error: `Track duration exceeds limit of ${config.maxTrackDuration} seconds` });
     }
 
     const nameLookupResult = await trackService.getTracks({ name: result.data.name });
     if (nameLookupResult.length !== 0) {
       return res.status(400).json({ error: "Track name is already taken" });
+    }
+
+    if (!req.user?.id) {
+      return res.status(500).json({ error: "Unexpected issue" });
     }
 
     try {
@@ -214,7 +224,12 @@ exports.postTrack = async (req, res, next) => {
       return res.status(500).json({ error: "Failed to normalize track" });
     }
 
-    const track = await trackService.postTrack(file.normalizedPath, result.data.name, metadata.format.duration, 351);
+    const track = await trackService.postTrack(
+      file.normalizedPath,
+      result.data.name,
+      metadata.format.duration,
+      req.user.id
+    );
 
     res.status(201).json(track);
   } catch (error) {
@@ -235,6 +250,15 @@ exports.deleteTrack = async (req, res, next) => {
     if (!track) {
       return res.status(404).json({ error: "Track not found" });
     }
+
+    if (!req.user?.id) {
+      return res.status(500).json({ error: "Unexpected issue" });
+    }
+
+    if (track.user_id !== req.user.id) {
+      return res.status(403).json({ error: "User does not have permission to delete this track." });
+    }
+
     const updatedTrack = await trackService.deleteTrack(req.params.id);
     res.status(200).json(updatedTrack);
   } catch (error) {

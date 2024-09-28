@@ -15,7 +15,7 @@ const postRegisterBodySchema = z.object({
     .min(config.minPasswordLength, {
       message: `Password must be at least ${config.minPasswordLength} characters long.`,
     })
-    .max(config.maxPasswordLength, { message: `Password must be ${config.maxPasswordLength}  characters or fewer.` })
+    .max(config.maxPasswordLength, { message: `Password must be ${config.maxPasswordLength} characters or fewer.` })
     .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter." })
     .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter." })
     .regex(/\d/, { message: "Password must contain at least one number." })

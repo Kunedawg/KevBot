@@ -8,5 +8,6 @@ module.exports = {
   minPasswordLength: 8, // characters
   maxPasswordLength: 64, // characters
   maxTrackDuration: 15.0, // seconds
+  supportedTrackExtensions: [".mp3"],
   jwtTokenExpirationTime: "1h",
 };
