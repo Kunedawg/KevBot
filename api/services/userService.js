@@ -15,6 +15,19 @@ exports.postUser = async (username, passwordHash) => {
   }
 };
 
+exports.patchUser = async (id, username) => {
+  if (!id || !username) {
+    throw new Error("invalid args");
+  }
+
+  try {
+    await knex("users").where("id", id).update({ username: username });
+    return await this.getUserById(id);
+  } catch (error) {
+    throw error;
+  }
+};
+
 exports.getUsers = async (options = {}) => {
   const { username, discordId, discordUsername } = options;
   try {

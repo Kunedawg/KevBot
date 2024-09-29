@@ -59,7 +59,7 @@ exports.getTrackDownloadById = async (req, res, next) => {
       })
       .pipe(res)
       .on("finish", () => {
-        console.log("File successfully sent");
+        // console.log("File successfully sent");
       });
   } catch (error) {
     next(error);
@@ -83,7 +83,6 @@ exports.getTrackStreamById = async (req, res, next) => {
 
     // Check for 'Range' header to serve byte-range requests
     const range = req.headers.range;
-    console.log(range);
     if (!range) {
       // No range provided, send the entire file (default behavior)
       res.setHeader("Content-Type", "audio/mpeg");

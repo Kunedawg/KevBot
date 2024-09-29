@@ -3,13 +3,21 @@ const userService = require("../services/userService");
 const authService = require("../services/authService");
 const config = require("../config/config");
 
+const usernameValidation = z
+  .string({ required_error: "Username is required" })
+  .regex(/^[a-z\d_]+$/g, {
+    message: "Invalid username. Only lower case letters, numbers, and underscores are allowed.",
+  })
+  .max(config.maxUsernameLength, { message: `Username must be ${config.maxUsernameLength} characters or fewer.` });
+
 const postRegisterBodySchema = z.object({
-  username: z
-    .string({ required_error: "Username is required" })
-    .regex(/^[a-z\d_]+$/g, {
-      message: "Invalid username. Only lower case letters, numbers, and underscores are allowed.",
-    })
-    .max(config.maxUsernameLength, { message: `Username must be ${config.maxUsernameLength} characters or fewer.` }),
+  // username: z
+  //   .string({ required_error: "Username is required" })
+  //   .regex(/^[a-z\d_]+$/g, {
+  //     message: "Invalid username. Only lower case letters, numbers, and underscores are allowed.",
+  //   })
+  //   .max(config.maxUsernameLength, { message: `Username must be ${config.maxUsernameLength} characters or fewer.` }),
+  username: usernameValidation,
   password: z
     .string({ required_error: "Password is required" })
     .min(config.minPasswordLength, {
@@ -23,11 +31,12 @@ const postRegisterBodySchema = z.object({
     .regex(/^\S+$/, { message: "Password must not contain spaces." }),
 });
 
+exports.usernameValidation = usernameValidation;
+
 exports.postRegister = async (req, res, next) => {
   try {
     const result = postRegisterBodySchema.safeParse(req.body);
     if (!result.success) {
-      console.log(result.error.issues);
       if (result?.error?.issues[0]?.message) {
         return res.status(400).json({ error: result.error.issues[0].message });
       } else {
@@ -55,7 +64,6 @@ exports.postLogin = async (req, res, next) => {
   try {
     const result = postLoginBodySchema.safeParse(req.body);
     if (!result.success) {
-      console.log(result.error.issues);
       if (result?.error?.issues[0]?.message) {
         return res.status(400).json({ error: result.error.issues[0].message });
       }
