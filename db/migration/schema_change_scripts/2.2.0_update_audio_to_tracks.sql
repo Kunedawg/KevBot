@@ -8,6 +8,7 @@ RENAME TABLE `audio` TO `tracks`;
 ALTER TABLE `tracks`
 	RENAME COLUMN `audio_id` TO `id`,
     RENAME COLUMN `dt_created` TO `created_at`,
+    RENAME COLUMN `player_id` TO `user_id`,
     RENAME COLUMN `audio_name` TO `name`;
 
 ALTER TABLE `tracks`
@@ -17,7 +18,6 @@ ALTER TABLE `tracks`
     ADD COLUMN `deleted_at` TIMESTAMP NULL DEFAULT NULL,
     DROP INDEX `audio_name_UNIQUE`,
     ADD UNIQUE INDEX `unique_tracks_name` (`name`, (IF(`deleted_at`, NULL, 1))),
-    RENAME COLUMN `player_id` TO `user_id`,
     DROP FOREIGN KEY `fk_audio_player_id`,
     ADD CONSTRAINT `fk_tracks_users_id` FOREIGN KEY (`user_id`) REFERENCES `player_info` (`player_id`) ON UPDATE CASCADE,
     DROP KEY `fk_audio_player_id_idx`,
