@@ -1,5 +1,5 @@
 /*
- * Script:      : 2.4.0_update_categories_to_playlists
+ * Script:      : 2.4.0_update_categories_to_playlists.sql
  * Description  : Renames audio table to tracks, and updates columns of table as well
  */
 
@@ -20,10 +20,10 @@ ALTER TABLE `playlists`
     DROP FOREIGN KEY `fk_cat_player_id`,
     ADD CONSTRAINT `fk_playlists_users_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE,
     DROP KEY `fk_cat_player_id_idx`,
-    ADD KEY `index_playlists_users_id` (`user_id`);
+    ADD KEY `index_playlists_user_id` (`user_id`);
 
 UPDATE `playlists` SET `updated_at` = `created_at`;
     
 -- Update the version and change_log tables
 INSERT INTO db_version (version) VALUES ('2.4.0');
-INSERT INTO change_log (script_name) VALUES ('2.4.0_update_categories_to_playlists');
+INSERT INTO change_log (script_name) VALUES ('2.4.0_update_categories_to_playlists.sql');
