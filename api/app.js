@@ -5,9 +5,8 @@ const docRoutes = require("./routes/docRoutes");
 const trackRoutes = require("./routes/trackRoutes");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
-// const userRoutes = require("./routes/userRoutes");
+const playlistRoutes = require("./routes/playlistRoutes");
 const errorHandler = require("./middlewares/errorHandler");
-// const authMiddleware = require("./middlewares/authMiddleware");
 const auth = require("./middlewares/auth");
 
 const app = express();
@@ -21,10 +20,12 @@ app.use("/v1/tracks", trackRoutes);
 app.use("/v1/docs", docRoutes);
 app.use("/v1/auth", authRoutes);
 app.use("/v1/users", userRoutes);
+app.use("/v1/playlists", playlistRoutes);
+
+// testing
 app.get("/v1/protected", auth.requireAuth, (req, res) => {
   res.send(`Hello ${req.user.username}`);
 });
-// app.use("/api/users", userRoutes);
 
 // Global Error Handler
 app.use(errorHandler);

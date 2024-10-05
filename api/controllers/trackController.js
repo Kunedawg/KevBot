@@ -119,13 +119,8 @@ exports.getTrackStreamById = async (req, res, next) => {
   }
 };
 
-const nameValidation = z
-  .string()
-  .regex(/^[a-z\d]+$/g, { message: "Invalid track name. Only lower case letters and numbers are allowed." })
-  .max(config.maxTrackNameLength, { message: `Track name must be ${config.maxTrackNameLength} characters or fewer.` });
-
 const patchTrackBodySchema = z.object({
-  name: nameValidation,
+  name: config.trackNameValidation,
 });
 
 exports.patchTrack = async (req, res, next) => {
@@ -165,7 +160,7 @@ exports.patchTrack = async (req, res, next) => {
 };
 
 const postTrackBodySchema = z.object({
-  name: nameValidation,
+  name: config.trackNameValidation,
 });
 
 exports.postTrack = async (req, res, next) => {
@@ -266,7 +261,7 @@ exports.deleteTrack = async (req, res, next) => {
 };
 
 const restoreTrackBodySchema = z.object({
-  name: nameValidation.optional(),
+  name: config.trackNameValidation.optional(),
 });
 
 exports.restoreTrack = async (req, res, next) => {
