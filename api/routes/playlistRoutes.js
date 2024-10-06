@@ -10,8 +10,8 @@ router.get("/:id", playlistController.getPlaylistById);
 router.patch("/:id", auth.requireAuth, playlistController.patchPlaylist);
 router.delete("/:id", auth.requireAuth, playlistController.deletePlaylist);
 router.patch("/:id/restore", auth.requireAuth, playlistController.restorePlaylist);
-// router.post("/:id/tracks", auth.requireAuth, upload.single("file"), playlistController.postTrack);
-// router.get("/:id/tracks", playlistController.getTracks);
-// router.delete("/:id/tracks/:track_id", auth.requireAuth, playlistController.deleteTrack);
+router.post("/:id/tracks", auth.requireAuth, playlistController.postPlaylistTracks);
+router.get("/:id/tracks", playlistController.getPlaylistTracks);
+router.delete("/:id/tracks", auth.requireAuth, playlistController.deletePlaylistTracks);
 
 module.exports = router;

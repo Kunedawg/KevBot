@@ -1,8 +1,7 @@
 const { z } = require("zod");
-const fs = require("fs");
-const path = require("path");
 const playlistService = require("../services/playlistService");
 const config = require("../config/config");
+const trackService = require("../services/trackService");
 
 const getPlaylistsQuerySchema = z.object({
   name: z.string().optional(),
@@ -123,7 +122,7 @@ exports.deletePlaylist = async (req, res, next) => {
     }
 
     if (playlist.user_id !== req.user.id) {
-      return res.status(403).json({ error: "User does not have permission to delete this track." });
+      return res.status(403).json({ error: "User does not have permission to delete this playlist." });
     }
 
     const updatedPlaylist = await playlistService.deletePlaylist(req.params.id);
@@ -177,6 +176,98 @@ exports.restorePlaylist = async (req, res, next) => {
 
     const updatedPlaylist = await playlistService.restorePlaylist(playlist.id);
     res.status(200).json(updatedPlaylist);
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getPlaylistTracks = async (req, res, next) => {
+  try {
+    const tracks = await playlistService.getPlaylistTracks(req.params.id);
+    if (!tracks) {
+      return res.status(404).json({ error: "Playlist not found" });
+    }
+    return res.status(200).json(tracks);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const postPlaylistTracksBodySchema = z.object({
+  track_ids: z.array(z.number().int()).min(1),
+});
+
+exports.postPlaylistTracks = async (req, res, next) => {
+  try {
+    const playlist = await playlistService.getPlaylistById(req.params.id);
+    if (!playlist) {
+      return res.status(404).json({ error: "Playlist not found" });
+    }
+
+    const result = postPlaylistTracksBodySchema.safeParse(req.body);
+    if (!result.success) {
+      if (result?.error?.issues[0]?.message) {
+        return res.status(400).json({ error: result.error.issues[0].message });
+      } else {
+        return res.status(400).json(result.error.issues);
+      }
+    }
+    const { track_ids } = result.data;
+
+    const tracksNotFound = [];
+    track_ids.forEach(async (track_id) => {
+      const track = await trackService.getTrackById(track_id);
+      if (!track) {
+        tracksNotFound.push(track_id);
+      }
+    });
+
+    if (tracksNotFound.length !== 0) {
+      return res.status(400).json({ error: "Invalid track IDs provided.", invalid_track_ids: tracksNotFound });
+    }
+
+    if (!req.user?.id) {
+      return res.status(500).json({ error: "Unexpected issue" });
+    }
+
+    const response = await playlistService.postPlaylistTracks(playlist.id, track_ids, req.user.id);
+    return res.status(201).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deletePlaylistTracksBodySchema = z.object({
+  track_ids: z.array(z.number().int()).min(1),
+});
+
+exports.deletePlaylistTracks = async (req, res, next) => {
+  try {
+    const playlist = await playlistService.getPlaylistById(req.params.id);
+    if (!playlist) {
+      return res.status(404).json({ error: "Playlist not found" });
+    }
+
+    const result = deletePlaylistTracksBodySchema.safeParse(req.body);
+    if (!result.success) {
+      if (result?.error?.issues[0]?.message) {
+        return res.status(400).json({ error: result.error.issues[0].message });
+      } else {
+        return res.status(400).json(result.error.issues);
+      }
+    }
+    const { track_ids } = result.data;
+
+    if (!req.user?.id) {
+      return res.status(500).json({ error: "Unexpected issue" });
+    }
+
+    if (playlist.user_id !== req.user.id) {
+      return res.status(403).json({ error: "User does not have permission to delete tracks from this playlist." });
+    }
+
+    const response = await playlistService.deletePlaylistTracks(playlist.id, track_ids, req.user.id);
+    return res.status(200).json(response);
   } catch (error) {
     next(error);
   }
