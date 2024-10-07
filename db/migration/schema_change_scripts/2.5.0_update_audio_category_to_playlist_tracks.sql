@@ -1,6 +1,6 @@
 /*
  * Script:      : 2.5.0_update_audio_category_to_playlist_tracks.sql
- * Description  : Renames audio table to tracks, and updates columns of table as well
+ * Description  : Renames audio_category table to playlist_tracks, and updates columns of table as well
  */
 
 RENAME TABLE `audio_category` TO `playlist_tracks`;
