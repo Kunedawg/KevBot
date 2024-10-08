@@ -19,6 +19,7 @@ ALTER TABLE `track_plays`
     DROP KEY `fk_audiolog_audio_id_idx`,
     MODIFY COLUMN `played_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     MODIFY COLUMN `type` INT NOT NULL,
+    MODIFY COLUMN `user_id` INT NULL, 
     ADD CONSTRAINT `fk_track_plays_tracks_id` FOREIGN KEY (`track_id`) REFERENCES `tracks` (`id`) ON UPDATE CASCADE,
     ADD CONSTRAINT `fk_track_plays_users_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE,
     ADD KEY `index_track_plays_track_id` (`track_id`),
