@@ -6,6 +6,7 @@ const trackRoutes = require("./routes/trackRoutes");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const playlistRoutes = require("./routes/playlistRoutes");
+const playsRoutes = require("./routes/playsRoutes");
 const errorHandler = require("./middlewares/errorHandler");
 const auth = require("./middlewares/auth");
 
@@ -21,6 +22,7 @@ app.use("/v1/docs", docRoutes);
 app.use("/v1/auth", authRoutes);
 app.use("/v1/users", userRoutes);
 app.use("/v1/playlists", playlistRoutes);
+app.use("/v1/plays", playsRoutes);
 
 // testing
 app.get("/v1/protected", auth.requireAuth, (req, res) => {
