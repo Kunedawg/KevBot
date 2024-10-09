@@ -17,7 +17,7 @@ exports.logTracksPlay = async (track_id, play_type, options = {}) => {
   const trx = await knex.transaction();
   try {
     const { user_id } = options;
-    await trx("track_plays").insert({ track_id: track_id, type: play_type, user_id: user_id });
+    await trx("track_plays").insert({ track_id: track_id, play_type: play_type, user_id: user_id });
     await trx.commit();
     // TODO: increment track play count (by type?)
     return {
