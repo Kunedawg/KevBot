@@ -9,6 +9,8 @@ exports.PLAY_TYPE = {
   CATEGORY_GREETING: 5,
 };
 
+exports.PLAY_TYPES_OF_TOTAL_PLAY_COUNT = [this.PLAY_TYPE.PLAY, this.PLAY_TYPE.RAID, this.PLAY_TYPE.PLAY_RANDOM];
+
 exports.logTracksPlay = async (track_id, play_type, options = {}) => {
   // if (!track_id || !play_type) {
   //   throw new Error("invalid args");
@@ -19,19 +21,18 @@ exports.logTracksPlay = async (track_id, play_type, options = {}) => {
     const { user_id } = options;
     await trx("track_plays").insert({ track_id: track_id, play_type: play_type, user_id: user_id });
 
-    // increment raw_total_plays
+    // increment raw_total_play_count
     await trx("track_play_counts")
       .insert({
         track_id: track_id,
-        raw_total_plays: 1,
+        raw_total_play_count: 1,
       })
       .onConflict("track_id")
-      .merge({ raw_total_plays: trx.raw("?? + ?", ["raw_total_plays", 1]) });
+      .merge({ raw_total_play_count: trx.raw("?? + ?", ["raw_total_play_count", 1]) });
 
-    // increment total_plays if needed
-    const VALID_PLAY_TYPES = [this.PLAY_TYPE.PLAY, this.PLAY_TYPE.RAID, this.PLAY_TYPE.PLAY_RANDOM];
-    if (VALID_PLAY_TYPES.includes(play_type)) {
-      await trx("track_play_counts").where("track_id", track_id).increment("total_plays", 1);
+    // increment total_play_count if needed
+    if (PLAY_TYPES_OF_TOTAL_PLAY_COUNT.includes(play_type)) {
+      await trx("track_play_counts").where("track_id", track_id).increment("total_play_count", 1);
     }
 
     // increment play_type count

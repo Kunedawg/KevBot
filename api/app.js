@@ -9,6 +9,7 @@ const playlistRoutes = require("./routes/playlistRoutes");
 const playsRoutes = require("./routes/playsRoutes");
 const errorHandler = require("./middlewares/errorHandler");
 const auth = require("./middlewares/auth");
+const initTaskSchedules = require("./schedulers/taskScheduler");
 
 const app = express();
 
@@ -31,5 +32,7 @@ app.get("/v1/protected", auth.requireAuth, (req, res) => {
 
 // Global Error Handler
 app.use(errorHandler);
+
+initTaskSchedules();
 
 module.exports = app;
