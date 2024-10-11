@@ -4,15 +4,16 @@ const tracksBucket = require("../storage/tracksBucket");
 exports.getTracks = async (options = {}) => {
   const { name, include_deleted = false } = options;
   try {
-    const query = knex("tracks");
+    const query = knex("tracks")
+      .select("tracks.*", "track_play_counts.total_play_count", "track_play_counts.raw_total_play_count")
+      .join("track_play_counts", "tracks.id", "=", "track_play_counts.track_id");
     if (name) {
-      query.andWhere("name", name);
+      query.andWhere("tracks.name", name);
     }
     if (!include_deleted) {
-      query.andWhere("deleted_at", null);
+      query.andWhere("tracks.deleted_at", null);
     }
-    const fields = include_deleted ? ["*"] : ["id", "name", "created_at", "user_id", "duration", "updated_at"];
-    return await query.select(fields);
+    return await query;
   } catch (error) {
     throw error;
   }
@@ -20,7 +21,11 @@ exports.getTracks = async (options = {}) => {
 
 exports.getTrackById = async (id) => {
   try {
-    return await knex("tracks").where("id", id).first();
+    return await knex("tracks")
+      .where("id", id)
+      .select("tracks.*", "track_play_counts.total_play_count", "track_play_counts.raw_total_play_count")
+      .join("track_play_counts", "tracks.id", "=", "track_play_counts.track_id")
+      .first();
   } catch (error) {
     throw error;
   }
