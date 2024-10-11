@@ -18,8 +18,33 @@ exports.logTracksPlay = async (track_id, play_type, options = {}) => {
   try {
     const { user_id } = options;
     await trx("track_plays").insert({ track_id: track_id, play_type: play_type, user_id: user_id });
+
+    // increment raw_total_plays
+    await trx("track_play_counts")
+      .insert({
+        track_id: track_id,
+        raw_total_plays: 1,
+      })
+      .onConflict("track_id")
+      .merge({ raw_total_plays: trx.raw("?? + ?", ["raw_total_plays", 1]) });
+
+    // increment total_plays if needed
+    const VALID_PLAY_TYPES = [this.PLAY_TYPE.PLAY, this.PLAY_TYPE.RAID, this.PLAY_TYPE.PLAY_RANDOM];
+    if (VALID_PLAY_TYPES.includes(play_type)) {
+      await trx("track_play_counts").where("track_id", track_id).increment("total_plays", 1);
+    }
+
+    // increment play_type count
+    await trx("track_play_type_counts")
+      .insert({
+        track_id: track_id,
+        play_type: play_type,
+        play_count: 1,
+      })
+      .onConflict("track_id", "play_type")
+      .merge({ play_count: trx.raw("?? + ?", ["play_count", 1]) });
+
     await trx.commit();
-    // TODO: increment track play count (by type?)
     return {
       message: "Successfully logged track play.",
     };
