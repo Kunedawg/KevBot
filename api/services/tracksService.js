@@ -4,14 +4,14 @@ const tracksBucket = require("../storage/tracksBucket");
 exports.getTracks = async (options = {}) => {
   const { name, include_deleted = false } = options;
   try {
-    const query = knex("tracks")
-      .select("tracks.*", "track_play_counts.total_play_count", "track_play_counts.raw_total_play_count")
-      .join("track_play_counts", "tracks.id", "=", "track_play_counts.track_id");
+    const query = knex({ t: "tracks" })
+      .select("t.*", "tpc.total_play_count", "tpc.raw_total_play_count")
+      .leftJoin({ tpc: "track_play_counts" }, "t.id", "tpc.track_id");
     if (name) {
-      query.andWhere("tracks.name", name);
+      query.andWhere("t.name", name);
     }
     if (!include_deleted) {
-      query.andWhere("tracks.deleted_at", null);
+      query.andWhere("t.deleted_at", null);
     }
     return await query;
   } catch (error) {
@@ -21,10 +21,10 @@ exports.getTracks = async (options = {}) => {
 
 exports.getTrackById = async (id) => {
   try {
-    return await knex("tracks")
+    return await knex({ t: "tracks" })
       .where("id", id)
-      .select("tracks.*", "track_play_counts.total_play_count", "track_play_counts.raw_total_play_count")
-      .join("track_play_counts", "tracks.id", "=", "track_play_counts.track_id")
+      .select("t.*", "tpc.total_play_count", "tpc.raw_total_play_count")
+      .leftJoin({ tpc: "track_play_counts" }, "t.id", "tpc.track_id")
       .first();
   } catch (error) {
     throw error;

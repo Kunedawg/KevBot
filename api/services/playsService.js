@@ -31,7 +31,7 @@ exports.logTracksPlay = async (track_id, play_type, options = {}) => {
       .merge({ raw_total_play_count: trx.raw("?? + ?", ["raw_total_play_count", 1]) });
 
     // increment total_play_count if needed
-    if (PLAY_TYPES_OF_TOTAL_PLAY_COUNT.includes(play_type)) {
+    if (this.PLAY_TYPES_OF_TOTAL_PLAY_COUNT.includes(play_type)) {
       await trx("track_play_counts").where("track_id", track_id).increment("total_play_count", 1);
     }
 
@@ -66,7 +66,6 @@ exports.logRandomPlaylistPlay = async (playlist_id, options = {}) => {
     const { user_id } = options;
     await trx("playlist_plays").insert({ playlist_id: playlist_id, user_id: user_id });
     await trx.commit();
-    // TODO: increment track play count (by type?)
     return {
       message: "Successfully logged random playlist play.",
     };
