@@ -1,6 +1,8 @@
 const { z } = require("zod");
 const userService = require("../services/userService");
 const { usernameValidation } = require("./authController");
+const trackService = require("../services/trackService");
+const playlistService = require("../services/playlistService");
 
 const getUsersQuerySchema = z.object({
   username: z.string().optional(),
@@ -36,16 +38,25 @@ exports.getUserById = async (req, res, next) => {
   }
 };
 
-exports.getUserByMe = async (req, res, next) => {
+exports.getGreeting = async (req, res, next) => {
   try {
-    if (!req.user?.id) {
-      return res.status(500).json({ error: "Unexpected issue" });
+    const greeting = await userService.getGreetingByUserId(req.params.id);
+    if (!greeting) {
+      return res.status(404).json({ error: "Greeting not found" });
     }
-    const user = await userService.getUserById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
+    return res.status(200).json(greeting);
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getFarewell = async (req, res, next) => {
+  try {
+    const farewell = await userService.getFarewellByUserId(req.params.id);
+    if (!farewell) {
+      return res.status(404).json({ error: "Farewell not found" });
     }
-    return res.status(200).json(user);
+    return res.status(200).json(farewell);
   } catch (error) {
     next(error);
   }
@@ -90,19 +101,37 @@ exports.patchUser = async (req, res, next) => {
   }
 };
 
-// TODO: Basically same logic as patchUser. Should refactor to reuse code
-exports.patchUserByMe = async (req, res, next) => {
-  try {
-    if (!req.user?.id) {
-      return res.status(500).json({ error: "Unexpected issue" });
+const putGreetingBodySchema = z
+  .object({
+    greeting_track_id: z.number().int().nullable(),
+    greeting_playlist_id: z.number().int().nullable(),
+  })
+  .refine(
+    (data) => {
+      const nonNullCount = Object.values(data).reduce((count, value) => count + (value !== null ? 1 : 0), 0);
+      return nonNullCount < 2;
+    },
+    {
+      message: "Only one greeting id entity can be provided, the others must be null.",
     }
+  );
 
-    const user = await userService.getUserById(req.user.id);
+exports.putGreeting = async (req, res, next) => {
+  try {
+    const user = await userService.getUserById(req.params.id);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const result = patchUserBodySchema.safeParse(req.body);
+    if (!req.user?.id) {
+      return res.status(500).json({ error: "Unexpected issue" });
+    }
+
+    if (user.id !== req.user.id) {
+      return res.status(403).json({ error: "User does not have permission to change this user." });
+    }
+
+    const result = putGreetingBodySchema.safeParse(req.body);
     if (!result.success) {
       if (result?.error?.issues[0]?.message) {
         return res.status(400).json({ error: result.error.issues[0].message });
@@ -110,13 +139,85 @@ exports.patchUserByMe = async (req, res, next) => {
         return res.status(400).json(result.error.issues);
       }
     }
-    const { username } = result.data;
-    const userLookupResult = await userService.getUsers({ username: username });
-    if (userLookupResult.length !== 0) {
-      return res.status(400).json({ error: "Username is already taken" });
+    const { greeting_track_id, greeting_playlist_id } = result.data;
+
+    if (greeting_track_id) {
+      const track = await trackService.getTrackById(greeting_track_id);
+      if (!track) {
+        return res.status(404).json({ error: "Track not found" });
+      }
     }
-    const updatedUser = await userService.patchUser(req.user.id, username);
-    return res.status(201).json(updatedUser);
+
+    if (greeting_playlist_id) {
+      const playlist = await playlistService.getPlaylistById(greeting_playlist_id);
+      if (!playlist) {
+        return res.status(404).json({ error: "Playlist not found" });
+      }
+    }
+
+    const updatedGreeting = await userService.putGreeting(req.params.id, greeting_track_id, greeting_playlist_id);
+    return res.status(201).json(updatedGreeting);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const putFarewellBodySchema = z
+  .object({
+    farewell_track_id: z.number().int().nullable(),
+    farewell_playlist_id: z.number().int().nullable(),
+  })
+  .refine(
+    (data) => {
+      const nonNullCount = Object.values(data).reduce((count, value) => count + (value !== null ? 1 : 0), 0);
+      return nonNullCount < 2;
+    },
+    {
+      message: "Only one farewell id entity can be provided, the others must be null.",
+    }
+  );
+
+exports.putFarewell = async (req, res, next) => {
+  try {
+    const user = await userService.getUserById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (!req.user?.id) {
+      return res.status(500).json({ error: "Unexpected issue" });
+    }
+
+    if (user.id !== req.user.id) {
+      return res.status(403).json({ error: "User does not have permission to change this user." });
+    }
+
+    const result = putFarewellBodySchema.safeParse(req.body);
+    if (!result.success) {
+      if (result?.error?.issues[0]?.message) {
+        return res.status(400).json({ error: result.error.issues[0].message });
+      } else {
+        return res.status(400).json(result.error.issues);
+      }
+    }
+    const { farewell_track_id, farewell_playlist_id } = result.data;
+
+    if (farewell_track_id) {
+      const track = await trackService.getTrackById(farewell_track_id);
+      if (!track) {
+        return res.status(404).json({ error: "Track not found" });
+      }
+    }
+
+    if (farewell_playlist_id) {
+      const playlist = await playlistService.getPlaylistById(farewell_playlist_id);
+      if (!playlist) {
+        return res.status(404).json({ error: "Playlist not found" });
+      }
+    }
+
+    const updatedFarewell = await userService.putFarewell(req.params.id, farewell_track_id, farewell_playlist_id);
+    return res.status(201).json(updatedFarewell);
   } catch (error) {
     next(error);
   }

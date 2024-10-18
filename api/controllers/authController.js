@@ -45,6 +45,7 @@ exports.postRegister = async (req, res, next) => {
     }
     const { username, password } = result.data;
     const userLookupResult = await userService.getUsers({ username: username });
+    console.log(userLookupResult);
     if (userLookupResult.length !== 0) {
       return res.status(400).json({ error: "Username is already taken" });
     }
