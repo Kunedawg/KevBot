@@ -1,7 +1,7 @@
 const { z } = require("zod");
 const playsService = require("../services/playsService");
-const playlistService = require("../services/playlistService");
-const trackService = require("../services/trackService");
+const playlistsService = require("../services/playlistsService");
+const tracksService = require("../services/tracksService");
 
 const logTracksPlayBodySchema = z.object({
   track_id: z.number().int(),
@@ -27,7 +27,7 @@ exports.logTracksPlay = async (req, res, next) => {
     }
     const { track_id, play_type } = result.data;
 
-    const track = await trackService.getTrackById(track_id);
+    const track = await tracksService.getTrackById(track_id);
     if (!track) {
       return res.status(400).json({ error: "Track not found" });
     }
@@ -55,7 +55,7 @@ exports.logRandomPlaylistsPlay = async (req, res, next) => {
     }
     const { playlist_id } = result.data;
 
-    const playlist = await playlistService.getPlaylistById(playlist_id);
+    const playlist = await playlistsService.getPlaylistById(playlist_id);
     if (!playlist) {
       return res.status(400).json({ error: "Playlist not found" });
     }

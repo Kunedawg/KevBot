@@ -2,7 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { API_JWT_SECRET } = require("../config/secrets");
 const { jwtTokenExpirationTime } = require("../config/config");
-const userService = require("./userService");
+const userService = require("./usersService");
 
 exports.registerUser = async (username, password) => {
   if (!username || !password) {

@@ -1,7 +1,7 @@
 const { z } = require("zod");
 const fs = require("fs");
 const path = require("path");
-const trackService = require("../services/trackService");
+const tracksService = require("../services/tracksService");
 const { getTrackMetaData, normalizeAudio } = require("../utils/utils");
 const config = require("../config/config");
 
@@ -21,7 +21,7 @@ exports.getTracks = async (req, res, next) => {
       }
     }
     const { name, include_deleted } = result.data;
-    const tracks = await trackService.getTracks({ name: name, include_deleted: include_deleted });
+    const tracks = await tracksService.getTracks({ name: name, include_deleted: include_deleted });
     return res.status(200).json(tracks);
   } catch (error) {
     next(error);
@@ -30,7 +30,7 @@ exports.getTracks = async (req, res, next) => {
 
 exports.getTrackById = async (req, res, next) => {
   try {
-    const track = await trackService.getTrackById(req.params.id);
+    const track = await tracksService.getTrackById(req.params.id);
     if (!track) {
       return res.status(404).json({ error: "Track not found" });
     }
@@ -42,11 +42,11 @@ exports.getTrackById = async (req, res, next) => {
 
 exports.getTrackDownloadById = async (req, res, next) => {
   try {
-    const track = await trackService.getTrackById(req.params.id);
+    const track = await tracksService.getTrackById(req.params.id);
     if (!track) {
       return res.status(404).json({ error: "Track not found" });
     }
-    const file = await trackService.getTrackFile(track);
+    const file = await tracksService.getTrackFile(track);
     if (!file) {
       return res.status(404).json({ error: "Track file not found" });
     }
@@ -68,11 +68,11 @@ exports.getTrackDownloadById = async (req, res, next) => {
 
 exports.getTrackStreamById = async (req, res, next) => {
   try {
-    const track = await trackService.getTrackById(req.params.id);
+    const track = await tracksService.getTrackById(req.params.id);
     if (!track) {
       return res.status(404).json({ error: "Track not found" });
     }
-    const file = await trackService.getTrackFile(track);
+    const file = await tracksService.getTrackFile(track);
     if (!file) {
       return res.status(404).json({ error: "Track file not found" });
     }
@@ -125,7 +125,7 @@ const patchTrackBodySchema = z.object({
 
 exports.patchTrack = async (req, res, next) => {
   try {
-    const track = await trackService.getTrackById(req.params.id);
+    const track = await tracksService.getTrackById(req.params.id);
     if (!track) {
       return res.status(404).json({ error: "Track not found" });
     }
@@ -147,12 +147,12 @@ exports.patchTrack = async (req, res, next) => {
       }
     }
 
-    const nameLookupResult = await trackService.getTracks({ name: result.data.name });
+    const nameLookupResult = await tracksService.getTracks({ name: result.data.name });
     if (nameLookupResult.length !== 0) {
       return res.status(400).json({ error: "Track name is already taken" });
     }
 
-    const updatedTrack = await trackService.patchTrack(req.params.id, result.data.name);
+    const updatedTrack = await tracksService.patchTrack(req.params.id, result.data.name);
     res.status(200).json(updatedTrack);
   } catch (error) {
     next(error);
@@ -201,7 +201,7 @@ exports.postTrack = async (req, res, next) => {
       return res.status(400).json({ error: `Track duration exceeds limit of ${config.maxTrackDuration} seconds` });
     }
 
-    const nameLookupResult = await trackService.getTracks({ name: result.data.name });
+    const nameLookupResult = await tracksService.getTracks({ name: result.data.name });
     if (nameLookupResult.length !== 0) {
       return res.status(400).json({ error: "Track name is already taken" });
     }
@@ -218,7 +218,7 @@ exports.postTrack = async (req, res, next) => {
       return res.status(500).json({ error: "Failed to normalize track" });
     }
 
-    const track = await trackService.postTrack(
+    const track = await tracksService.postTrack(
       file.normalizedPath,
       result.data.name,
       metadata.format.duration,
@@ -240,7 +240,7 @@ exports.postTrack = async (req, res, next) => {
 
 exports.deleteTrack = async (req, res, next) => {
   try {
-    const track = await trackService.getTrackById(req.params.id);
+    const track = await tracksService.getTrackById(req.params.id);
     if (!track) {
       return res.status(404).json({ error: "Track not found" });
     }
@@ -253,7 +253,7 @@ exports.deleteTrack = async (req, res, next) => {
       return res.status(403).json({ error: "User does not have permission to delete this track." });
     }
 
-    const updatedTrack = await trackService.deleteTrack(req.params.id);
+    const updatedTrack = await tracksService.deleteTrack(req.params.id);
     res.status(200).json(updatedTrack);
   } catch (error) {
     next(error);
@@ -276,7 +276,7 @@ exports.restoreTrack = async (req, res, next) => {
     }
     const { name } = result.data;
 
-    const track = await trackService.getTrackById(req.params.id);
+    const track = await tracksService.getTrackById(req.params.id);
     if (!track) {
       return res.status(404).json({ error: "Track not found" });
     }
@@ -285,7 +285,7 @@ exports.restoreTrack = async (req, res, next) => {
       return res.status(400).json({ error: "Track is not deleted, so it cannot be restored." });
     }
 
-    const tracksWithSameName = await trackService.getTracks({ name: name ?? track.name });
+    const tracksWithSameName = await tracksService.getTracks({ name: name ?? track.name });
     if (tracksWithSameName.length !== 0) {
       return res.status(400).json({ error: "Track name is already taken." });
     }
@@ -299,10 +299,10 @@ exports.restoreTrack = async (req, res, next) => {
     }
 
     if (name) {
-      await trackService.patchTrack(track.id, name);
+      await tracksService.patchTrack(track.id, name);
     }
 
-    const updatedTrack = await trackService.restoreTrack(track.id);
+    const updatedTrack = await tracksService.restoreTrack(track.id);
     res.status(200).json(updatedTrack);
   } catch (error) {
     next(error);

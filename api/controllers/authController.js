@@ -1,5 +1,5 @@
 const { z } = require("zod");
-const userService = require("../services/userService");
+const userService = require("../services/usersService");
 const authService = require("../services/authService");
 const config = require("../config/config");
 

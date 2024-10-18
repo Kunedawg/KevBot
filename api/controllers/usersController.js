@@ -1,8 +1,8 @@
 const { z } = require("zod");
-const userService = require("../services/userService");
+const usersService = require("../services/usersService");
 const { usernameValidation } = require("./authController");
-const trackService = require("../services/trackService");
-const playlistService = require("../services/playlistService");
+const tracksService = require("../services/tracksService");
+const playlistsService = require("../services/playlistsService");
 
 const getUsersQuerySchema = z.object({
   username: z.string().optional(),
@@ -19,7 +19,7 @@ exports.getUsers = async (req, res, next) => {
       }
     }
     const { username } = result.data;
-    const users = await userService.getUsers({ username: username });
+    const users = await usersService.getUsers({ username: username });
     return res.status(200).json(users);
   } catch (error) {
     next(error);
@@ -28,7 +28,7 @@ exports.getUsers = async (req, res, next) => {
 
 exports.getUserById = async (req, res, next) => {
   try {
-    const user = await userService.getUserById(req.params.id);
+    const user = await usersService.getUserById(req.params.id);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -40,7 +40,7 @@ exports.getUserById = async (req, res, next) => {
 
 exports.getGreeting = async (req, res, next) => {
   try {
-    const greeting = await userService.getGreetingByUserId(req.params.id);
+    const greeting = await usersService.getGreetingByUserId(req.params.id);
     if (!greeting) {
       return res.status(404).json({ error: "Greeting not found" });
     }
@@ -52,7 +52,7 @@ exports.getGreeting = async (req, res, next) => {
 
 exports.getFarewell = async (req, res, next) => {
   try {
-    const farewell = await userService.getFarewellByUserId(req.params.id);
+    const farewell = await usersService.getFarewellByUserId(req.params.id);
     if (!farewell) {
       return res.status(404).json({ error: "Farewell not found" });
     }
@@ -68,7 +68,7 @@ const patchUserBodySchema = z.object({
 
 exports.patchUser = async (req, res, next) => {
   try {
-    const user = await userService.getUserById(req.params.id);
+    const user = await usersService.getUserById(req.params.id);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -90,11 +90,11 @@ exports.patchUser = async (req, res, next) => {
       }
     }
     const { username } = result.data;
-    const userLookupResult = await userService.getUsers({ username: username });
+    const userLookupResult = await usersService.getUsers({ username: username });
     if (userLookupResult.length !== 0) {
       return res.status(400).json({ error: "Username is already taken" });
     }
-    const updatedUser = await userService.patchUser(req.params.id, username);
+    const updatedUser = await usersService.patchUser(req.params.id, username);
     return res.status(201).json(updatedUser);
   } catch (error) {
     next(error);
@@ -118,7 +118,7 @@ const putGreetingBodySchema = z
 
 exports.putGreeting = async (req, res, next) => {
   try {
-    const user = await userService.getUserById(req.params.id);
+    const user = await usersService.getUserById(req.params.id);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -142,20 +142,20 @@ exports.putGreeting = async (req, res, next) => {
     const { greeting_track_id, greeting_playlist_id } = result.data;
 
     if (greeting_track_id) {
-      const track = await trackService.getTrackById(greeting_track_id);
+      const track = await tracksService.getTrackById(greeting_track_id);
       if (!track) {
         return res.status(404).json({ error: "Track not found" });
       }
     }
 
     if (greeting_playlist_id) {
-      const playlist = await playlistService.getPlaylistById(greeting_playlist_id);
+      const playlist = await playlistsService.getPlaylistById(greeting_playlist_id);
       if (!playlist) {
         return res.status(404).json({ error: "Playlist not found" });
       }
     }
 
-    const updatedGreeting = await userService.putGreeting(req.params.id, greeting_track_id, greeting_playlist_id);
+    const updatedGreeting = await usersService.putGreeting(req.params.id, greeting_track_id, greeting_playlist_id);
     return res.status(201).json(updatedGreeting);
   } catch (error) {
     next(error);
@@ -179,7 +179,7 @@ const putFarewellBodySchema = z
 
 exports.putFarewell = async (req, res, next) => {
   try {
-    const user = await userService.getUserById(req.params.id);
+    const user = await usersService.getUserById(req.params.id);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -203,20 +203,20 @@ exports.putFarewell = async (req, res, next) => {
     const { farewell_track_id, farewell_playlist_id } = result.data;
 
     if (farewell_track_id) {
-      const track = await trackService.getTrackById(farewell_track_id);
+      const track = await tracksService.getTrackById(farewell_track_id);
       if (!track) {
         return res.status(404).json({ error: "Track not found" });
       }
     }
 
     if (farewell_playlist_id) {
-      const playlist = await playlistService.getPlaylistById(farewell_playlist_id);
+      const playlist = await playlistsService.getPlaylistById(farewell_playlist_id);
       if (!playlist) {
         return res.status(404).json({ error: "Playlist not found" });
       }
     }
 
-    const updatedFarewell = await userService.putFarewell(req.params.id, farewell_track_id, farewell_playlist_id);
+    const updatedFarewell = await usersService.putFarewell(req.params.id, farewell_track_id, farewell_playlist_id);
     return res.status(201).json(updatedFarewell);
   } catch (error) {
     next(error);

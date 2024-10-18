@@ -2,10 +2,10 @@ const express = require("express");
 // const cors = require("cors");
 // const morgan = require("morgan");
 const docRoutes = require("./routes/docRoutes");
-const trackRoutes = require("./routes/trackRoutes");
+const tracksRoutes = require("./routes/tracksRoutes");
 const authRoutes = require("./routes/authRoutes");
-const userRoutes = require("./routes/userRoutes");
-const playlistRoutes = require("./routes/playlistRoutes");
+const usersRoutes = require("./routes/usersRoutes");
+const playlistsRoutes = require("./routes/playlistsRoutes");
 const playsRoutes = require("./routes/playsRoutes");
 const errorHandler = require("./middlewares/errorHandler");
 const auth = require("./middlewares/auth");
@@ -18,11 +18,11 @@ app.use(express.json());
 // app.use(morgan("dev")); // Logging middleware
 
 // Routes
-app.use("/v1/tracks", trackRoutes);
+app.use("/v1/tracks", tracksRoutes);
 app.use("/v1/docs", docRoutes);
 app.use("/v1/auth", authRoutes);
-app.use("/v1/users", userRoutes);
-app.use("/v1/playlists", playlistRoutes);
+app.use("/v1/users", usersRoutes);
+app.use("/v1/playlists", playlistsRoutes);
 app.use("/v1/plays", playsRoutes);
 
 // testing

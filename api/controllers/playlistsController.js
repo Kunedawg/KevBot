@@ -1,7 +1,7 @@
 const { z } = require("zod");
-const playlistService = require("../services/playlistService");
+const playlistsService = require("../services/playlistsService");
 const config = require("../config/config");
-const trackService = require("../services/trackService");
+const tracksService = require("../services/tracksService");
 
 const getPlaylistsQuerySchema = z.object({
   name: z.string().optional(),
@@ -19,7 +19,7 @@ exports.getPlaylists = async (req, res, next) => {
       }
     }
     const { name, include_deleted } = result.data;
-    const playlists = await playlistService.getPlaylists({ name: name, include_deleted: include_deleted });
+    const playlists = await playlistsService.getPlaylists({ name: name, include_deleted: include_deleted });
     return res.status(200).json(playlists);
   } catch (error) {
     next(error);
@@ -28,7 +28,7 @@ exports.getPlaylists = async (req, res, next) => {
 
 exports.getPlaylistById = async (req, res, next) => {
   try {
-    const playlist = await playlistService.getPlaylistById(req.params.id);
+    const playlist = await playlistsService.getPlaylistById(req.params.id);
     if (!playlist) {
       return res.status(404).json({ error: "Playlist not found" });
     }
@@ -44,7 +44,7 @@ const patchPlaylistBodySchema = z.object({
 
 exports.patchPlaylist = async (req, res, next) => {
   try {
-    const playlist = await playlistService.getPlaylistById(req.params.id);
+    const playlist = await playlistsService.getPlaylistById(req.params.id);
     if (!playlist) {
       return res.status(404).json({ error: "Playlist not found" });
     }
@@ -66,12 +66,12 @@ exports.patchPlaylist = async (req, res, next) => {
       }
     }
 
-    const nameLookupResult = await playlistService.getPlaylists({ name: result.data.name });
+    const nameLookupResult = await playlistsService.getPlaylists({ name: result.data.name });
     if (nameLookupResult.length !== 0) {
       return res.status(400).json({ error: "Playlist name is already taken" });
     }
 
-    const updatedPlaylist = await playlistService.patchPlaylist(req.params.id, result.data.name);
+    const updatedPlaylist = await playlistsService.patchPlaylist(req.params.id, result.data.name);
     res.status(200).json(updatedPlaylist);
   } catch (error) {
     next(error);
@@ -93,7 +93,7 @@ exports.postPlaylist = async (req, res, next) => {
       }
     }
 
-    const nameLookupResult = await playlistService.getPlaylists({ name: result.data.name });
+    const nameLookupResult = await playlistsService.getPlaylists({ name: result.data.name });
     if (nameLookupResult.length !== 0) {
       return res.status(400).json({ error: "Playlist name is already taken" });
     }
@@ -102,7 +102,7 @@ exports.postPlaylist = async (req, res, next) => {
       return res.status(500).json({ error: "Unexpected issue" });
     }
 
-    const playlist = await playlistService.postPlaylist(result.data.name, req.user.id);
+    const playlist = await playlistsService.postPlaylist(result.data.name, req.user.id);
 
     res.status(201).json(playlist);
   } catch (error) {
@@ -112,7 +112,7 @@ exports.postPlaylist = async (req, res, next) => {
 
 exports.deletePlaylist = async (req, res, next) => {
   try {
-    const playlist = await playlistService.getPlaylistById(req.params.id);
+    const playlist = await playlistsService.getPlaylistById(req.params.id);
     if (!playlist) {
       return res.status(404).json({ error: "Playlist not found" });
     }
@@ -125,7 +125,7 @@ exports.deletePlaylist = async (req, res, next) => {
       return res.status(403).json({ error: "User does not have permission to delete this playlist." });
     }
 
-    const updatedPlaylist = await playlistService.deletePlaylist(req.params.id);
+    const updatedPlaylist = await playlistsService.deletePlaylist(req.params.id);
     res.status(200).json(updatedPlaylist);
   } catch (error) {
     next(error);
@@ -148,7 +148,7 @@ exports.restorePlaylist = async (req, res, next) => {
     }
     const { name } = result.data;
 
-    const playlist = await playlistService.getPlaylistById(req.params.id);
+    const playlist = await playlistsService.getPlaylistById(req.params.id);
     if (!playlist) {
       return res.status(404).json({ error: "Playlist not found" });
     }
@@ -157,7 +157,7 @@ exports.restorePlaylist = async (req, res, next) => {
       return res.status(400).json({ error: "Playlist is not deleted, so it cannot be restored." });
     }
 
-    const playlistsWithSameName = await playlistService.getPlaylists({ name: name ?? playlist.name });
+    const playlistsWithSameName = await playlistsService.getPlaylists({ name: name ?? playlist.name });
     if (playlistsWithSameName.length !== 0) {
       return res.status(400).json({ error: "Playlist name is already taken." });
     }
@@ -171,10 +171,10 @@ exports.restorePlaylist = async (req, res, next) => {
     }
 
     if (name) {
-      await playlistService.patchPlaylist(playlist.id, name);
+      await playlistsService.patchPlaylist(playlist.id, name);
     }
 
-    const updatedPlaylist = await playlistService.restorePlaylist(playlist.id);
+    const updatedPlaylist = await playlistsService.restorePlaylist(playlist.id);
     res.status(200).json(updatedPlaylist);
   } catch (error) {
     next(error);
@@ -183,7 +183,7 @@ exports.restorePlaylist = async (req, res, next) => {
 
 exports.getPlaylistTracks = async (req, res, next) => {
   try {
-    const tracks = await playlistService.getPlaylistTracks(req.params.id);
+    const tracks = await playlistsService.getPlaylistTracks(req.params.id);
     if (!tracks) {
       return res.status(404).json({ error: "Playlist not found" });
     }
@@ -199,7 +199,7 @@ const postPlaylistTracksBodySchema = z.object({
 
 exports.postPlaylistTracks = async (req, res, next) => {
   try {
-    const playlist = await playlistService.getPlaylistById(req.params.id);
+    const playlist = await playlistsService.getPlaylistById(req.params.id);
     if (!playlist) {
       return res.status(404).json({ error: "Playlist not found" });
     }
@@ -216,7 +216,7 @@ exports.postPlaylistTracks = async (req, res, next) => {
 
     const tracksNotFound = [];
     track_ids.forEach(async (track_id) => {
-      const track = await trackService.getTrackById(track_id);
+      const track = await tracksService.getTrackById(track_id);
       if (!track) {
         tracksNotFound.push(track_id);
       }
@@ -230,7 +230,7 @@ exports.postPlaylistTracks = async (req, res, next) => {
       return res.status(500).json({ error: "Unexpected issue" });
     }
 
-    const response = await playlistService.postPlaylistTracks(playlist.id, track_ids, req.user.id);
+    const response = await playlistsService.postPlaylistTracks(playlist.id, track_ids, req.user.id);
     return res.status(201).json(response);
   } catch (error) {
     next(error);
@@ -243,7 +243,7 @@ const deletePlaylistTracksBodySchema = z.object({
 
 exports.deletePlaylistTracks = async (req, res, next) => {
   try {
-    const playlist = await playlistService.getPlaylistById(req.params.id);
+    const playlist = await playlistsService.getPlaylistById(req.params.id);
     if (!playlist) {
       return res.status(404).json({ error: "Playlist not found" });
     }
@@ -266,7 +266,7 @@ exports.deletePlaylistTracks = async (req, res, next) => {
       return res.status(403).json({ error: "User does not have permission to delete tracks from this playlist." });
     }
 
-    const response = await playlistService.deletePlaylistTracks(playlist.id, track_ids, req.user.id);
+    const response = await playlistsService.deletePlaylistTracks(playlist.id, track_ids, req.user.id);
     return res.status(200).json(response);
   } catch (error) {
     next(error);
