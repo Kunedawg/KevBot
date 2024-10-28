@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import docRoutes from "./routes/docRoutes";
 import authRoutes from "./routes/authRoutes";
 import usersRoutes from "./routes/usersRoutes";
-const tracksRoutes = require("./routes/tracksRoutes");
+import tracksRoutes from "./routes/tracksRoutes";
 const playlistsRoutes = require("./routes/playlistsRoutes");
 const playsRoutes = require("./routes/playsRoutes");
 const errorHandler = require("./middlewares/errorHandler");

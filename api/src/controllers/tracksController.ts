@@ -1,8 +1,9 @@
-const { z } = require("zod");
-const fs = require("fs");
-const path = require("path");
+import { Request, Response, NextFunction } from "express";
+import { z } from "zod";
+import fs from "fs";
+import path from "path";
 const tracksService = require("../services/tracksService");
-const { getTrackMetaData, normalizeAudio } = require("../utils/utils");
+import { getTrackMetaData, normalizeAudio } from "../utils/utils";
 const config = require("../config/config");
 
 const getTracksQuerySchema = z.object({
@@ -10,50 +11,57 @@ const getTracksQuerySchema = z.object({
   include_deleted: z.coerce.boolean().optional().default(false),
 });
 
-exports.getTracks = async (req, res, next) => {
+export const getTracks = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = getTracksQuerySchema.safeParse(req.query);
     if (!result.success) {
       if (result?.error?.issues[0]?.message) {
-        return res.status(400).json({ error: result.error.issues[0].message });
+        res.status(400).json({ error: result.error.issues[0].message });
+        return;
       } else {
-        return res.status(400).json(result.error.issues);
+        res.status(400).json(result.error.issues);
+        return;
       }
     }
     const { name, include_deleted } = result.data;
     const tracks = await tracksService.getTracks({ name: name, include_deleted: include_deleted });
-    return res.status(200).json(tracks);
+    res.status(200).json(tracks);
+    return;
   } catch (error) {
     next(error);
   }
 };
 
-exports.getTrackById = async (req, res, next) => {
+export const getTrackById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const track = await tracksService.getTrackById(req.params.id);
     if (!track) {
-      return res.status(404).json({ error: "Track not found" });
+      res.status(404).json({ error: "Track not found" });
+      return;
     }
-    return res.status(200).json(track);
+    res.status(200).json(track);
+    return;
   } catch (error) {
     next(error);
   }
 };
 
-exports.getTrackDownloadById = async (req, res, next) => {
+export const getTrackDownloadById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const track = await tracksService.getTrackById(req.params.id);
     if (!track) {
-      return res.status(404).json({ error: "Track not found" });
+      res.status(404).json({ error: "Track not found" });
+      return;
     }
     const file = await tracksService.getTrackFile(track);
     if (!file) {
-      return res.status(404).json({ error: "Track file not found" });
+      res.status(404).json({ error: "Track file not found" });
+      return;
     }
     res.setHeader("Content-Disposition", `attachment; filename="${track.name}.mp3"`);
     file
       .createReadStream()
-      .on("error", (err) => {
+      .on("error", (err: any) => {
         console.error("Error downloading the file:", err);
         res.status(500).send("Error downloading the file");
       })
@@ -66,15 +74,17 @@ exports.getTrackDownloadById = async (req, res, next) => {
   }
 };
 
-exports.getTrackStreamById = async (req, res, next) => {
+export const getTrackStreamById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const track = await tracksService.getTrackById(req.params.id);
     if (!track) {
-      return res.status(404).json({ error: "Track not found" });
+      res.status(404).json({ error: "Track not found" });
+      return;
     }
     const file = await tracksService.getTrackFile(track);
     if (!file) {
-      return res.status(404).json({ error: "Track file not found" });
+      res.status(404).json({ error: "Track file not found" });
+      return;
     }
 
     // Get file metadata to determine size
@@ -123,33 +133,39 @@ const patchTrackBodySchema = z.object({
   name: config.trackNameValidation,
 });
 
-exports.patchTrack = async (req, res, next) => {
+export const patchTrack = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const track = await tracksService.getTrackById(req.params.id);
     if (!track) {
-      return res.status(404).json({ error: "Track not found" });
+      res.status(404).json({ error: "Track not found" });
+      return;
     }
 
     if (!req.user?.id) {
-      return res.status(500).json({ error: "Unexpected issue" });
+      res.status(500).json({ error: "Unexpected issue" });
+      return;
     }
 
     if (track.user_id !== req.user.id) {
-      return res.status(403).json({ error: "User does not have permission to change this track." });
+      res.status(403).json({ error: "User does not have permission to change this track." });
+      return;
     }
 
     const result = patchTrackBodySchema.safeParse(req.body);
     if (!result.success) {
       if (result?.error?.issues[0]?.message) {
-        return res.status(400).json({ error: result.error.issues[0].message });
+        res.status(400).json({ error: result.error.issues[0].message });
+        return;
       } else {
-        return res.status(400).json(result.error.issues);
+        res.status(400).json(result.error.issues);
+        return;
       }
     }
 
     const nameLookupResult = await tracksService.getTracks({ name: result.data.name });
     if (nameLookupResult.length !== 0) {
-      return res.status(400).json({ error: "Track name is already taken" });
+      res.status(400).json({ error: "Track name is already taken" });
+      return;
     }
 
     const updatedTrack = await tracksService.patchTrack(req.params.id, result.data.name);
@@ -163,63 +179,78 @@ const postTrackBodySchema = z.object({
   name: config.trackNameValidation,
 });
 
-exports.postTrack = async (req, res, next) => {
+export const postTrack = async (req: Request, res: Response, next: NextFunction) => {
   const file = req.file;
+  let normalizedPath;
   try {
     const result = postTrackBodySchema.safeParse(req.body);
     if (!result.success) {
       if (result?.error?.issues[0]?.message) {
-        return res.status(400).json({ error: result.error.issues[0].message });
+        res.status(400).json({ error: result.error.issues[0].message });
+        return;
       } else {
-        return res.status(400).json(result.error.issues);
+        res.status(400).json(result.error.issues);
+        return;
       }
     }
 
     if (!file) {
-      return res.status(400).json({ error: "File is required" });
+      res.status(400).json({ error: "File is required" });
+      return;
     }
-    file.parsedPath = path.parse(file.path);
+    const parsedPath = path.parse(file.path);
 
-    if (!config.supportedTrackExtensions.includes(file.parsedPath.ext)) {
-      return res.status(400).json({
-        error: `Invalid file extension '${file.parsedPath.ext}'. Supported extensions: ${config.supportedTrackExtensions}`,
+    if (!config.supportedTrackExtensions.includes(parsedPath.ext)) {
+      res.status(400).json({
+        error: `Invalid file extension '${parsedPath.ext}'. Supported extensions: ${config.supportedTrackExtensions}`,
       });
+      return;
     }
 
+    let metadata;
     try {
       metadata = await getTrackMetaData(file.path);
       if (metadata.format.format_name !== "mp3") {
-        return res.status(400).json({ error: "Invalid file format, must be mp3" });
+        res.status(400).json({ error: "Invalid file format, must be mp3" });
+        return;
+      }
+      if (!metadata.format.duration) {
+        res.status(400).json({ error: `Track duration failed to be determined` });
+        return;
+      }
+      if (metadata.format.duration > config.maxTrackDuration) {
+        res.status(400).json({ error: `Track duration exceeds limit of ${config.maxTrackDuration} seconds` });
+        return;
       }
     } catch (error) {
-      return res
+      res
         .status(400)
         .json({ error: "Unsupported or corrupt file was received. Failed to parse track metadata from file." });
-    }
-
-    if (metadata.format.duration > config.maxTrackDuration) {
-      return res.status(400).json({ error: `Track duration exceeds limit of ${config.maxTrackDuration} seconds` });
+      return;
     }
 
     const nameLookupResult = await tracksService.getTracks({ name: result.data.name });
     if (nameLookupResult.length !== 0) {
-      return res.status(400).json({ error: "Track name is already taken" });
+      res.status(400).json({ error: "Track name is already taken" });
+      return;
     }
 
     if (!req.user?.id) {
-      return res.status(500).json({ error: "Unexpected issue" });
+      res.status(500).json({ error: "Unexpected issue" });
+      return;
     }
 
     try {
-      file.normalizedPath = `${file.parsedPath.dir}/${file.parsedPath.name}-normalized${file.parsedPath.ext}`;
-      await normalizeAudio(file.path, file.normalizedPath, metadata.format.duration);
+      normalizedPath = `${parsedPath.dir}/${parsedPath.name}-normalized${parsedPath.ext}`;
+      await normalizeAudio(file.path, normalizedPath, metadata.format.duration);
     } catch (error) {
       console.error("Failed to normalize track:", error);
-      return res.status(500).json({ error: "Failed to normalize track" });
+      res.status(500).json({ error: "Failed to normalize track" });
+      return;
     }
 
     const track = await tracksService.postTrack(
-      file.normalizedPath,
+      normalizedPath,
       result.data.name,
       metadata.format.duration,
       req.user.id
@@ -231,26 +262,29 @@ exports.postTrack = async (req, res, next) => {
   } finally {
     try {
       if (file?.path) await fs.unlinkSync(file.path);
-      if (file?.normalizedPath) await fs.unlinkSync(file.normalizedPath);
+      if (normalizedPath) await fs.unlinkSync(normalizedPath);
     } catch (error) {
       console.error(`Failed to delete files during track post clean up`, error);
     }
   }
 };
 
-exports.deleteTrack = async (req, res, next) => {
+export const deleteTrack = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const track = await tracksService.getTrackById(req.params.id);
     if (!track) {
-      return res.status(404).json({ error: "Track not found" });
+      res.status(404).json({ error: "Track not found" });
+      return;
     }
 
     if (!req.user?.id) {
-      return res.status(500).json({ error: "Unexpected issue" });
+      res.status(500).json({ error: "Unexpected issue" });
+      return;
     }
 
     if (track.user_id !== req.user.id) {
-      return res.status(403).json({ error: "User does not have permission to delete this track." });
+      res.status(403).json({ error: "User does not have permission to delete this track." });
+      return;
     }
 
     const updatedTrack = await tracksService.deleteTrack(req.params.id);
@@ -264,38 +298,45 @@ const restoreTrackBodySchema = z.object({
   name: config.trackNameValidation.optional(),
 });
 
-exports.restoreTrack = async (req, res, next) => {
+export const restoreTrack = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = restoreTrackBodySchema.safeParse(req.body);
     if (!result.success) {
       if (result?.error?.issues[0]?.message) {
-        return res.status(400).json({ error: result.error.issues[0].message });
+        res.status(400).json({ error: result.error.issues[0].message });
+        return;
       } else {
-        return res.status(400).json(result.error.issues);
+        res.status(400).json(result.error.issues);
+        return;
       }
     }
     const { name } = result.data;
 
     const track = await tracksService.getTrackById(req.params.id);
     if (!track) {
-      return res.status(404).json({ error: "Track not found" });
+      res.status(404).json({ error: "Track not found" });
+      return;
     }
 
     if (track.deleted_at === null) {
-      return res.status(400).json({ error: "Track is not deleted, so it cannot be restored." });
+      res.status(400).json({ error: "Track is not deleted, so it cannot be restored." });
+      return;
     }
 
     const tracksWithSameName = await tracksService.getTracks({ name: name ?? track.name });
     if (tracksWithSameName.length !== 0) {
-      return res.status(400).json({ error: "Track name is already taken." });
+      res.status(400).json({ error: "Track name is already taken." });
+      return;
     }
 
     if (!req.user?.id) {
-      return res.status(500).json({ error: "Unexpected issue" });
+      res.status(500).json({ error: "Unexpected issue" });
+      return;
     }
 
     if (track.user_id !== req.user.id) {
-      return res.status(403).json({ error: "User does not have permission to restore this track." });
+      res.status(403).json({ error: "User does not have permission to restore this track." });
+      return;
     }
 
     if (name) {
@@ -307,4 +348,15 @@ exports.restoreTrack = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+export default {
+  getTracks,
+  getTrackById,
+  getTrackDownloadById,
+  getTrackStreamById,
+  patchTrack,
+  postTrack,
+  deleteTrack,
+  restoreTrack,
 };
