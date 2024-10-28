@@ -3,7 +3,7 @@ import docRoutes from "./routes/docRoutes";
 import authRoutes from "./routes/authRoutes";
 import usersRoutes from "./routes/usersRoutes";
 import tracksRoutes from "./routes/tracksRoutes";
-const playlistsRoutes = require("./routes/playlistsRoutes");
+import playlistsRoutes from "./routes/playlistsRoutes";
 const playsRoutes = require("./routes/playsRoutes");
 const errorHandler = require("./middlewares/errorHandler");
 import { requireAuth } from "./middlewares/auth";

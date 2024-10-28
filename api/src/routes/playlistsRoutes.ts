@@ -1,6 +1,6 @@
-const express = require("express");
-const playlistsController = require("../controllers/playlistsController");
-const auth = require("../middlewares/auth");
+import express from "express";
+import playlistsController from "../controllers/playlistsController";
+import auth from "../middlewares/auth";
 
 const router = express.Router();
 
@@ -14,4 +14,4 @@ router.post("/:id/tracks", auth.requireAuth, playlistsController.postPlaylistTra
 router.get("/:id/tracks", playlistsController.getPlaylistTracks);
 router.delete("/:id/tracks", auth.requireAuth, playlistsController.deletePlaylistTracks);
 
-module.exports = router;
+export default router;

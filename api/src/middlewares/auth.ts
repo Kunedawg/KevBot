@@ -38,3 +38,8 @@ export const optionalAuth = async (req: Request, next: NextFunction) => {
     next(error);
   }
 };
+
+export default {
+  requireAuth,
+  optionalAuth,
+};
