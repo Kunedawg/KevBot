@@ -1,9 +1,10 @@
-const { z } = require("zod");
+import { z } from "zod";
 const userService = require("../services/usersService");
 const authService = require("../services/authService");
 const config = require("../config/config");
+import { Request, Response, NextFunction } from "express";
 
-const usernameValidation = z
+export const usernameValidation = z
   .string({ required_error: "Username is required" })
   .regex(/^[a-z\d_]+$/g, {
     message: "Invalid username. Only lower case letters, numbers, and underscores are allowed.",
@@ -11,12 +12,6 @@ const usernameValidation = z
   .max(config.maxUsernameLength, { message: `Username must be ${config.maxUsernameLength} characters or fewer.` });
 
 const postRegisterBodySchema = z.object({
-  // username: z
-  //   .string({ required_error: "Username is required" })
-  //   .regex(/^[a-z\d_]+$/g, {
-  //     message: "Invalid username. Only lower case letters, numbers, and underscores are allowed.",
-  //   })
-  //   .max(config.maxUsernameLength, { message: `Username must be ${config.maxUsernameLength} characters or fewer.` }),
   username: usernameValidation,
   password: z
     .string({ required_error: "Password is required" })
@@ -31,21 +26,14 @@ const postRegisterBodySchema = z.object({
     .regex(/^\S+$/, { message: "Password must not contain spaces." }),
 });
 
-exports.usernameValidation = usernameValidation;
-
-exports.postRegister = async (req, res, next) => {
+export const postRegister = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = postRegisterBodySchema.safeParse(req.body);
     if (!result.success) {
-      if (result?.error?.issues[0]?.message) {
-        return res.status(400).json({ error: result.error.issues[0].message });
-      } else {
-        return res.status(400).json(result.error.issues);
-      }
+      return res.status(400).json({ error: result.error.issues[0]?.message || result.error.issues });
     }
     const { username, password } = result.data;
-    const userLookupResult = await userService.getUsers({ username: username });
-    console.log(userLookupResult);
+    const userLookupResult = await userService.getUsers({ username });
     if (userLookupResult.length !== 0) {
       return res.status(400).json({ error: "Username is already taken" });
     }
@@ -61,18 +49,15 @@ const postLoginBodySchema = z.object({
   password: z.string({ required_error: "Password is required" }),
 });
 
-exports.postLogin = async (req, res, next) => {
+export const postLogin = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = postLoginBodySchema.safeParse(req.body);
     if (!result.success) {
-      if (result?.error?.issues[0]?.message) {
-        return res.status(400).json({ error: result.error.issues[0].message });
-      }
-      return res.status(400).json(result.error.issues);
+      return res.status(400).json({ error: result.error.issues[0]?.message || result.error.issues });
     }
     const { username, password } = result.data;
     const errorMessage = "Invalid username or password";
-    const userLookupResult = await userService.getUsers({ username: username });
+    const userLookupResult = await userService.getUsers({ username });
     if (userLookupResult.length !== 1) {
       return res.status(400).json({ error: errorMessage });
     }

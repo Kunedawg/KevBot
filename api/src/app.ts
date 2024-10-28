@@ -1,8 +1,8 @@
 import express, { Request, Response } from "express";
 import docRoutes from "./routes/docRoutes";
-const tracksRoutes = require("./routes/tracksRoutes");
-const authRoutes = require("./routes/authRoutes");
+import authRoutes from "./routes/authRoutes";
 const usersRoutes = require("./routes/usersRoutes");
+const tracksRoutes = require("./routes/tracksRoutes");
 const playlistsRoutes = require("./routes/playlistsRoutes");
 const playsRoutes = require("./routes/playsRoutes");
 const errorHandler = require("./middlewares/errorHandler");
@@ -13,10 +13,10 @@ const app = express();
 
 app.use(express.json());
 
-app.use("/v1/tracks", tracksRoutes);
 app.use("/v1/docs", docRoutes);
 app.use("/v1/auth", authRoutes);
 app.use("/v1/users", usersRoutes);
+app.use("/v1/tracks", tracksRoutes);
 app.use("/v1/playlists", playlistsRoutes);
 app.use("/v1/plays", playsRoutes);
 // testing - remove
