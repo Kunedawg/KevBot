@@ -21,7 +21,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
-export const optionalAuth = async (req: Request, next: NextFunction) => {
+export const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];

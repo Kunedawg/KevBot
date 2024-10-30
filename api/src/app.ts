@@ -4,7 +4,7 @@ import authRoutes from "./routes/authRoutes";
 import usersRoutes from "./routes/usersRoutes";
 import tracksRoutes from "./routes/tracksRoutes";
 import playlistsRoutes from "./routes/playlistsRoutes";
-const playsRoutes = require("./routes/playsRoutes");
+import playsRoutes from "./routes/playsRoutes";
 const errorHandler = require("./middlewares/errorHandler");
 import { requireAuth } from "./middlewares/auth";
 const initTaskSchedules = require("./schedulers/taskScheduler");
