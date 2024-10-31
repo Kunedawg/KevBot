@@ -1,5 +1,5 @@
 import cron from "node-cron";
-const aggregatePlayCounts = require("../tasks/aggregatePlayCounts");
+import aggregatePlayCounts from "../tasks/aggregatePlayCounts";
 
 const initTaskSchedules = () => {
   aggregatePlayCounts(); // run on startup

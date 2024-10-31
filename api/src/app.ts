@@ -6,7 +6,7 @@ import tracksRoutes from "./routes/tracksRoutes";
 import playlistsRoutes from "./routes/playlistsRoutes";
 import playsRoutes from "./routes/playsRoutes";
 import errorHandler from "./middlewares/errorHandler";
-import { requireAuth } from "./middlewares/auth";
+import auth from "./middlewares/auth";
 import initTaskSchedules from "./schedulers/taskScheduler";
 
 const app = express();
@@ -20,7 +20,7 @@ app.use("/v1/tracks", tracksRoutes);
 app.use("/v1/playlists", playlistsRoutes);
 app.use("/v1/plays", playsRoutes);
 // testing - remove
-app.get("/v1/protected", requireAuth, (req: Request, res: Response) => {
+app.get("/v1/protected", auth.requireAuth, (req: Request, res: Response) => {
   res.send(`Hello ${req.user?.username}`);
 });
 
