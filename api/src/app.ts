@@ -5,9 +5,9 @@ import usersRoutes from "./routes/usersRoutes";
 import tracksRoutes from "./routes/tracksRoutes";
 import playlistsRoutes from "./routes/playlistsRoutes";
 import playsRoutes from "./routes/playsRoutes";
-const errorHandler = require("./middlewares/errorHandler");
+import errorHandler from "./middlewares/errorHandler";
 import { requireAuth } from "./middlewares/auth";
-const initTaskSchedules = require("./schedulers/taskScheduler");
+import initTaskSchedules from "./schedulers/taskScheduler";
 
 const app = express();
 
