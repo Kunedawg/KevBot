@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 const tracksService = require("../services/tracksService");
 import { getTrackMetaData, normalizeAudio } from "../utils/utils";
-const config = require("../config/config");
+import config from "../config/config";
 
 const getTracksQuerySchema = z.object({
   name: z.string().optional(),

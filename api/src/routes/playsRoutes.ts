@@ -1,7 +1,6 @@
 import express from "express";
 import playsController from "../controllers/playsController";
 import auth from "../middlewares/auth";
-// const playsController = require("../controllers/playsController");
 
 const router = express.Router();
 

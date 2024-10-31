@@ -1,6 +1,5 @@
 import express from "express";
-// import usersController from "../controllers/usersController";
-const usersController = require("../controllers/usersController");
+import usersController from "../controllers/usersController";
 import { requireAuth } from "../middlewares/auth";
 import setIdFromUser from "../middlewares/setIdFromUser";
 

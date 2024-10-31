@@ -1,7 +1,6 @@
 import express from "express";
 import tracksController from "../controllers/tracksController";
-// import upload from "../middlewares/multer";
-const upload = require("../middlewares/multer");
+import upload from "../middlewares/multer";
 import { requireAuth } from "../middlewares/auth";
 
 const router = express.Router();

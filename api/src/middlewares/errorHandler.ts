@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import multer from "multer";
-const config = require("../config/config");
+import config from "../config/config";
 
 const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
   console.error(err);

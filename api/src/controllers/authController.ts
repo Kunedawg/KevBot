@@ -1,7 +1,7 @@
 import { z } from "zod";
 const userService = require("../services/usersService");
 const authService = require("../services/authService");
-const config = require("../config/config");
+import config from "../config/config";
 import { Request, Response, NextFunction } from "express";
 
 export const usernameValidation = z
@@ -30,15 +30,18 @@ export const postRegister = async (req: Request, res: Response, next: NextFuncti
   try {
     const result = postRegisterBodySchema.safeParse(req.body);
     if (!result.success) {
-      return res.status(400).json({ error: result.error.issues[0]?.message || result.error.issues });
+      res.status(400).json({ error: result.error.issues[0]?.message || result.error.issues });
+      return;
     }
     const { username, password } = result.data;
     const userLookupResult = await userService.getUsers({ username });
     if (userLookupResult.length !== 0) {
-      return res.status(400).json({ error: "Username is already taken" });
+      res.status(400).json({ error: "Username is already taken" });
+      return;
     }
     const user = await authService.registerUser(username, password);
-    return res.status(201).json(user);
+    res.status(201).json(user);
+    return;
   } catch (error) {
     next(error);
   }
@@ -53,17 +56,20 @@ export const postLogin = async (req: Request, res: Response, next: NextFunction)
   try {
     const result = postLoginBodySchema.safeParse(req.body);
     if (!result.success) {
-      return res.status(400).json({ error: result.error.issues[0]?.message || result.error.issues });
+      res.status(400).json({ error: result.error.issues[0]?.message || result.error.issues });
+      return;
     }
     const { username, password } = result.data;
     const errorMessage = "Invalid username or password";
     const userLookupResult = await userService.getUsers({ username });
     if (userLookupResult.length !== 1) {
-      return res.status(400).json({ error: errorMessage });
+      res.status(400).json({ error: errorMessage });
+      return;
     }
     const validPassword = await authService.verifyPassword(username, password);
     if (!validPassword) {
-      return res.status(400).json({ error: errorMessage });
+      res.status(400).json({ error: errorMessage });
+      return;
     }
     const user = userLookupResult[0];
     const token = await authService.signUser(user);
@@ -71,4 +77,9 @@ export const postLogin = async (req: Request, res: Response, next: NextFunction)
   } catch (error) {
     next(error);
   }
+};
+
+export default {
+  postRegister,
+  postLogin,
 };

@@ -1,7 +1,7 @@
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
-const config = require("../config/config");
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import config from "../config/config";
 
 const uploadDir = path.join(__dirname, "..", "uploads");
 if (!fs.existsSync(uploadDir)) {
@@ -18,5 +18,9 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage: storage, limits: { fileSize: config.maxFileSize } });
-module.exports = upload;
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: config.maxFileSize },
+});
+
+export default upload;
