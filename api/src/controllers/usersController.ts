@@ -1,12 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-// import usersService from "../services/usersService";
-const usersService = require("../services/usersService");
+import * as usersService from "../services/usersService";
 import { usernameValidation } from "./authController";
-// import tracksService from "../services/tracksService";
-// import playlistsService from "../services/playlistsService";
-const tracksService = require("../services/tracksService");
-const playlistsService = require("../services/playlistsService");
+import * as tracksService from "../services/tracksService";
+import * as playlistsService from "../services/playlistsService";
 
 const getUsersQuerySchema = z.object({
   username: z.string().optional(),

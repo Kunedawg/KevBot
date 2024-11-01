@@ -38,7 +38,7 @@ export const postUser = async (username: string, passwordHash: string) => {
   }
 };
 
-export const patchUser = async (id: number, username: string) => {
+export const patchUser = async (id: number | string, username: string) => {
   if (!id || !username) {
     throw new Error("invalid args");
   }
@@ -52,7 +52,7 @@ export const patchUser = async (id: number, username: string) => {
 };
 
 export const putGreeting = async (
-  id: number,
+  id: number | string,
   greeting_track_id: number | null,
   greeting_playlist_id: number | null
 ) => {
@@ -81,7 +81,7 @@ export const putGreeting = async (
 };
 
 export const putFarewell = async (
-  id: number,
+  id: number | string,
   farewell_track_id: number | null,
   farewell_playlist_id: number | null
 ) => {
@@ -128,7 +128,7 @@ export const getUsers = async (options: UserOptions = {}) => {
   }
 };
 
-export const getUserById = async (id: number) => {
+export const getUserById = async (id: number | string) => {
   try {
     return await knex("users").select(PUBLIC_USER_FIELDS).where("id", id).first();
   } catch (error) {
@@ -136,7 +136,7 @@ export const getUserById = async (id: number) => {
   }
 };
 
-export const getGreetingByUserId = async (id: number): Promise<Greeting> => {
+export const getGreetingByUserId = async (id: number | string): Promise<Greeting> => {
   try {
     return (
       (await knex("user_greetings")
@@ -149,7 +149,7 @@ export const getGreetingByUserId = async (id: number): Promise<Greeting> => {
   }
 };
 
-export const getFarewellByUserId = async (id: number): Promise<Farewell> => {
+export const getFarewellByUserId = async (id: number | string): Promise<Farewell> => {
   try {
     return (
       (await knex("user_farewells")
