@@ -41,7 +41,7 @@ export const getPlaylists = async (options: PlaylistOptions = {}): Promise<Playl
   }
 };
 
-export const getPlaylistById = async (id: number): Promise<Playlist | undefined> => {
+export const getPlaylistById = async (id: number | string): Promise<Playlist | undefined> => {
   try {
     return await knex("playlists").where("id", id).first();
   } catch (error) {
@@ -49,7 +49,7 @@ export const getPlaylistById = async (id: number): Promise<Playlist | undefined>
   }
 };
 
-export const patchPlaylist = async (id: number, name: string): Promise<Playlist | undefined> => {
+export const patchPlaylist = async (id: number | string, name: string): Promise<Playlist | undefined> => {
   try {
     await knex("playlists").where("id", id).update({ name });
     return await getPlaylistById(id);
@@ -58,7 +58,7 @@ export const patchPlaylist = async (id: number, name: string): Promise<Playlist 
   }
 };
 
-export const deletePlaylist = async (id: number): Promise<Playlist | undefined> => {
+export const deletePlaylist = async (id: number | string): Promise<Playlist | undefined> => {
   try {
     await knex("playlists").where("id", id).andWhere("deleted_at", null).update({ deleted_at: knex.fn.now() });
     return await getPlaylistById(id);
@@ -67,7 +67,7 @@ export const deletePlaylist = async (id: number): Promise<Playlist | undefined> 
   }
 };
 
-export const restorePlaylist = async (id: number): Promise<Playlist | undefined> => {
+export const restorePlaylist = async (id: number | string): Promise<Playlist | undefined> => {
   try {
     await knex("playlists").where("id", id).whereNotNull("deleted_at").update({ deleted_at: null });
     return await getPlaylistById(id);
@@ -76,7 +76,7 @@ export const restorePlaylist = async (id: number): Promise<Playlist | undefined>
   }
 };
 
-export const postPlaylist = async (name: string, user_id: number): Promise<Playlist> => {
+export const postPlaylist = async (name: string, user_id: number | string): Promise<Playlist> => {
   if (!name || !user_id) {
     throw new Error("invalid args");
   }
@@ -94,7 +94,7 @@ export const postPlaylist = async (name: string, user_id: number): Promise<Playl
   }
 };
 
-export const getPlaylistTracks = async (id: number): Promise<Track[] | null> => {
+export const getPlaylistTracks = async (id: number | string): Promise<Track[] | null> => {
   try {
     const playlist = await knex("playlists").where("id", id).first();
     if (!playlist) {
@@ -110,7 +110,11 @@ export const getPlaylistTracks = async (id: number): Promise<Track[] | null> => 
   }
 };
 
-export const postPlaylistTracks = async (id: number, track_ids: number[], user_id: number): Promise<object> => {
+export const postPlaylistTracks = async (
+  id: number | string,
+  track_ids: number[],
+  user_id: number | string
+): Promise<object> => {
   if (!id || !track_ids || !user_id) {
     throw new Error("invalid args");
   }
@@ -155,7 +159,11 @@ export const postPlaylistTracks = async (id: number, track_ids: number[], user_i
   }
 };
 
-export const deletePlaylistTracks = async (id: number, track_ids: number[], user_id: number): Promise<object> => {
+export const deletePlaylistTracks = async (
+  id: number | string,
+  track_ids: number[],
+  user_id: number
+): Promise<object> => {
   if (!id || !track_ids || !user_id) {
     throw new Error("invalid args");
   }

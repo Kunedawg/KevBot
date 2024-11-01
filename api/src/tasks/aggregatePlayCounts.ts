@@ -1,5 +1,5 @@
 const knex = require("../db/connection");
-const { PLAY_TYPES_OF_TOTAL_PLAY_COUNT } = require("../services/playsService");
+import { PlayType, PLAY_TYPES_OF_TOTAL_PLAY_COUNT } from "../services/playsService";
 
 interface PlayCount {
   track_id: number;
@@ -72,12 +72,14 @@ const aggregatePlayCounts = async () => {
       if (aggregatedTotalPlayCountsMap.has(row.track_id)) {
         const item = aggregatedTotalPlayCountsMap.get(row.track_id)!;
         item.raw_total_play_count += row.count;
-        item.total_play_count += PLAY_TYPES_OF_TOTAL_PLAY_COUNT.includes(row.play_type) ? row.count : 0;
+        item.total_play_count += PLAY_TYPES_OF_TOTAL_PLAY_COUNT.includes(Number(row.play_type) as PlayType)
+          ? row.count
+          : 0;
         aggregatedTotalPlayCountsMap.set(row.track_id, item);
       } else {
         aggregatedTotalPlayCountsMap.set(row.track_id, {
           raw_total_play_count: row.count,
-          total_play_count: PLAY_TYPES_OF_TOTAL_PLAY_COUNT.includes(row.play_type) ? row.count : 0,
+          total_play_count: PLAY_TYPES_OF_TOTAL_PLAY_COUNT.includes(Number(row.play_type) as PlayType) ? row.count : 0,
         });
       }
     });

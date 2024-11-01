@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-const playlistsService = require("../services/playlistsService");
+import * as playlistsService from "../services/playlistsService";
 import config from "../config/config";
-const tracksService = require("../services/tracksService");
+import * as tracksService from "../services/tracksService";
 
 const getPlaylistsQuerySchema = z.object({
   name: z.string().optional(),

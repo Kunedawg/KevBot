@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import fs from "fs";
 import path from "path";
-const tracksService = require("../services/tracksService");
+import * as tracksService from "../services/tracksService";
 import { getTrackMetaData, normalizeAudio } from "../utils/utils";
 import config from "../config/config";
 
