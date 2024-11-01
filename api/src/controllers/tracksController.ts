@@ -89,7 +89,10 @@ export const getTrackStreamById = async (req: Request, res: Response, next: Next
 
     // Get file metadata to determine size
     const [metadata] = await file.getMetadata();
-    const fileSize = metadata.size;
+    if (metadata.size === undefined) {
+      throw new Error("Track fileSize is undefined");
+    }
+    const fileSize = typeof metadata.size === "string" ? parseInt(metadata.size) : metadata.size;
 
     // Check for 'Range' header to serve byte-range requests
     const range = req.headers.range;

@@ -1,4 +1,4 @@
-const knex = require("../db/connection");
+import knex from "../db/connection";
 
 interface PlaylistOptions {
   name?: string;

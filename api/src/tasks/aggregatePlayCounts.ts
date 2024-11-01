@@ -1,4 +1,4 @@
-const knex = require("../db/connection");
+import knex from "../db/connection";
 import { PlayType, PLAY_TYPES_OF_TOTAL_PLAY_COUNT } from "../services/playsService";
 
 interface PlayCount {

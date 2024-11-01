@@ -1,4 +1,4 @@
-const knex = require("../db/connection");
+import knex from "../db/connection";
 
 const PUBLIC_USER_FIELDS = [
   "users.id",

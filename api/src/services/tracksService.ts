@@ -1,5 +1,5 @@
-const knex = require("../db/connection");
-const tracksBucket = require("../storage/tracksBucket");
+import knex from "../db/connection";
+import tracksBucket from "../storage/tracksBucket";
 
 interface TrackOptions {
   name?: string;
