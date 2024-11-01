@@ -9,33 +9,53 @@ const PUBLIC_USER_FIELDS = [
   "users.updated_at",
 ];
 
-exports.postUser = async (username, passwordHash) => {
+interface UserOptions {
+  username?: string;
+  discordId?: string;
+  discordUsername?: string;
+}
+
+interface Greeting {
+  greeting_track_id: number | null;
+  greeting_playlist_id: number | null;
+}
+
+interface Farewell {
+  farewell_track_id: number | null;
+  farewell_playlist_id: number | null;
+}
+
+export const postUser = async (username: string, passwordHash: string) => {
   if (!username || !passwordHash) {
     throw new Error("invalid args");
   }
 
   try {
-    const [id] = await knex("users").insert({ username: username, password_hash: passwordHash });
-    return await this.getUserById(id);
+    const [id] = await knex("users").insert({ username, password_hash: passwordHash });
+    return await getUserById(id);
   } catch (error) {
     throw error;
   }
 };
 
-exports.patchUser = async (id, username) => {
+export const patchUser = async (id: number, username: string) => {
   if (!id || !username) {
     throw new Error("invalid args");
   }
 
   try {
-    await knex("users").where("id", id).update({ username: username });
-    return await this.getUserById(id);
+    await knex("users").where("id", id).update({ username });
+    return await getUserById(id);
   } catch (error) {
     throw error;
   }
 };
 
-exports.putGreeting = async (id, greeting_track_id, greeting_playlist_id) => {
+export const putGreeting = async (
+  id: number,
+  greeting_track_id: number | null,
+  greeting_playlist_id: number | null
+) => {
   const trx = await knex.transaction();
   try {
     if (!(Number.isInteger(greeting_track_id) || greeting_track_id === null)) {
@@ -53,15 +73,18 @@ exports.putGreeting = async (id, greeting_track_id, greeting_playlist_id) => {
       .onConflict("user_id")
       .merge();
     await trx.commit();
-    const greeting = await this.getGreetingByUserId(id);
-    return greeting;
+    return await getGreetingByUserId(id);
   } catch (error) {
     await trx.rollback();
     throw error;
   }
 };
 
-exports.putFarewell = async (id, farewell_track_id, farewell_playlist_id) => {
+export const putFarewell = async (
+  id: number,
+  farewell_track_id: number | null,
+  farewell_playlist_id: number | null
+) => {
   const trx = await knex.transaction();
   try {
     if (!(Number.isInteger(farewell_track_id) || farewell_track_id === null)) {
@@ -79,15 +102,14 @@ exports.putFarewell = async (id, farewell_track_id, farewell_playlist_id) => {
       .onConflict("user_id")
       .merge();
     await trx.commit();
-    const farewell = await this.getFarewellByUserId(id);
-    return farewell;
+    return await getFarewellByUserId(id);
   } catch (error) {
     await trx.rollback();
     throw error;
   }
 };
 
-exports.getUsers = async (options = {}) => {
+export const getUsers = async (options: UserOptions = {}) => {
   try {
     const { username, discordId, discordUsername } = options;
     const query = knex("users");
@@ -106,7 +128,7 @@ exports.getUsers = async (options = {}) => {
   }
 };
 
-exports.getUserById = async (id) => {
+export const getUserById = async (id: number) => {
   try {
     return await knex("users").select(PUBLIC_USER_FIELDS).where("id", id).first();
   } catch (error) {
@@ -114,7 +136,7 @@ exports.getUserById = async (id) => {
   }
 };
 
-exports.getGreetingByUserId = async (id) => {
+export const getGreetingByUserId = async (id: number): Promise<Greeting> => {
   try {
     return (
       (await knex("user_greetings")
@@ -127,7 +149,7 @@ exports.getGreetingByUserId = async (id) => {
   }
 };
 
-exports.getFarewellByUserId = async (id) => {
+export const getFarewellByUserId = async (id: number): Promise<Farewell> => {
   try {
     return (
       (await knex("user_farewells")
@@ -140,7 +162,7 @@ exports.getFarewellByUserId = async (id) => {
   }
 };
 
-exports.getUserPasswordHash = async (username) => {
+export const getUserPasswordHash = async (username: string): Promise<string> => {
   try {
     const user = await knex("users").select(["password_hash"]).where("username", username).first();
     if (!user?.password_hash) {

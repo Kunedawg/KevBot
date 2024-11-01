@@ -1,6 +1,6 @@
 import { z } from "zod";
-const userService = require("../services/usersService");
-const authService = require("../services/authService");
+import * as userService from "../services/usersService";
+import * as authService from "../services/authService";
 import config from "../config/config";
 import { Request, Response, NextFunction } from "express";
 
