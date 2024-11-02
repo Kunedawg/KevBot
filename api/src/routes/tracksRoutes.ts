@@ -1,7 +1,7 @@
 import express from "express";
-import tracksController from "../controllers/tracksController";
+import * as tracksController from "../controllers/tracksController";
 import upload from "../middlewares/multer";
-import auth from "../middlewares/auth";
+import * as auth from "../middlewares/auth";
 
 const router = express.Router();
 

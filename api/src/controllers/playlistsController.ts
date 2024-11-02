@@ -281,15 +281,3 @@ export const deletePlaylistTracks = async (req: Request, res: Response, next: Ne
     next(error);
   }
 };
-
-export default {
-  getPlaylists,
-  getPlaylistById,
-  patchPlaylist,
-  postPlaylist,
-  deletePlaylist,
-  restorePlaylist,
-  getPlaylistTracks,
-  postPlaylistTracks,
-  deletePlaylistTracks,
-};

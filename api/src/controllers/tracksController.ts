@@ -352,14 +352,3 @@ export const restoreTrack = async (req: Request, res: Response, next: NextFuncti
     next(error);
   }
 };
-
-export default {
-  getTracks,
-  getTrackById,
-  getTrackDownloadById,
-  getTrackStreamById,
-  patchTrack,
-  postTrack,
-  deleteTrack,
-  restoreTrack,
-};

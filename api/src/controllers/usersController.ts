@@ -237,13 +237,3 @@ export const putFarewell = async (req: Request, res: Response, next: NextFunctio
     next(error);
   }
 };
-
-export default {
-  getUsers,
-  getUserById,
-  getGreeting,
-  getFarewell,
-  patchUser,
-  putGreeting,
-  putFarewell,
-};

@@ -1,6 +1,6 @@
 import express from "express";
-import playlistsController from "../controllers/playlistsController";
-import auth from "../middlewares/auth";
+import * as playlistsController from "../controllers/playlistsController";
+import * as auth from "../middlewares/auth";
 
 const router = express.Router();
 

@@ -6,7 +6,7 @@ import tracksRoutes from "./routes/tracksRoutes";
 import playlistsRoutes from "./routes/playlistsRoutes";
 import playsRoutes from "./routes/playsRoutes";
 import errorHandler from "./middlewares/errorHandler";
-import auth from "./middlewares/auth";
+import * as auth from "./middlewares/auth";
 import initTaskSchedules from "./schedulers/taskScheduler";
 
 const app = express();

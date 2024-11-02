@@ -78,8 +78,3 @@ export const postLogin = async (req: Request, res: Response, next: NextFunction)
     next(error);
   }
 };
-
-export default {
-  postRegister,
-  postLogin,
-};

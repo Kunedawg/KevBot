@@ -63,8 +63,3 @@ export const logRandomPlaylistsPlay = async (req: Request, res: Response, next: 
     next(error);
   }
 };
-
-export default {
-  logTracksPlay,
-  logRandomPlaylistsPlay,
-};
