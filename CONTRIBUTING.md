@@ -55,7 +55,7 @@ Note the development docker compose file mounts the root of KevBot to `src-dev`,
 ### Starting containers
 
 ```sh
-docker compose -f docker-compose.dev.yml up -d
+docker compose --env-file .env -f docker-compose.dev.yml up [-d]
 ```
 
 ### Stopping containers

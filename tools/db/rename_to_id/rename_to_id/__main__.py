@@ -1,5 +1,6 @@
 import os
 import json
+from google.auth.credentials import AnonymousCredentials
 from google.cloud import storage
 from google.oauth2.service_account import Credentials
 from dotenv import load_dotenv
@@ -26,6 +27,8 @@ class EnvVars:
     mysql_tcp_port: str = field(default=None, init=False)
     gcp_service_account_json_64: str = field(default=None, init=False)
     gcp_audio_bucket: str = field(default=None, init=False)
+    gcp_api_endpoint: str = field(default=None, init=False)
+    env: str = field(default=None, init=False)
 
     @staticmethod
     def get_required_env_vars():
@@ -37,6 +40,8 @@ class EnvVars:
             "MYSQL_TCP_PORT",
             "GCP_SERVICE_ACCOUNT_JSON_64",
             "GCP_AUDIO_BUCKET",
+            "GCP_API_ENDPOINT",
+            "ENV",
         ]
         return required_env_vars
 
@@ -90,11 +95,21 @@ def parse_args():
 
 def get_gloud_bucket(env_vars: EnvVars):
     try:
-        decoded_json = base64.b64decode(env_vars.gcp_service_account_json_64).decode(
-            "utf-8"
-        )
-        credentials = Credentials.from_service_account_info(json.loads(decoded_json))
-        client = storage.Client(credentials=credentials)
+        if env_vars.env == "LOCAL_DEVELOPMENT":
+            os.environ.setdefault("STORAGE_EMULATOR_HOST", env_vars.gcp_api_endpoint)
+            client = storage.Client(
+                credentials=AnonymousCredentials(),
+                project="test",
+                client_options={"api_endpoint": env_vars.gcp_api_endpoint},
+            )
+        else:
+            decoded_json = base64.b64decode(
+                env_vars.gcp_service_account_json_64
+            ).decode("utf-8")
+            credentials = Credentials.from_service_account_info(
+                json.loads(decoded_json)
+            )
+            client = storage.Client(credentials=credentials)
         return client.get_bucket(env_vars.gcp_audio_bucket)
     except Error as e:
         print("Failed to get gcloud bucket")

@@ -26,7 +26,7 @@ jobs:
       - name: Build Docker image
         run: |
           cd $GITHUB_WORKSPACE/tools
-          docker build -f Dockerfile.dev -t kevbot_tools .
+          docker build --target production -t kevbot_tools .
 
       - name: Create .env file
         run: |
@@ -38,8 +38,10 @@ jobs:
           echo "MYSQL_HOST=${{ secrets.MYSQL_HOST }}" >> .env
           echo "GCP_SERVICE_ACCOUNT_JSON_64=${{ secrets.GCP_SERVICE_ACCOUNT_JSON_64 }}" >> .env
           echo "GCP_AUDIO_BUCKET=${{ secrets.GCP_AUDIO_BUCKET }}" >> .env
+          echo "GCP_API_ENDPOINT=${{ secrets.GCP_API_ENDPOINT }}" >> .env
+          echo "ENV=${{ secrets.ENV }}" >> .env
 
       - name: Run migration
         run: |
           cd $GITHUB_WORKSPACE/tools
-          docker run --rm --env-file .env kevbot_tools bash -c "cd /src/db/rename_to_id && .venv/bin/python rename_to_id -y"
+          docker run --rm --env-file .env kevbot_tools bash -c "cd /tools/db/rename_to_id && /opt/rename_to_id/.venv/bin/python rename_to_id -y"
