@@ -3,6 +3,7 @@ import * as userService from "../services/usersService";
 import * as authService from "../services/authService";
 import config from "../config/config";
 import { Request, Response, NextFunction } from "express";
+import { User } from "../models/User";
 
 export const usernameValidation = z
   .string({ required_error: "Username is required" })
@@ -72,7 +73,7 @@ export const postLogin = async (req: Request, res: Response, next: NextFunction)
       return;
     }
     const user = userLookupResult[0];
-    const token = await authService.signUser(user);
+    const token = await authService.signUser(user as User);
     res.json({ token });
   } catch (error) {
     next(error);

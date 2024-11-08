@@ -7,6 +7,8 @@ import * as playlistsService from "../services/playlistsService";
 
 const getUsersQuerySchema = z.object({
   username: z.string().optional(),
+  discordId: z.string().optional(),
+  discordUsername: z.string().optional(),
 });
 
 export const getUsers = async (req: Request, res: Response, next: NextFunction) => {
@@ -16,8 +18,7 @@ export const getUsers = async (req: Request, res: Response, next: NextFunction) 
       res.status(400).json({ error: result.error.issues[0]?.message || result.error.issues });
       return;
     }
-    const { username } = result.data;
-    const users = await usersService.getUsers({ username });
+    const users = await usersService.getUsers(result.data);
     res.status(200).json(users);
     return;
   } catch (error) {

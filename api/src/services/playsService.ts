@@ -1,4 +1,4 @@
-import knex from "../db/connection";
+import { db } from "../db/connection";
 
 export const PLAY_TYPE = {
   PLAY: 0,
@@ -17,66 +17,56 @@ interface LogOptions {
   user_id?: number;
 }
 
-export const logTracksPlay = async (
-  track_id: number,
-  play_type: PlayType,
-  options: LogOptions = {}
-): Promise<{ message: string }> => {
-  const trx = await knex.transaction();
-  try {
+export const logTracksPlay = async (track_id: number, play_type: PlayType, options: LogOptions = {}) => {
+  return await db.transaction().execute(async (trx) => {
     const { user_id } = options;
-    await trx("track_plays").insert({ track_id, play_type, user_id });
+    await trx.insertInto("track_plays").values({ track_id, play_type, user_id }).execute();
 
     // Increment raw_total_play_count
-    await trx("track_play_counts")
-      .insert({
+    await trx
+      .insertInto("track_play_counts")
+      .values({
         track_id,
         raw_total_play_count: 1,
       })
-      .onConflict("track_id")
-      .merge({ raw_total_play_count: trx.raw("?? + ?", ["raw_total_play_count", 1]) });
+      .onDuplicateKeyUpdate((eb) => ({
+        raw_total_play_count: eb("raw_total_play_count", "+", 1),
+      }))
+      .execute();
 
     // Increment total_play_count if needed
     if (PLAY_TYPES_OF_TOTAL_PLAY_COUNT.includes(play_type)) {
-      await trx("track_play_counts").where("track_id", track_id).increment("total_play_count", 1);
+      await trx
+        .updateTable("track_play_counts")
+        .where("track_id", "=", track_id)
+        .set((eb) => ({
+          total_play_count: eb("total_play_count", "+", 1),
+        }))
+        .execute();
     }
 
     // Increment play_type count
-    await trx("track_play_type_counts")
-      .insert({
+    await trx
+      .insertInto("track_play_type_counts")
+      .values({
         track_id,
         play_type,
         play_count: 1,
       })
-      .onConflict(["track_id", "play_type"])
-      .merge({ play_count: trx.raw("?? + ?", ["play_count", 1]) });
+      .onDuplicateKeyUpdate((eb) => ({
+        play_type,
+        play_count: eb("play_count", "+", 1),
+      }))
+      .execute();
 
-    await trx.commit();
-    return {
-      message: "Successfully logged track play.",
-    };
-  } catch (error) {
-    await trx.rollback();
-    console.error("Error occurred during logTracksPlay operation:", error);
-    throw error;
-  }
+    return { message: "Successfully logged track play." };
+  });
 };
 
-export const logRandomPlaylistPlay = async (
-  playlist_id: number,
-  options: LogOptions = {}
-): Promise<{ message: string }> => {
-  const trx = await knex.transaction();
-  try {
+export const logRandomPlaylistPlay = async (playlist_id: number, options: LogOptions = {}) => {
+  return await db.transaction().execute(async (trx) => {
     const { user_id } = options;
-    await trx("playlist_plays").insert({ playlist_id, user_id });
-    await trx.commit();
-    return {
-      message: "Successfully logged random playlist play.",
-    };
-  } catch (error) {
-    await trx.rollback();
-    console.error("Error occurred during logRandomPlaylistPlay operation:", error);
-    throw error;
-  }
+    await trx.insertInto("playlist_plays").values({ playlist_id, user_id }).execute();
+    return { message: "Successfully logged random playlist play." };
+  });
 };
