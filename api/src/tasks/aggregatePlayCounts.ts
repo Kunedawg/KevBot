@@ -1,4 +1,4 @@
-import { db } from "../db/connection2";
+import { db } from "../db/connection";
 import { PlayType, PLAY_TYPES_OF_TOTAL_PLAY_COUNT } from "../services/playsService";
 
 interface AggregatedCounts {

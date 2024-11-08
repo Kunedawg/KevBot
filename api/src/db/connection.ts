@@ -1,10 +1,11 @@
-import knex from "knex";
-import { Knex } from "knex";
-import secrets from "../config/secrets";
+import { Kysely, MysqlDialect } from "kysely";
+import { createPool } from "mysql2";
+import { Database } from "./schema";
 
-const db: Knex = knex({
-  client: "mysql2",
-  connection: secrets.DB_CONNECTION_STRING,
+export const db = new Kysely<Database>({
+  dialect: new MysqlDialect({
+    pool: createPool({
+      uri: process.env.DB_CONNECTION_STRING,
+    }),
+  }),
 });
-
-export default db;

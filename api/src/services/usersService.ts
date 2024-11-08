@@ -1,4 +1,4 @@
-import { db } from "../db/connection2";
+import { db } from "../db/connection";
 
 const PUBLIC_USER_FIELDS = [
   "users.id",

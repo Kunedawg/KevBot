@@ -1,4 +1,4 @@
-import { db } from "../db/connection2";
+import { db } from "../db/connection";
 import tracksBucket from "../storage/tracksBucket";
 import { Track } from "../db/schema";
 
