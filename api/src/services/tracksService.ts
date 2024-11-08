@@ -1,18 +1,19 @@
 import { db } from "../db/connection";
 import tracksBucket from "../storage/tracksBucket";
 import { Track } from "../db/schema";
+import { Kysely, sql, Transaction } from "kysely";
+import { Database } from "../db/schema";
 
 interface TrackOptions {
   name?: string;
   include_deleted?: boolean;
 }
 
-export const getTracks = async (options: TrackOptions = {}) => {
-  const { name, include_deleted = false } = options;
-  let query = db
+const getTrackBaseQuery = (dbTrx: Kysely<Database> | Transaction<Database>) => {
+  return dbTrx
     .selectFrom("tracks as t")
     .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
-    .select([
+    .select(({ fn }) => [
       "t.id",
       "t.name",
       "t.duration",
@@ -20,9 +21,14 @@ export const getTracks = async (options: TrackOptions = {}) => {
       "t.deleted_at",
       "t.created_at",
       "t.updated_at",
-      "tpc.total_play_count",
-      "tpc.raw_total_play_count",
+      fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
+      fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
     ]);
+};
+
+export const getTracks = async (options: TrackOptions = {}) => {
+  const { name, include_deleted = false } = options;
+  let query = getTrackBaseQuery(db);
   if (name) {
     query = query.where("t.name", "=", name);
   }
@@ -32,23 +38,10 @@ export const getTracks = async (options: TrackOptions = {}) => {
   return await query.execute();
 };
 
-export const getTrackById = async (id: number | string) => {
-  return await db
-    .selectFrom("tracks as t")
-    .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
-    .select([
-      "t.id",
-      "t.name",
-      "t.duration",
-      "t.user_id",
-      "t.deleted_at",
-      "t.created_at",
-      "t.updated_at",
-      "tpc.total_play_count",
-      "tpc.raw_total_play_count",
-    ])
-    .where("t.id", "=", Number(id))
-    .executeTakeFirst();
+export const getTrackById = async (id: number | string, trx?: Transaction<Database>) => {
+  const dbTrx = trx ?? db;
+  let query = getTrackBaseQuery(dbTrx);
+  return await query.where("t.id", "=", Number(id)).executeTakeFirst();
 };
 
 export const getTrackFile = async (track: Track) => {
@@ -89,11 +82,10 @@ export const postTrack = async (filepath: string, name: string, duration: number
       .insertInto("tracks")
       .values({ name, duration, user_id: Number(user_id) })
       .executeTakeFirstOrThrow();
-    const track = await trx
-      .selectFrom("tracks")
-      .selectAll()
-      .where("id", "=", Number(insertId))
-      .executeTakeFirstOrThrow();
+    const track = await getTrackById(Number(insertId), trx);
+    if (!track) {
+      throw new Error("Track not found after insert");
+    }
     await tracksBucket.upload(filepath, {
       destination: `${track.id}.mp3`,
       resumable: false,
