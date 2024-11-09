@@ -13,6 +13,7 @@ const config = {
   maxPasswordLength: 64, // characters
   supportedTrackExtensions: [".mp3"],
   jwtTokenExpirationTime: "1h",
+  expectedDbVersion: "2.10.0",
 };
 
 function nameValidationFactory(resourceName: string, maxNameLength: number) {

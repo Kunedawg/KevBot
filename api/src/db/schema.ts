@@ -26,7 +26,7 @@ export type ChangeLogUpdate = Updateable<ChangeLogTable>;
 
 export interface DbVersionTable {
   id: Generated<number>;
-  script_name: string;
+  version: string;
   applied_at: Generated<Date>;
 }
 export type DbVersion = Selectable<DbVersionTable>;

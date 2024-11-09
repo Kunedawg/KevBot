@@ -7,7 +7,6 @@ import playlistsRoutes from "./routes/playlistsRoutes";
 import playsRoutes from "./routes/playsRoutes";
 import errorHandler from "./middlewares/errorHandler";
 import * as auth from "./middlewares/auth";
-import initTaskSchedules from "./schedulers/taskScheduler";
 
 const app = express();
 
@@ -25,7 +24,5 @@ app.get("/v1/protected", auth.requireAuth, (req: Request, res: Response) => {
 });
 
 app.use(errorHandler);
-
-initTaskSchedules();
 
 export default app;
