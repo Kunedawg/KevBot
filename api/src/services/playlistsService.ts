@@ -119,6 +119,10 @@ export const postPlaylistTracks = async (id: number | string, track_ids: number[
 
 export const deletePlaylistTracks = async (id: number | string, track_ids: number[], user_id: number) => {
   return await db.transaction().execute(async (trx) => {
+    if (track_ids.length == 0) {
+      throw { status: 400, message: "track_ids array cannot be empty." };
+    }
+
     const playlist = await trx
       .selectFrom("playlists")
       .selectAll()
@@ -129,29 +133,28 @@ export const deletePlaylistTracks = async (id: number | string, track_ids: numbe
       throw { status: 404, message: "Playlist not found or access denied." };
     }
 
-    const validTrackIds = await trx.selectFrom("tracks").select("id").where("id", "in", track_ids).execute();
-    const validTrackIdSet = new Set(validTrackIds.map((track) => track.id));
-    const inPlaylistTrackIds = await trx
-      .selectFrom("playlist_tracks")
-      .select("track_id")
-      .where("playlist_id", "=", Number(id))
-      .where("track_id", "in", Array.from(validTrackIdSet))
-      .execute();
+    const trackIdSet = new Set(track_ids);
+    const inPlaylistTrackIdSet = new Set(
+      (
+        await trx
+          .selectFrom("playlist_tracks")
+          .select("track_id")
+          .where("playlist_id", "=", Number(id))
+          .where("track_id", "in", Array.from(trackIdSet))
+          .execute()
+      ).map((result) => result.track_id)
+    );
 
-    const inPlaylistTrackIdSet = new Set(inPlaylistTrackIds.map((track) => track.track_id));
-    const tracksToDelete = Array.from(inPlaylistTrackIdSet);
-    if (tracksToDelete.length > 0) {
-      await trx
-        .deleteFrom("playlist_tracks")
-        .where("playlist_id", "=", Number(id))
-        .where("track_id", "in", tracksToDelete)
-        .execute();
-    }
+    await trx
+      .deleteFrom("playlist_tracks")
+      .where("playlist_id", "=", Number(id))
+      .where("track_id", "in", Array.from(trackIdSet))
+      .execute();
 
     return {
       message: "Playlist track deletion complete.",
-      deleted_track_ids: tracksToDelete,
-      not_in_playlist_track_ids: Array.from(validTrackIdSet).filter((id) => !inPlaylistTrackIdSet.has(id)),
+      deleted_track_ids: Array.from(inPlaylistTrackIdSet),
+      not_in_playlist_track_ids: Array.from(trackIdSet).filter((id) => !inPlaylistTrackIdSet.has(id)),
     };
   });
 };
