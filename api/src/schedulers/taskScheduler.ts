@@ -1,8 +1,13 @@
 import cron from "node-cron";
 import aggregatePlayCounts from "../tasks/aggregatePlayCounts";
+import { checkDatabaseVersion } from "../tasks/checkDatabaseVersion";
 
-const initTaskSchedules = () => {
-  aggregatePlayCounts(); // run on startup
+const initTaskSchedules = async () => {
+  // run on startup
+  await aggregatePlayCounts();
+  await checkDatabaseVersion();
+
+  // run on schedule
   cron.schedule(
     "0 * * * *",
     () => {

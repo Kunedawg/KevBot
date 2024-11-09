@@ -7,14 +7,14 @@
 CREATE TABLE IF NOT EXISTS db_version (
     id INT AUTO_INCREMENT PRIMARY KEY,
     version VARCHAR(50) NOT NULL,
-    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create table to log each change script application
 CREATE TABLE IF NOT EXISTS change_log (
     id INT AUTO_INCREMENT PRIMARY KEY,
     script_name VARCHAR(255) NOT NULL,
-    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Update the version and change_log tables
