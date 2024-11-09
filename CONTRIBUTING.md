@@ -1,5 +1,14 @@
 # Contributing to kev-bot API
 
+## Running migrations locally
+
+1. Make sure you have built the `kevbot-tools` docker image
+2. Run the following command from root of project
+
+```sh
+docker run --rm --env-file .env -v ./db/migration:/tools/db/migration_manager/migration kevbot-tools bash -c "cd /tools/db/migration_manager && /opt/migration_manager/.venv/bin/python migration_manager migrate -v latest --schema-dir ./migration/schema_change_scripts --supplemental-dirs ./migration/supplemental_scripts ./migration/sensitive_supplemental_scripts"
+```
+
 ## Docker structure
 
 needs to be updated
