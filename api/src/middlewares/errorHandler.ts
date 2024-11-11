@@ -3,6 +3,9 @@ import multer from "multer";
 import config from "../config/config";
 import { ZodError } from "zod";
 import { AuthenticationError } from "../utils/getAuthenticatedUser";
+import * as Boom from "@hapi/boom";
+import { fromError } from "zod-validation-error";
+import { StatusCodes } from "http-status-codes";
 
 const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
   console.error(err);
@@ -28,13 +31,25 @@ const errorHandler = (err: any, req: Request, res: Response, next: NextFunction)
   }
 
   if (err instanceof ZodError) {
-    res.status(400).json({ errors: err.errors });
+    const validationError = fromError(err);
+    res.status(StatusCodes.BAD_REQUEST).json({
+      statusCode: StatusCodes.BAD_REQUEST,
+      error: "Bad Request",
+      message: validationError.toString().replaceAll(`"`, `'`),
+    });
     return;
   }
 
   if (err instanceof AuthenticationError) {
     res.status(err.statusCode).json({ error: err.message });
     return;
+  }
+
+  if (Boom.isBoom(err)) {
+    if (err.data) {
+      res.status(err.output.statusCode).json({ ...err.output.payload, ...err.data });
+    }
+    res.status(err.output.statusCode).json(err.output.payload);
   }
 
   const statusCode = err.statusCode || 500;

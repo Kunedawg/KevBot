@@ -1,10 +1,29 @@
 import { db } from "../db/connection";
 import { getTrackBaseQuery } from "./tracksService";
+import * as Boom from "@hapi/boom";
+import { Playlist } from "../db/schema";
 
 interface PlaylistOptions {
   name?: string;
   include_deleted?: boolean;
 }
+
+const validatePlaylistNameIsUnique = async (name: string, excludeId?: number) => {
+  let query = db.selectFrom("playlists").selectAll().where("name", "=", name);
+  if (excludeId) {
+    query = query.where("id", "!=", excludeId);
+  }
+  const playlist = await query.executeTakeFirst();
+  if (playlist) {
+    throw Boom.conflict("Playlist name is already taken");
+  }
+};
+
+const playlistPermissionCheck = (playlist: Playlist, user_id: number) => {
+  if (playlist.user_id !== user_id) {
+    throw Boom.forbidden("You do not have permission to modify this playlist.");
+  }
+};
 
 export const getPlaylists = async (options: PlaylistOptions = {}) => {
   const { name, include_deleted = false } = options;
@@ -19,15 +38,27 @@ export const getPlaylists = async (options: PlaylistOptions = {}) => {
 };
 
 export const getPlaylistById = async (id: number) => {
-  return await db.selectFrom("playlists").selectAll().where("id", "=", id).executeTakeFirst();
+  const playlist = await db.selectFrom("playlists").selectAll().where("id", "=", id).executeTakeFirst();
+  if (!playlist) {
+    throw Boom.notFound("Playlist not found");
+  }
+  return playlist;
 };
 
-export const patchPlaylist = async (id: number, name: string) => {
+export const patchPlaylist = async (id: number, name: string, user_id: number) => {
+  const playlist = await getPlaylistById(id);
+  playlistPermissionCheck(playlist, user_id);
+  if (playlist.name === name) {
+    return playlist;
+  }
+  await validatePlaylistNameIsUnique(name, id);
   await db.updateTable("playlists").set({ name }).where("id", "=", id).execute();
   return await getPlaylistById(id);
 };
 
-export const deletePlaylist = async (id: number) => {
+export const deletePlaylist = async (id: number, user_id: number) => {
+  const playlist = await getPlaylistById(id);
+  playlistPermissionCheck(playlist, user_id);
   await db
     .updateTable("playlists")
     .set({ deleted_at: new Date() })
@@ -37,18 +68,18 @@ export const deletePlaylist = async (id: number) => {
   return await getPlaylistById(id);
 };
 
-export const restorePlaylist = async (id: number) => {
-  await db
-    .updateTable("playlists")
-    .set({ deleted_at: null })
-    .where("id", "=", id)
-    .where("deleted_at", "is not", null)
-    .execute();
+export const restorePlaylist = async (id: number, user_id: number, name?: string) => {
+  const playlist = await getPlaylistById(id);
+  playlistPermissionCheck(playlist, user_id);
+  await patchPlaylist(id, name ?? playlist.name, user_id);
+  await db.updateTable("playlists").set({ deleted_at: null }).where("id", "=", id).execute();
   return await getPlaylistById(id);
 };
 
 export const postPlaylist = async (name: string, user_id: number) => {
   return await db.transaction().execute(async (trx) => {
+    await validatePlaylistNameIsUnique(name);
+    // TODO: type guard for insertId?
     const { insertId } = await trx.insertInto("playlists").values({ name, user_id }).executeTakeFirstOrThrow();
     const playlist = await trx
       .selectFrom("playlists")
@@ -60,8 +91,7 @@ export const postPlaylist = async (name: string, user_id: number) => {
 };
 
 export const getPlaylistTracks = async (id: number) => {
-  const playlist = await db.selectFrom("playlists").selectAll().where("id", "=", id).executeTakeFirst();
-  if (!playlist) return null;
+  await getPlaylistById(id); // ensures playlist exists
   return await getTrackBaseQuery(db)
     .innerJoin("playlist_tracks", "t.id", "playlist_tracks.track_id")
     .where("playlist_tracks.playlist_id", "=", id)
@@ -70,19 +100,17 @@ export const getPlaylistTracks = async (id: number) => {
 };
 
 export const postPlaylistTracks = async (id: number, track_ids: number[], user_id: number) => {
+  await getPlaylistById(id); // ensures playlist exists
+
+  // ensures tracks are valid
+  const validTrackIds = await db.selectFrom("tracks").select("id").where("id", "in", track_ids).execute();
+  const validTrackIdSet = new Set(validTrackIds.map((track) => track.id));
+  const invalidTrackIds = track_ids.filter((track_id) => !validTrackIdSet.has(track_id));
+  if (invalidTrackIds.length > 0) {
+    throw Boom.notFound("Track(s) not found", { invalid_track_ids: invalidTrackIds });
+  }
+
   return await db.transaction().execute(async (trx) => {
-    const playlist = await trx.selectFrom("playlists").selectAll().where("id", "=", id).executeTakeFirst();
-    if (!playlist) {
-      throw { status: 404, message: "Playlist not found." };
-    }
-
-    const validTrackIds = await trx.selectFrom("tracks").select("id").where("id", "in", track_ids).execute();
-    const validTrackIdSet = new Set(validTrackIds.map((track) => track.id));
-    const invalidTrackIds = track_ids.filter((track_id) => !validTrackIdSet.has(track_id));
-    if (invalidTrackIds.length > 0) {
-      throw { status: 400, message: "Invalid track ids" };
-    }
-
     const inPlaylistTrackIds = await trx
       .selectFrom("playlist_tracks")
       .select("track_id")
@@ -114,21 +142,12 @@ export const postPlaylistTracks = async (id: number, track_ids: number[], user_i
 };
 
 export const deletePlaylistTracks = async (id: number, track_ids: number[], user_id: number) => {
+  const playlist = await getPlaylistById(id); // ensures playlist exists
+  playlistPermissionCheck(playlist, user_id);
+  if (track_ids.length == 0) {
+    throw Boom.badRequest("track_ids array cannot be empty.");
+  }
   return await db.transaction().execute(async (trx) => {
-    if (track_ids.length == 0) {
-      throw { status: 400, message: "track_ids array cannot be empty." };
-    }
-
-    const playlist = await trx
-      .selectFrom("playlists")
-      .selectAll()
-      .where("id", "=", id)
-      .where("user_id", "=", user_id)
-      .executeTakeFirst();
-    if (!playlist) {
-      throw { status: 404, message: "Playlist not found or access denied." };
-    }
-
     const trackIdSet = new Set(track_ids);
     const inPlaylistTrackIdSet = new Set(
       (
