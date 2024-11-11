@@ -1,4 +1,5 @@
 import { db } from "../db/connection";
+import { getTrackBaseQuery } from "./tracksService";
 
 interface PlaylistOptions {
   name?: string;
@@ -17,41 +18,38 @@ export const getPlaylists = async (options: PlaylistOptions = {}) => {
   return await query.execute();
 };
 
-export const getPlaylistById = async (id: number | string) => {
-  return await db.selectFrom("playlists").selectAll().where("id", "=", Number(id)).executeTakeFirst();
+export const getPlaylistById = async (id: number) => {
+  return await db.selectFrom("playlists").selectAll().where("id", "=", id).executeTakeFirst();
 };
 
-export const patchPlaylist = async (id: number | string, name: string) => {
-  await db.updateTable("playlists").set({ name }).where("id", "=", Number(id)).execute();
+export const patchPlaylist = async (id: number, name: string) => {
+  await db.updateTable("playlists").set({ name }).where("id", "=", id).execute();
   return await getPlaylistById(id);
 };
 
-export const deletePlaylist = async (id: number | string) => {
+export const deletePlaylist = async (id: number) => {
   await db
     .updateTable("playlists")
     .set({ deleted_at: new Date() })
-    .where("id", "=", Number(id))
+    .where("id", "=", id)
     .where("deleted_at", "is", null)
     .execute();
   return await getPlaylistById(id);
 };
 
-export const restorePlaylist = async (id: number | string) => {
+export const restorePlaylist = async (id: number) => {
   await db
     .updateTable("playlists")
     .set({ deleted_at: null })
-    .where("id", "=", Number(id))
+    .where("id", "=", id)
     .where("deleted_at", "is not", null)
     .execute();
   return await getPlaylistById(id);
 };
 
-export const postPlaylist = async (name: string, user_id: number | string) => {
+export const postPlaylist = async (name: string, user_id: number) => {
   return await db.transaction().execute(async (trx) => {
-    const { insertId } = await trx
-      .insertInto("playlists")
-      .values({ name, user_id: Number(user_id) })
-      .executeTakeFirstOrThrow();
+    const { insertId } = await trx.insertInto("playlists").values({ name, user_id }).executeTakeFirstOrThrow();
     const playlist = await trx
       .selectFrom("playlists")
       .selectAll()
@@ -61,21 +59,19 @@ export const postPlaylist = async (name: string, user_id: number | string) => {
   });
 };
 
-export const getPlaylistTracks = async (id: number | string) => {
-  const playlist = await db.selectFrom("playlists").selectAll().where("id", "=", Number(id)).executeTakeFirst();
+export const getPlaylistTracks = async (id: number) => {
+  const playlist = await db.selectFrom("playlists").selectAll().where("id", "=", id).executeTakeFirst();
   if (!playlist) return null;
-  return await db
-    .selectFrom("tracks")
-    .selectAll()
-    .innerJoin("playlist_tracks", "tracks.id", "playlist_tracks.track_id")
-    .where("playlist_tracks.playlist_id", "=", Number(id))
-    .where("tracks.deleted_at", "is", null)
+  return await getTrackBaseQuery(db)
+    .innerJoin("playlist_tracks", "t.id", "playlist_tracks.track_id")
+    .where("playlist_tracks.playlist_id", "=", id)
+    .where("t.deleted_at", "is", null)
     .execute();
 };
 
-export const postPlaylistTracks = async (id: number | string, track_ids: number[], user_id: number | string) => {
+export const postPlaylistTracks = async (id: number, track_ids: number[], user_id: number) => {
   return await db.transaction().execute(async (trx) => {
-    const playlist = await trx.selectFrom("playlists").selectAll().where("id", "=", Number(id)).executeTakeFirst();
+    const playlist = await trx.selectFrom("playlists").selectAll().where("id", "=", id).executeTakeFirst();
     if (!playlist) {
       throw { status: 404, message: "Playlist not found." };
     }
@@ -90,7 +86,7 @@ export const postPlaylistTracks = async (id: number | string, track_ids: number[
     const inPlaylistTrackIds = await trx
       .selectFrom("playlist_tracks")
       .select("track_id")
-      .where("playlist_id", "=", Number(id))
+      .where("playlist_id", "=", id)
       .where("track_id", "in", Array.from(validTrackIdSet))
       .execute();
     const inPlaylistTrackIdSet = new Set(inPlaylistTrackIds.map((track) => track.track_id));
@@ -102,8 +98,8 @@ export const postPlaylistTracks = async (id: number | string, track_ids: number[
         .values(
           notInPlaylistTrackIds.map((track_id) => ({
             track_id,
-            playlist_id: Number(id),
-            user_id: Number(user_id),
+            playlist_id: id,
+            user_id,
           }))
         )
         .execute();
@@ -117,7 +113,7 @@ export const postPlaylistTracks = async (id: number | string, track_ids: number[
   });
 };
 
-export const deletePlaylistTracks = async (id: number | string, track_ids: number[], user_id: number) => {
+export const deletePlaylistTracks = async (id: number, track_ids: number[], user_id: number) => {
   return await db.transaction().execute(async (trx) => {
     if (track_ids.length == 0) {
       throw { status: 400, message: "track_ids array cannot be empty." };
@@ -126,7 +122,7 @@ export const deletePlaylistTracks = async (id: number | string, track_ids: numbe
     const playlist = await trx
       .selectFrom("playlists")
       .selectAll()
-      .where("id", "=", Number(id))
+      .where("id", "=", id)
       .where("user_id", "=", user_id)
       .executeTakeFirst();
     if (!playlist) {
@@ -139,7 +135,7 @@ export const deletePlaylistTracks = async (id: number | string, track_ids: numbe
         await trx
           .selectFrom("playlist_tracks")
           .select("track_id")
-          .where("playlist_id", "=", Number(id))
+          .where("playlist_id", "=", id)
           .where("track_id", "in", Array.from(trackIdSet))
           .execute()
       ).map((result) => result.track_id)
@@ -147,7 +143,7 @@ export const deletePlaylistTracks = async (id: number | string, track_ids: numbe
 
     await trx
       .deleteFrom("playlist_tracks")
-      .where("playlist_id", "=", Number(id))
+      .where("playlist_id", "=", id)
       .where("track_id", "in", Array.from(trackIdSet))
       .execute();
 

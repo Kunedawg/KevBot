@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import multer from "multer";
 import config from "../config/config";
+import { ZodError } from "zod";
+import { AuthenticationError } from "../utils/getAuthenticatedUser";
 
 const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
   console.error(err);
@@ -22,6 +24,16 @@ const errorHandler = (err: any, req: Request, res: Response, next: NextFunction)
         break;
     }
     res.status(statusCode).json({ error: message });
+    return;
+  }
+
+  if (err instanceof ZodError) {
+    res.status(400).json({ errors: err.errors });
+    return;
+  }
+
+  if (err instanceof AuthenticationError) {
+    res.status(err.statusCode).json({ error: err.message });
     return;
   }
 

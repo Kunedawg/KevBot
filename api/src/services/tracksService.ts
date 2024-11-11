@@ -9,7 +9,7 @@ interface TrackOptions {
   include_deleted?: boolean;
 }
 
-const getTrackBaseQuery = (dbTrx: Kysely<Database> | Transaction<Database>) => {
+export const getTrackBaseQuery = (dbTrx: Kysely<Database> | Transaction<Database>) => {
   return dbTrx
     .selectFrom("tracks as t")
     .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
