@@ -5,6 +5,7 @@ import path from "path";
 import * as tracksService from "../services/tracksService";
 import { getTrackMetaData, normalizeAudio } from "../utils/utils";
 import config from "../config/config";
+import { trackNameValidation } from "../schemas/sharedSchemas";
 
 const getTracksQuerySchema = z.object({
   name: z.string().optional(),
@@ -133,7 +134,7 @@ export const getTrackStreamById = async (req: Request, res: Response, next: Next
 };
 
 const patchTrackBodySchema = z.object({
-  name: config.trackNameValidation,
+  name: trackNameValidation,
 });
 
 export const patchTrack = async (req: Request, res: Response, next: NextFunction) => {
@@ -179,7 +180,7 @@ export const patchTrack = async (req: Request, res: Response, next: NextFunction
 };
 
 const postTrackBodySchema = z.object({
-  name: config.trackNameValidation,
+  name: trackNameValidation,
 });
 
 export const postTrack = async (req: Request, res: Response, next: NextFunction) => {
@@ -298,7 +299,7 @@ export const deleteTrack = async (req: Request, res: Response, next: NextFunctio
 };
 
 const restoreTrackBodySchema = z.object({
-  name: config.trackNameValidation.optional(),
+  name: trackNameValidation.optional(),
 });
 
 export const restoreTrack = async (req: Request, res: Response, next: NextFunction) => {

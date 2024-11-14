@@ -4,6 +4,7 @@ import secrets from "../config/secrets";
 import config from "../config/config";
 import * as userService from "./usersService";
 import { User } from "../models/User";
+import * as Boom from "@hapi/boom";
 
 export const registerUser = async (username: string, password: string) => {
   const saltRounds = 12;
@@ -11,12 +12,21 @@ export const registerUser = async (username: string, password: string) => {
   return await userService.postUser(username, passwordHash);
 };
 
-export const verifyPassword = async (username: string, password: string) => {
+export const verifyPassword = async (username: string, password: string): Promise<User> => {
   const passwordHash = await userService.getUserPasswordHash(username);
-  if (!passwordHash) {
-    throw new Error("password hash does not exist");
+  const passwordIsValid = await bcrypt.compare(password, passwordHash);
+  if (!passwordIsValid) {
+    throw Boom.unauthorized("Invalid username or password");
   }
-  return await bcrypt.compare(password, passwordHash);
+  const users = await userService.getUsers({ username });
+  if (users.length > 1) {
+    throw Boom.internal("Non-unique username was found");
+  }
+  const user = users[0];
+  if (!user?.username) {
+    throw Boom.internal("Null or undefined username should not be possible here");
+  }
+  return { id: user.id, username: user.username };
 };
 
 export const signUser = async (user: User) => {

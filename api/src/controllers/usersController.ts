@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import * as usersService from "../services/usersService";
-import { usernameValidation } from "../schemas/authSchemas";
+import { usernameValidation } from "../schemas/sharedSchemas";
 import * as tracksService from "../services/tracksService";
 import * as playlistsService from "../services/playlistsService";
 

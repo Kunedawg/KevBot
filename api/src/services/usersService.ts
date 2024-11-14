@@ -1,4 +1,5 @@
 import { db } from "../db/connection";
+import * as Boom from "@hapi/boom";
 
 const PUBLIC_USER_FIELDS = [
   "users.id",
@@ -15,7 +16,19 @@ interface UserOptions {
   discordUsername?: string;
 }
 
+const validateUsernameIsUnique = async (username: string, excludeId?: number) => {
+  let query = db.selectFrom("users").select(["username"]).where("username", "=", username);
+  if (excludeId) {
+    query = query.where("id", "!=", excludeId);
+  }
+  const user = await query.executeTakeFirst();
+  if (user) {
+    throw Boom.conflict("Username is already taken");
+  }
+};
+
 export const postUser = async (username: string, passwordHash: string) => {
+  validateUsernameIsUnique(username);
   const { insertId } = await db
     .insertInto("users")
     .values({ username, password_hash: passwordHash })
@@ -110,7 +123,7 @@ export const getUserPasswordHash = async (username: string) => {
     .where("username", "=", username)
     .executeTakeFirst();
   if (!user?.password_hash) {
-    throw new Error("could not retrieve password hash");
+    throw Boom.unauthorized("Invalid username or password");
   }
   return user.password_hash;
 };

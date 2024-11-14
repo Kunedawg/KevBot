@@ -1,5 +1,5 @@
 import { z } from "zod";
-import config from "../config/config";
+import { playlistNameValidation } from "./sharedSchemas";
 
 export const getPlaylistsQuerySchema = z.object({
   name: z.string().optional(),
@@ -7,15 +7,15 @@ export const getPlaylistsQuerySchema = z.object({
 });
 
 export const patchPlaylistBodySchema = z.object({
-  name: config.playlistNameValidation,
+  name: playlistNameValidation,
 });
 
 export const postPlaylistBodySchema = z.object({
-  name: config.playlistNameValidation,
+  name: playlistNameValidation,
 });
 
 export const restorePlaylistBodySchema = z.object({
-  name: config.playlistNameValidation.optional(),
+  name: playlistNameValidation.optional(),
 });
 
 export const postPlaylistTracksBodySchema = z.object({

@@ -1,4 +1,4 @@
-import { z } from "zod";
+// import { z } from "zod";
 
 const config = {
   PORT: Number(process.env.PORT) || 3000,
@@ -16,25 +16,27 @@ const config = {
   expectedDbVersion: "2.10.0",
 };
 
-function nameValidationFactory(resourceName: string, maxNameLength: number) {
-  return z
-    .string()
-    .regex(/^[a-z\d]+$/g, {
-      message: `Invalid ${resourceName.toLowerCase()} name. Only lower case letters and numbers are allowed.`,
-    })
-    .max(maxNameLength, {
-      message: `${
-        resourceName.charAt(0).toUpperCase() + resourceName.slice(1).toLowerCase()
-      } name must be ${maxNameLength} characters or fewer.`,
-    });
-}
+// function nameValidationFactory(resourceName: string, maxNameLength: number) {
+//   return z
+//     .string()
+//     .regex(/^[a-z\d]+$/g, {
+//       message: `Invalid ${resourceName.toLowerCase()} name. Only lower case letters and numbers are allowed.`,
+//     })
+//     .max(maxNameLength, {
+//       message: `${
+//         resourceName.charAt(0).toUpperCase() + resourceName.slice(1).toLowerCase()
+//       } name must be ${maxNameLength} characters or fewer.`,
+//     });
+// }
 
-const validationConfig = {
-  trackNameValidation: nameValidationFactory("track", config.maxTrackNameLength),
-  playlistNameValidation: nameValidationFactory("playlist", config.maxPlaylistNameLength),
-};
+// const validationConfig = {
+//   trackNameValidation: nameValidationFactory("track", config.maxTrackNameLength),
+//   playlistNameValidation: nameValidationFactory("playlist", config.maxPlaylistNameLength),
+// };
 
-export default {
-  ...config,
-  ...validationConfig,
-};
+export default config;
+
+// export default {
+//   ...config,
+//   ...validationConfig,
+// };
