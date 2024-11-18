@@ -9,7 +9,7 @@ interface PlaylistOptions {
 }
 
 const validatePlaylistNameIsUnique = async (name: string, excludeId?: number) => {
-  let query = db.selectFrom("playlists").selectAll().where("name", "=", name);
+  let query = db.selectFrom("playlists").selectAll().where("name", "=", name).where("deleted_at", "is", null);
   if (excludeId) {
     query = query.where("id", "!=", excludeId);
   }
@@ -48,10 +48,10 @@ export const getPlaylistById = async (id: number) => {
 export const patchPlaylist = async (id: number, name: string, req_user_id: number) => {
   const playlist = await getPlaylistById(id);
   playlistPermissionCheck(playlist, req_user_id);
+  await validatePlaylistNameIsUnique(name, id);
   if (playlist.name === name) {
     return playlist;
   }
-  await validatePlaylistNameIsUnique(name, id);
   await db.updateTable("playlists").set({ name }).where("id", "=", id).execute();
   return await getPlaylistById(id);
 };
@@ -79,7 +79,6 @@ export const restorePlaylist = async (id: number, req_user_id: number, name?: st
 export const postPlaylist = async (name: string, req_user_id: number) => {
   return await db.transaction().execute(async (trx) => {
     await validatePlaylistNameIsUnique(name);
-    // TODO: type guard for insertId?
     const { insertId } = await trx
       .insertInto("playlists")
       .values({ name, user_id: req_user_id })
