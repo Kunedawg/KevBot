@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import jwt, { TokenExpiredError, NotBeforeError, JsonWebTokenError } from "jsonwebtoken";
 import secrets from "../config/secrets";
 import config from "../config/config";
 import * as userService from "./usersService";
@@ -45,11 +45,22 @@ function isUserPayload(payload: any): payload is User {
   );
 }
 
+function isJwtError(err: unknown): err is JsonWebTokenError {
+  return err instanceof JsonWebTokenError || err instanceof TokenExpiredError || err instanceof NotBeforeError;
+}
+
 export const verifyToken = async (token: string) => {
-  const decoded = jwt.verify(token, secrets.API_JWT_SECRET);
-  if (isUserPayload(decoded)) {
-    return decoded;
-  } else {
-    throw new Error("Token payload is invalid");
+  let decoded;
+  try {
+    decoded = jwt.verify(token, secrets.API_JWT_SECRET);
+  } catch (err) {
+    if (isJwtError(err)) {
+      throw Boom.unauthorized(err.message);
+    }
+    throw Boom.unauthorized();
   }
+  if (!isUserPayload(decoded)) {
+    throw Boom.unauthorized("Token payload is invalid");
+  }
+  return decoded;
 };

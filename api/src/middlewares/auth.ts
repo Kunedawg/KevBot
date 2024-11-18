@@ -1,40 +1,28 @@
 import { Request, Response, NextFunction } from "express";
 import * as authService from "../services/authService";
+import Boom from "@hapi/boom";
 
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
-    if (!token) {
-      res.status(401).json({ error: "Access token is missing" });
-      return;
-    }
-    const user = await authService.verifyToken(token);
-    if (!user) {
-      res.status(403).json({ error: "Invalid access token" });
-      return;
-    }
-    req.user = user;
-    next();
-  } catch (error) {
-    next(error);
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+  if (!token) {
+    throw Boom.unauthorized("Access token is missing");
   }
+  const user = await authService.verifyToken(token);
+  req.user = user;
+  next();
 };
 
 export const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
-    if (token) {
-      try {
-        const user = await authService.verifyToken(token);
-        req.user = user;
-      } catch {
-        // No error handling needed; requests can proceed as anonymous user.
-      }
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+  if (token) {
+    try {
+      const user = await authService.verifyToken(token);
+      req.user = user;
+    } catch {
+      // No error handling needed; requests can proceed as anonymous user.
     }
-    next();
-  } catch (error) {
-    next(error);
   }
+  next();
 };

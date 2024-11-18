@@ -63,7 +63,7 @@ export const putGreeting = async (
   req_user_id: number
 ) => {
   if (Number.isInteger(greeting_track_id) && Number.isInteger(greeting_playlist_id)) {
-    throw new Error("Only a greeting track OR a playlist can be provided, not both");
+    throw Boom.badRequest("Only a greeting track OR a playlist can be provided, not both");
   }
   const user = await getUserById(id); // ensures user exits
   userPermissionCheck(user, req_user_id);
@@ -91,7 +91,7 @@ export const putFarewell = async (
   req_user_id: number
 ) => {
   if (Number.isInteger(farewell_track_id) && Number.isInteger(farewell_playlist_id)) {
-    throw new Error("Only a farewell track OR a playlist can be provided, not both");
+    throw Boom.badRequest("Only a farewell track OR a playlist can be provided, not both");
   }
   const user = await getUserById(id); // ensures user exits
   userPermissionCheck(user, req_user_id);

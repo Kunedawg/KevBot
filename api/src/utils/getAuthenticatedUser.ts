@@ -1,18 +1,10 @@
 import { Request } from "express";
 import { User } from "../models/User";
-
-export class AuthenticationError extends Error {
-  statusCode: number;
-  constructor(message: string = "User not authenticated") {
-    super(message);
-    this.name = "AuthenticationError";
-    this.statusCode = 401;
-  }
-}
+import Boom from "@hapi/boom";
 
 export const getAuthenticatedUser = (req: Request): User => {
   if (!req.user || !req.user.id) {
-    throw new AuthenticationError();
+    throw Boom.unauthorized("User not authenticated");
   }
   return req.user;
 };
