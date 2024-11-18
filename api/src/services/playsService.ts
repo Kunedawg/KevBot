@@ -1,4 +1,6 @@
 import { db } from "../db/connection";
+import * as tracksService from "../services/tracksService";
+import * as playlistsService from "../services/playlistsService";
 
 export const PLAY_TYPE = {
   PLAY: 0,
@@ -19,6 +21,7 @@ interface LogOptions {
 
 export const logTracksPlay = async (track_id: number, play_type: PlayType, options: LogOptions = {}) => {
   return await db.transaction().execute(async (trx) => {
+    await tracksService.getTrackById(track_id); // ensures that the track_id is actually valid
     const { user_id } = options;
     await trx.insertInto("track_plays").values({ track_id, play_type, user_id }).execute();
 
@@ -65,6 +68,7 @@ export const logTracksPlay = async (track_id: number, play_type: PlayType, optio
 
 export const logRandomPlaylistPlay = async (playlist_id: number, options: LogOptions = {}) => {
   return await db.transaction().execute(async (trx) => {
+    await playlistsService.getPlaylistById(playlist_id); // ensures playlist exists
     const { user_id } = options;
     await trx.insertInto("playlist_plays").values({ playlist_id, user_id }).execute();
     return { message: "Successfully logged random playlist play." };
