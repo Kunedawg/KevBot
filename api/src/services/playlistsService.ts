@@ -19,8 +19,8 @@ const validatePlaylistNameIsUnique = async (name: string, excludeId?: number) =>
   }
 };
 
-const playlistPermissionCheck = (playlist: Playlist, user_id: number) => {
-  if (playlist.user_id !== user_id) {
+const playlistPermissionCheck = (playlist: Playlist, req_user_id: number) => {
+  if (playlist.user_id !== req_user_id) {
     throw Boom.forbidden("You do not have permission to modify this playlist.");
   }
 };
@@ -45,9 +45,9 @@ export const getPlaylistById = async (id: number) => {
   return playlist;
 };
 
-export const patchPlaylist = async (id: number, name: string, user_id: number) => {
+export const patchPlaylist = async (id: number, name: string, req_user_id: number) => {
   const playlist = await getPlaylistById(id);
-  playlistPermissionCheck(playlist, user_id);
+  playlistPermissionCheck(playlist, req_user_id);
   if (playlist.name === name) {
     return playlist;
   }
@@ -56,9 +56,9 @@ export const patchPlaylist = async (id: number, name: string, user_id: number) =
   return await getPlaylistById(id);
 };
 
-export const deletePlaylist = async (id: number, user_id: number) => {
+export const deletePlaylist = async (id: number, req_user_id: number) => {
   const playlist = await getPlaylistById(id);
-  playlistPermissionCheck(playlist, user_id);
+  playlistPermissionCheck(playlist, req_user_id);
   await db
     .updateTable("playlists")
     .set({ deleted_at: new Date() })
@@ -68,19 +68,22 @@ export const deletePlaylist = async (id: number, user_id: number) => {
   return await getPlaylistById(id);
 };
 
-export const restorePlaylist = async (id: number, user_id: number, name?: string) => {
+export const restorePlaylist = async (id: number, req_user_id: number, name?: string) => {
   const playlist = await getPlaylistById(id);
-  playlistPermissionCheck(playlist, user_id);
-  await patchPlaylist(id, name ?? playlist.name, user_id);
+  playlistPermissionCheck(playlist, req_user_id);
+  await patchPlaylist(id, name ?? playlist.name, req_user_id);
   await db.updateTable("playlists").set({ deleted_at: null }).where("id", "=", id).execute();
   return await getPlaylistById(id);
 };
 
-export const postPlaylist = async (name: string, user_id: number) => {
+export const postPlaylist = async (name: string, req_user_id: number) => {
   return await db.transaction().execute(async (trx) => {
     await validatePlaylistNameIsUnique(name);
     // TODO: type guard for insertId?
-    const { insertId } = await trx.insertInto("playlists").values({ name, user_id }).executeTakeFirstOrThrow();
+    const { insertId } = await trx
+      .insertInto("playlists")
+      .values({ name, user_id: req_user_id })
+      .executeTakeFirstOrThrow();
     const playlist = await trx
       .selectFrom("playlists")
       .selectAll()
@@ -99,7 +102,7 @@ export const getPlaylistTracks = async (id: number) => {
     .execute();
 };
 
-export const postPlaylistTracks = async (id: number, track_ids: number[], user_id: number) => {
+export const postPlaylistTracks = async (id: number, track_ids: number[], req_user_id: number) => {
   await getPlaylistById(id); // ensures playlist exists
 
   // ensures tracks are valid
@@ -127,7 +130,7 @@ export const postPlaylistTracks = async (id: number, track_ids: number[], user_i
           notInPlaylistTrackIds.map((track_id) => ({
             track_id,
             playlist_id: id,
-            user_id,
+            user_id: req_user_id,
           }))
         )
         .execute();
@@ -141,9 +144,9 @@ export const postPlaylistTracks = async (id: number, track_ids: number[], user_i
   });
 };
 
-export const deletePlaylistTracks = async (id: number, track_ids: number[], user_id: number) => {
+export const deletePlaylistTracks = async (id: number, track_ids: number[], req_user_id: number) => {
   const playlist = await getPlaylistById(id); // ensures playlist exists
-  playlistPermissionCheck(playlist, user_id);
+  playlistPermissionCheck(playlist, req_user_id);
   if (track_ids.length == 0) {
     throw Boom.badRequest("track_ids array cannot be empty.");
   }

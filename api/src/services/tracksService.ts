@@ -38,8 +38,8 @@ const validateTrackNameIsUnique = async (name: string, excludeId?: number) => {
   }
 };
 
-const trackPermissionCheck = (track: Track, user_id: number) => {
-  if (track.user_id !== user_id) {
+const trackPermissionCheck = (track: Track, req_user_id: number) => {
+  if (track.user_id !== req_user_id) {
     throw Boom.forbidden("You do not have permission to modify this playlist.");
   }
 };
@@ -75,9 +75,9 @@ export const getTrackFile = async (track: Track) => {
   return file;
 };
 
-export const patchTrack = async (id: number, name: string, user_id: number) => {
+export const patchTrack = async (id: number, name: string, req_user_id: number) => {
   const track = await getTrackById(id);
-  trackPermissionCheck(track, user_id);
+  trackPermissionCheck(track, req_user_id);
   await validateTrackNameIsUnique(name, id);
   if (track.name === name) {
     return track;
@@ -86,9 +86,9 @@ export const patchTrack = async (id: number, name: string, user_id: number) => {
   return await getTrackById(id);
 };
 
-export const deleteTrack = async (id: number, user_id: number) => {
+export const deleteTrack = async (id: number, req_user_id: number) => {
   const track = await getTrackById(id);
-  trackPermissionCheck(track, user_id);
+  trackPermissionCheck(track, req_user_id);
   await db
     .updateTable("tracks")
     .set({ deleted_at: new Date() })
@@ -98,21 +98,21 @@ export const deleteTrack = async (id: number, user_id: number) => {
   return await getTrackById(id);
 };
 
-export const restoreTrack = async (id: number, user_id: number, name?: string) => {
+export const restoreTrack = async (id: number, req_user_id: number, name?: string) => {
   const track = await getTrackById(id);
-  trackPermissionCheck(track, user_id);
-  await patchTrack(id, name ?? track.name, user_id);
+  trackPermissionCheck(track, req_user_id);
+  await patchTrack(id, name ?? track.name, req_user_id);
   await db.updateTable("tracks").set({ deleted_at: null }).where("id", "=", id).execute();
   return await getTrackById(id);
 };
 
-export const postTrack = async (filepath: string, name: string, duration: number, user_id: number) => {
+export const postTrack = async (filepath: string, name: string, duration: number, req_user_id: number) => {
   await validateTrackNameIsUnique(name);
   return await db.transaction().execute(async (trx) => {
     // TODO: why is the insertId incrementing even on failed inserts?
     const { insertId } = await trx
       .insertInto("tracks")
-      .values({ name, duration, user_id: user_id })
+      .values({ name, duration, user_id: req_user_id })
       .executeTakeFirstOrThrow();
     const track = await getTrackById(Number(insertId), trx);
     await tracksBucket.upload(filepath, {
