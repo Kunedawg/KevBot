@@ -1,5 +1,8 @@
 import { db } from "../db/connection";
 import * as Boom from "@hapi/boom";
+import { PublicUser } from "../db/schema";
+import * as tracksService from "../services/tracksService";
+import * as playlistsService from "../services/playlistsService";
 
 const PUBLIC_USER_FIELDS = [
   "users.id",
@@ -27,8 +30,14 @@ const validateUsernameIsUnique = async (username: string, excludeId?: number) =>
   }
 };
 
+const userPermissionCheck = (user: PublicUser, req_user_id: number) => {
+  if (user.id !== req_user_id) {
+    throw Boom.forbidden("You do not have permission to modify this user.");
+  }
+};
+
 export const postUser = async (username: string, passwordHash: string) => {
-  validateUsernameIsUnique(username);
+  await validateUsernameIsUnique(username);
   const { insertId } = await db
     .insertInto("users")
     .values({ username, password_hash: passwordHash })
@@ -36,22 +45,37 @@ export const postUser = async (username: string, passwordHash: string) => {
   return await getUserById(Number(insertId));
 };
 
-export const patchUser = async (id: number | string, username: string) => {
-  await db.updateTable("users").set({ username }).where("id", "=", Number(id)).execute();
+export const patchUser = async (id: number, username: string, req_user_id: number) => {
+  const user = await getUserById(id);
+  userPermissionCheck(user, req_user_id);
+  await validateUsernameIsUnique(username, id);
+  if (user.username === username) {
+    return user;
+  }
+  await db.updateTable("users").set({ username }).where("id", "=", id).execute();
   return await getUserById(id);
 };
 
 export const putGreeting = async (
-  id: number | string,
+  id: number,
   greeting_track_id: number | null,
-  greeting_playlist_id: number | null
+  greeting_playlist_id: number | null,
+  req_user_id: number
 ) => {
   if (Number.isInteger(greeting_track_id) && Number.isInteger(greeting_playlist_id)) {
     throw new Error("Only a greeting track OR a playlist can be provided, not both");
   }
+  const user = await getUserById(id); // ensures user exits
+  userPermissionCheck(user, req_user_id);
+  if (greeting_track_id) {
+    await tracksService.getTrackById(greeting_track_id); // ensures track exists
+  }
+  if (greeting_playlist_id) {
+    await playlistsService.getPlaylistById(greeting_playlist_id); // ensures playlist exists
+  }
   await db
     .insertInto("user_greetings")
-    .values({ user_id: Number(id), greeting_track_id, greeting_playlist_id })
+    .values({ user_id: id, greeting_track_id, greeting_playlist_id })
     .onDuplicateKeyUpdate({
       greeting_track_id: greeting_track_id,
       greeting_playlist_id: greeting_playlist_id,
@@ -61,16 +85,25 @@ export const putGreeting = async (
 };
 
 export const putFarewell = async (
-  id: number | string,
+  id: number,
   farewell_track_id: number | null,
-  farewell_playlist_id: number | null
+  farewell_playlist_id: number | null,
+  req_user_id: number
 ) => {
   if (Number.isInteger(farewell_track_id) && Number.isInteger(farewell_playlist_id)) {
     throw new Error("Only a farewell track OR a playlist can be provided, not both");
   }
+  const user = await getUserById(id); // ensures user exits
+  userPermissionCheck(user, req_user_id);
+  if (farewell_track_id) {
+    await tracksService.getTrackById(farewell_track_id); // ensures track exists
+  }
+  if (farewell_playlist_id) {
+    await playlistsService.getPlaylistById(farewell_playlist_id); // ensures playlist exists
+  }
   await db
     .insertInto("user_farewells")
-    .values({ user_id: Number(id), farewell_track_id, farewell_playlist_id })
+    .values({ user_id: id, farewell_track_id, farewell_playlist_id })
     .onDuplicateKeyUpdate({
       farewell_track_id: farewell_track_id,
       farewell_playlist_id: farewell_playlist_id,
@@ -94,24 +127,28 @@ export const getUsers = async (options: UserOptions = {}) => {
   return await query.execute();
 };
 
-export const getUserById = async (id: number | string) => {
-  return await db.selectFrom("users").select(PUBLIC_USER_FIELDS).where("users.id", "=", Number(id)).executeTakeFirst();
+export const getUserById = async (id: number) => {
+  const user = await db.selectFrom("users").select(PUBLIC_USER_FIELDS).where("users.id", "=", id).executeTakeFirst();
+  if (!user) {
+    throw Boom.notFound("User not found");
+  }
+  return user;
 };
 
-export const getGreetingByUserId = async (id: number | string) => {
+export const getGreetingByUserId = async (id: number) => {
   const greeting = await db
     .selectFrom("user_greetings")
     .select(["greeting_track_id", "greeting_playlist_id"])
-    .where("user_id", "=", Number(id))
+    .where("user_id", "=", id)
     .executeTakeFirst();
   return greeting ?? { greeting_track_id: null, greeting_playlist_id: null };
 };
 
-export const getFarewellByUserId = async (id: number | string) => {
+export const getFarewellByUserId = async (id: number) => {
   const farewell = await db
     .selectFrom("user_farewells")
     .select(["farewell_track_id", "farewell_playlist_id"])
-    .where("user_id", "=", Number(id))
+    .where("user_id", "=", id)
     .executeTakeFirst();
   return farewell ?? { farewell_track_id: null, farewell_playlist_id: null };
 };

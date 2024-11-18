@@ -139,5 +139,6 @@ export interface UsersTable {
   updated_at: Generated<Date>;
 }
 export type User = Selectable<UsersTable>;
+export type PublicUser = Omit<User, "password_hash">;
 export type NewUser = Insertable<UsersTable>;
 export type UserUpdate = Updateable<UsersTable>;

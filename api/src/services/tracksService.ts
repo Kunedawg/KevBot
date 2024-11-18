@@ -32,10 +32,7 @@ const validateTrackNameIsUnique = async (name: string, excludeId?: number) => {
   if (excludeId) {
     query = query.where("id", "!=", excludeId);
   }
-  console.log("query: ", query.compile().sql);
-  console.log("parameters: ", query.compile().parameters);
   const track = await query.executeTakeFirst();
-  console.log("track: ", track);
   if (track) {
     throw Boom.conflict("Track name is already taken");
   }
@@ -79,7 +76,6 @@ export const getTrackFile = async (track: Track) => {
 };
 
 export const patchTrack = async (id: number, name: string, user_id: number) => {
-  console.log("patchTrack");
   const track = await getTrackById(id);
   trackPermissionCheck(track, user_id);
   await validateTrackNameIsUnique(name, id);

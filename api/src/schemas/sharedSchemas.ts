@@ -1,10 +1,10 @@
 import { z } from "zod";
 import config from "../config/config";
 
-function nameValidationFactory(resourceName: string, maxNameLength: number) {
+function nameValidationFactory(resourceName: string, maxNameLength: number, regex: RegExp) {
   return z
     .string()
-    .regex(/^[a-z\d]+$/g, {
+    .regex(regex, {
       message: `Invalid ${resourceName.toLowerCase()}. Only lower case letters and numbers are allowed.`,
     })
     .max(maxNameLength, {
@@ -14,9 +14,13 @@ function nameValidationFactory(resourceName: string, maxNameLength: number) {
     });
 }
 
-export const trackNameValidation = nameValidationFactory("track name", config.maxTrackNameLength);
-export const playlistNameValidation = nameValidationFactory("playlist name", config.maxPlaylistNameLength);
-export const usernameValidation = nameValidationFactory("username", config.maxUsernameLength);
+export const trackNameValidation = nameValidationFactory("track name", config.maxTrackNameLength, /^[a-z\d]+$/g);
+export const playlistNameValidation = nameValidationFactory(
+  "playlist name",
+  config.maxPlaylistNameLength,
+  /^[a-z\d]+$/g
+);
+export const usernameValidation = nameValidationFactory("username", config.maxUsernameLength, /^[a-z\d_]+$/g);
 
 export const i32IdSchema = z.object({
   id: z.coerce.number().int().min(0).max(2_147_483_647),
