@@ -50,3 +50,9 @@ options:
 ```sh
 python migration_manager migrate -v 1.1.0 -e ../../../.env --schema-dir ../../../db/migration/mysql_schema_change_scripts --supplemental-dirs ../../../db/migration/supplemental_scripts ../../../db/migration/sensitive_supplemental_scripts
 ```
+
+## Running from Docker
+
+```bash
+docker run --rm --env-file .env -v ./db/migration:/app/migration migration-manager migrate -v latest --schema-dir /app/migration/schema_change_scripts
+```
