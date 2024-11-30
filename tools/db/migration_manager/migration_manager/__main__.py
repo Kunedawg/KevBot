@@ -9,6 +9,9 @@ from packaging.version import parse as parse_version, Version
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+import pymysql
+from pymysql.cursors import DictCursor
+from pymysql.constants import CLIENT
 
 
 @dataclass
@@ -18,7 +21,7 @@ class EnvVars:
     mysql_database: str = field(default=None, init=False)
     mysql_root_user: str = field(default=None, init=False)
     mysql_root_password: str = field(default=None, init=False)
-    mysql_tcp_port: str = field(default=None, init=False)
+    mysql_tcp_port: int = field(default=None, init=False)
 
     @staticmethod
     def get_required_env_vars():
@@ -41,6 +44,13 @@ class EnvVars:
                     f"Missing required environment variable: {env_var}"
                 )
             if hasattr(self, attr):
+                if attr == "mysql_tcp_port":
+                    try:
+                        value = int(value)
+                    except ValueError:
+                        raise ValueError(
+                            f"Invalid MYSQL_TCP_PORT value: {value} is not an integer"
+                        )
                 setattr(self, attr, value)
             else:
                 raise AttributeError(f"Unknown attribute: {attr}")
@@ -92,6 +102,27 @@ def parse_args():
     return parser.parse_args()
 
 
+# class MySQLClient:
+#     def __init__(self, env_vars):
+#         self.host = env_vars.mysql_host
+#         self.user = env_vars.mysql_root_user
+#         self.password = env_vars.mysql_root_password
+#         self.database = env_vars.mysql_database
+#         self.port = env_vars.mysql_tcp_port
+
+#     def run_sql_command(self, sql_cmd):
+#         cmd = (
+#             f"mysql -h {self.host} -u {self.user} -p{self.password} -D"
+#             f" {self.database} -P {self.port}"
+#         )
+#         result = subprocess.run(
+#             shlex.split(cmd), capture_output=True, text=True, input=sql_cmd
+#         )
+#         if result.returncode != 0:
+#             raise RuntimeError(f"SQL command failed!\n{result.stderr}")
+#         return result
+
+
 class MySQLClient:
     def __init__(self, env_vars):
         self.host = env_vars.mysql_host
@@ -99,18 +130,52 @@ class MySQLClient:
         self.password = env_vars.mysql_root_password
         self.database = env_vars.mysql_database
         self.port = env_vars.mysql_tcp_port
+        self.connection = None
 
-    def run_sql_command(self, sql_cmd):
-        cmd = (
-            f"mysql -h {self.host} -u {self.user} -p{self.password} -D"
-            f" {self.database} -P {self.port}"
-        )
-        result = subprocess.run(
-            shlex.split(cmd), capture_output=True, text=True, input=sql_cmd
-        )
-        if result.returncode != 0:
-            raise RuntimeError(f"SQL command failed!\n{result.stderr}")
-        return result
+    def connect(self):
+        """Establishes a connection to the MySQL database."""
+        if self.connection is None or not self.connection.open:
+            try:
+                self.connection = pymysql.connect(
+                    host=self.host,
+                    user=self.user,
+                    password=self.password,
+                    database=self.database,
+                    port=self.port,
+                    cursorclass=DictCursor,
+                    autocommit=True,  # Set to False if you need transaction control
+                    client_flag=CLIENT.MULTI_STATEMENTS,  # Enable multiple statements
+                )
+                print("Successfully connected to MySQL")
+            except pymysql.MySQLError as e:
+                raise RuntimeError(f"Failed to connect to MySQL: {e}")
+
+    def run_sql_command(self, sql_cmd, params=None):
+        """
+        Executes an SQL command.
+
+        :param sql_cmd: The SQL command to execute.
+        :param params: Optional parameters to pass to the SQL command.
+        :return: The result of the query, if any.
+        """
+        self.connect()
+        try:
+            with self.connection.cursor() as cursor:
+                cursor.execute(sql_cmd, params)
+                # If it's a SELECT query, fetch the results
+                if sql_cmd.strip().lower().startswith("select"):
+                    return cursor.fetchall()
+                # For INSERT, UPDATE, DELETE, etc., you might return affected rows
+                else:
+                    return cursor.rowcount
+        except pymysql.MySQLError as e:
+            raise RuntimeError(f"SQL command failed: {e}")
+
+    def close(self):
+        """Closes the database connection."""
+        if self.connection and self.connection.open:
+            self.connection.close()
+            print("MySQL connection closed.")
 
 
 def perform_action(env_vars, args):
@@ -153,13 +218,17 @@ def get_current_version(client: MySQLClient):
                 f"SELECT version FROM {client.database}.db_version ORDER BY applied_at"
                 " DESC LIMIT 1;"
             )
-            if result.stdout != "":
-                return result.stdout.split("\n")[1]
+            # print(result[0]["version"])
+            # if result.stdout != "":
+            #     return result.stdout.split("\n")[1]
+            return result[0]["version"]
         except Exception:
             pass
         try:
             result = client.run_sql_command('SHOW TABLES LIKE "audio";')
-            if result.stdout:
+            # print(result)
+            # if result.stdout:
+            if result:
                 return "1.0.0"
         except Exception:
             raise RuntimeError("Failed to get MySQL version.")
