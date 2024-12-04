@@ -9,6 +9,9 @@ from packaging.version import parse as parse_version, Version
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import List, Optional
+from enum import Enum
+from collections import defaultdict
 
 
 @dataclass
@@ -46,6 +49,23 @@ class EnvVars:
                 raise AttributeError(f"Unknown attribute: {attr}")
 
 
+class SchemaState(Enum):
+    EMPTY = "Empty Schema (no baseline applied)"
+    NOT_EMPTY = "Not Empty Schema (baseline assumed applied)"
+    VERSIONED = "Has version (database has version table and version)"
+
+
+@dataclass
+class SchemaStatus:
+    state: SchemaState
+    version: Optional[str] = field(default=None)
+
+    def describe(self) -> str:
+        if self.state == SchemaState.VERSIONED and self.version:
+            return f"Schema is versioned with version: {self.version}"
+        return f"Schema state is: {self.state.value}"
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Tool for managing KevBot MySQL database.",
@@ -55,7 +75,28 @@ def parse_args():
         ),
     )
     subparsers = parser.add_subparsers(dest="action", required=True)
-    subparser = subparsers.add_parser("migrate", help="Migrate the database")
+    subparser = subparsers.add_parser(
+        "migrate",
+        help="Migrate the database",
+        formatter_class=argparse.RawTextHelpFormatter,
+        description=(
+            "Migrate the database to the specified version. This command will apply"
+            " migration scripts located in the specified directory."
+        ),
+        epilog=(
+            "Script Naming Conventions:\n  - Scripts must be named in the format"
+            " <version>__<name>.sql\n  - Optionally, scripts can include a type:"
+            " <version>__<type>__<name>.sql\n    where <type> is 'baseline' or"
+            " 'seed'.\n\nExamples:\n  0.0.0__baseline__pre_existing_schema.sql\n "
+            " 2.0.0__add_users_table.sql\n "
+            " 2.0.0__seed__populate_user_data.sql\n\nNotes:\n  - The <version>"
+            " must follow the semantic versioning format 'major.minor.patch'.\n  - The"
+            " <name> must not contain double underscores '__'.\n  - The <name> must be"
+            " at least one character long.\n  - Scripts are applied in version order.\n"
+            "  - Seed scripts are only applied if there is a corresponding migration or"
+            " baseline script with the same version."
+        ),
+    )
     subparser.add_argument(
         "--env-file",
         "-e",
@@ -64,17 +105,11 @@ def parse_args():
         help="Path to the .env file",
     )
     subparser.add_argument(
-        "--schema-dir",
+        "scripts_directory",
         type=lambda s: Path(s).resolve(),
-        required=True,
-        help="Directory containing schema SQL scripts",
-    )
-    subparser.add_argument(
-        "--supplemental-dirs",
-        type=lambda s: Path(s).resolve(),
-        nargs="+",
-        default=[],
-        help="List of directories containing additional scripts to be applied",
+        help=(
+            "Directory containing migration scripts. This will be searched recursively."
+        ),
     )
     subparser.add_argument(
         "--version",
@@ -113,20 +148,141 @@ class MySQLClient:
         return result
 
 
+class ScriptType(Enum):
+    BASELINE = "BASELINE"
+    MIGRATION = "MIGRATION"
+    SEED = "SEED"
+
+
+@dataclass(order=True)
+class Script:
+    version: Version = field(compare=True)
+    type: ScriptType = field(compare=False)
+    name: str = field(compare=False)
+    path: Path = field(compare=False)
+
+
+def parse_script_file(f: Path):
+    if not f.is_file() or f.suffix != ".sql":
+        return None
+
+    pattern = (
+        r"^(?P<version_str>\d+\.\d+\.\d+)__"
+        r"(?:(?P<type_name>seed|baseline)__)?"
+        r"(?P<name>(?:(?!__).)+)\.sql$"
+    )
+    match = re.match(pattern, f.name)
+    if not match:
+        raise ValueError(f"Invalid script filename: {f.name}")
+    name = match.group("name")
+    if name in ["baseline", "seed"]:
+        raise ValueError(f"Invalid script filename: {f.name}")
+    version = parse_version(match.group("version_str"))
+
+    match match.group("type_name"):
+        case "baseline":
+            script_type = ScriptType.BASELINE
+        case "seed":
+            script_type = ScriptType.SEED
+        case _:
+            script_type = ScriptType.MIGRATION
+
+    return Script(version=version, type=script_type, name=name, path=f)
+
+
+def passes_schema_state_and_version_filter(
+    script: Script, target_version: Version, schema_status: SchemaStatus
+):
+    filter_conditions = {
+        SchemaState.EMPTY: lambda s: s.version <= target_version,
+        SchemaState.NOT_EMPTY: lambda s: s.version <= target_version
+        and s.type != ScriptType.BASELINE,
+        SchemaState.VERSIONED: lambda s: s.version <= target_version
+        and s.type != ScriptType.BASELINE
+        and schema_status.version < s.version,
+    }
+    return filter_conditions[schema_status.state](script)
+
+
+def is_not_seed_or_has_matching_script(
+    script: Script, scripts_by_version: defaultdict[Version, List[Script]]
+):
+    if script.type != ScriptType.SEED:
+        return True
+    scripts_in_version = scripts_by_version[script.version]
+    has_migration_or_baseline = any(
+        s.type in {ScriptType.MIGRATION, ScriptType.BASELINE}
+        for s in scripts_in_version
+    )
+    return has_migration_or_baseline
+
+
+def script_sort_key(script: Script):
+    type_order = {
+        ScriptType.BASELINE: 0,
+        ScriptType.MIGRATION: 1,
+        ScriptType.SEED: 2,
+    }
+    return (script.version, type_order[script.type])
+
+
+def get_scripts_to_apply(
+    all_scripts: List[Script], schema_status: SchemaStatus, target_version: Version
+):
+    baseline_scripts = [s for s in all_scripts if s.type == ScriptType.BASELINE]
+    migration_scripts = [s for s in all_scripts if s.type == ScriptType.MIGRATION]
+
+    if len(baseline_scripts) > 1:
+        raise ValueError("Multiple baseline scripts found.")
+    elif baseline_scripts:
+        baseline_script = baseline_scripts[0]
+        lowest_version = min(s.version for s in all_scripts)
+        if baseline_script.version != lowest_version:
+            raise ValueError("Baseline script does not have the lowest version.")
+
+    migration_versions = [s.version for s in migration_scripts]
+    if len(migration_versions) != len(set(migration_versions)):
+        raise ValueError("Multiple migration scripts found for the same version.")
+
+    scripts_to_apply = [
+        s
+        for s in all_scripts
+        if passes_schema_state_and_version_filter(s, target_version, schema_status)
+    ]
+    scripts_by_version = defaultdict(list)
+    for script in scripts_to_apply:
+        scripts_by_version[script.version].append(script)
+    scripts_to_apply = [
+        s
+        for s in scripts_to_apply
+        if is_not_seed_or_has_matching_script(s, scripts_by_version)
+    ]
+
+    scripts_to_apply.sort(key=script_sort_key)
+    return scripts_to_apply
+
+
 def perform_action(env_vars, args):
     if args.action == "migrate":
         client = MySQLClient(env_vars)
         check_mysql_connection(client)
-        current_version = get_current_version(client)
+        schema_status = get_schema_status(client)
+        print(schema_status.describe())
+        all_scripts = [
+            script
+            for f in Path(args.scripts_directory).rglob("*")
+            if (script := parse_script_file(f))
+        ]
         if args.version == "latest":
-            target_version = get_latest_version(args.schema_dir)
+            target_version = max(s.version for s in all_scripts)
         else:
             target_version = parse_version(args.version)
-        scripts = get_scripts_to_apply(
-            args.schema_dir, args.supplemental_dirs, current_version, target_version
-        )
+        print(f"Target version: {target_version}")
+        scripts = get_scripts_to_apply(all_scripts, schema_status, target_version)
         apply_scripts(client, scripts, args.dry_run)
-        print(f"Database migration complete! {current_version} --> {target_version}")
+        print(
+            f"Database migration complete! {schema_status.version} --> {target_version}"
+        )
 
 
 def check_mysql_connection(client: MySQLClient):
@@ -134,115 +290,67 @@ def check_mysql_connection(client: MySQLClient):
     attempts = 0
     while attempts < 5:
         try:
-            result = client.run_sql_command("SELECT 1")
+            client.run_sql_command("SELECT 1")
+            print("MySQL database is ready.")
+            return
         except Exception:
             print("Waiting for MySQL to be ready...")
             attempts += 1
             time.sleep(2)
-        print("MySQL database is ready.")
-        return
-    print(result.stderr)
     print("Number of attempts exceeded. Could not connect to MySql Database.")
     sys.exit(1)
 
 
-def get_current_version(client: MySQLClient):
-    def get_version(client: MySQLClient):
-        try:
-            result = client.run_sql_command(
-                f"SELECT version FROM {client.database}.db_version ORDER BY applied_at"
-                " DESC LIMIT 1;"
-            )
-            if result.stdout != "":
-                return result.stdout.split("\n")[1]
-        except Exception:
-            pass
-        try:
-            result = client.run_sql_command('SHOW TABLES LIKE "audio";')
-            if result.stdout:
-                return "1.0.0"
-        except Exception:
-            raise RuntimeError("Failed to get MySQL version.")
-        return "0.0.0"
+def get_schema_status(client: MySQLClient) -> SchemaStatus:
+    try:
+        result = client.run_sql_command(
+            "SELECT count(*) FROM information_schema.tables WHERE table_schema"
+            f" = '{client.database}';"
+        )
+        if result.stdout.split("\n")[1] == "0":
+            return SchemaStatus(SchemaState.EMPTY)
 
-    version = get_version(client)
-    print(f"Current KevBot MySQL version: {version}")
-    return parse_version(version)
+        result = client.run_sql_command(
+            "SELECT count(*) FROM information_schema.tables WHERE table_schema"
+            f" = '{client.database}' AND table_name = 'db_version' LIMIT 1;"
+        )
+        if result.stdout.split("\n")[1] != "1":
+            return SchemaStatus(SchemaState.NOT_EMPTY)
 
-
-def extract_version(string) -> Version:
-    match = re.match(r"^(\d+\.\d+\.\d+)(_|$)", string)
-    return parse_version(match.group(1)) if match else None
+        result = client.run_sql_command(
+            f"SELECT version FROM {client.database}.db_version ORDER BY id"
+            " DESC LIMIT 1;"
+        )
+        return SchemaStatus(
+            SchemaState.VERSIONED, parse_version(result.stdout.split("\n")[1])
+        )
+    except Exception:
+        raise RuntimeError("Failed to determine Schema Status")
 
 
-def get_latest_version(schema_dir) -> Version:
-    versions = [
-        extract_version(f.name) for f in Path(schema_dir).iterdir() if f.is_file()
-    ]
-    return max(versions)
-
-
-def get_scripts_to_apply(
-    schema_dir, supplemental_dirs, current_version: Version, target_version: Version
-):
-    def get_filtered_scripts(directory, current_version, target_version):
-        def version_filter(f):
-            version = extract_version(f.name)
-            return (
-                version is not None
-                and version <= target_version
-                and version > current_version
-            )
-
-        return [
-            f for f in Path(directory).iterdir() if f.is_file() and version_filter(f)
-        ]
-
-    print(f"Migrating to version: {target_version}")
-    schema_files = get_filtered_scripts(schema_dir, current_version, target_version)
-    supplemental_files = [
-        f
-        for dir in supplemental_dirs
-        for f in get_filtered_scripts(dir, current_version, target_version)
-    ]
-
-    return sorted(
-        schema_files + supplemental_files,
-        key=lambda f: (
-            extract_version(f.name),
-            f not in schema_files,
-        ),
-    )
-
-
-def apply_scripts(client: MySQLClient, script_files, dry_run):
+def apply_scripts(client: MySQLClient, scripts: List[Script], dry_run):
     if dry_run:
         print("DRY RUN. Scripts will not actually be applied.")
-    if not script_files:
+    if not scripts:
         print("No scripts to apply! Database is already up to date.")
-    for script_file in script_files:
-        print(f">>> {script_file.name} >>> executing script...")
-        file_extension = script_file.suffix
-        script_path = script_file.resolve()
+        return
+
+    headers = ["Script", "Status"]
+    script_names = [s.path.name for s in scripts]
+    script_width = max(len(s) for s in script_names + [headers[0]]) + 2
+    status_width = max(len(status) for status in ["DONE"] + [headers[1]]) + 2
+    print("Applying Scripts...\n")
+    print(f"{headers[0]:<{script_width}}{headers[1]:<{status_width}}")
+    print("=" * (script_width + status_width))
+    for script in scripts:
+        print(f"{script.path.name:<{script_width}}", end="")
+        script_path = script.path.resolve()
         if not dry_run:
             with open(script_path, "r") as file:
                 script_str = file.read()
-            match file_extension:
-                case ".sql":
-                    client.run_sql_command(script_str)
-                case ".sh":
-                    subprocess.run(
-                        shlex.split(str(script_path)),
-                        text=True,
-                        stdout=sys.stdout,
-                        stderr=sys.stderr,
-                    ).check_returncode()
-                case _:
-                    raise RuntimeError(
-                        f"File extension '{file_extension}', is not supported."
-                        " Aborting!"
-                    )
-        print(f"=== {script_file.name} === script was applied!")
+                client.run_sql_command(script_str)
+        print(f"{"DONE":<{status_width}}")
+    print("")
 
 
 def main():
