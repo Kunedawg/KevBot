@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import List, Optional
 from enum import Enum
 from collections import defaultdict
+from urllib.parse import urlparse
 
 VERSION_TABLE_NAME = "schema_version"
 
@@ -25,21 +26,16 @@ class MigrationManagerError(Exception):
 @dataclass
 class EnvVars:
     env_file: str = field(default=".env")
-    mysql_host: str = field(default=None, init=False)
-    mysql_database: str = field(default=None, init=False)
-    mysql_root_user: str = field(default=None, init=False)
-    mysql_root_password: str = field(default=None, init=False)
-    mysql_tcp_port: str = field(default=None, init=False)
+    db_connection_string: str = field(default=None, init=False)
+    # mysql_host: str = field(default=None, init=False)
+    # mysql_database: str = field(default=None, init=False)
+    # mysql_root_user: str = field(default=None, init=False)
+    # mysql_root_password: str = field(default=None, init=False)
+    # mysql_tcp_port: str = field(default=None, init=False)
 
     @staticmethod
     def get_required_env_vars():
-        required_env_vars = [
-            "MYSQL_HOST",
-            "MYSQL_DATABASE",
-            "MYSQL_ROOT_USER",
-            "MYSQL_ROOT_PASSWORD",
-            "MYSQL_TCP_PORT",
-        ]
+        required_env_vars = ["DB_CONNECTION_STRING"]
         return required_env_vars
 
     def __post_init__(self):
@@ -76,11 +72,7 @@ class SchemaStatus:
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Tool for managing KevBot MySQL database.",
-        epilog=(
-            "Required environment variables:"
-            f" {', '.join(EnvVars.get_required_env_vars())}"
-        ),
+        description="Tool for managing KevBot MySQL database."
     )
     subparsers = parser.add_subparsers(dest="action", required=True)
     subparser = subparsers.add_parser(
@@ -105,7 +97,9 @@ def parse_args():
             " <name> must not contain double underscores '__'.\n  - The <name> must be"
             " at least one character long.\n  - Scripts are applied in version order.\n"
             "  - Seed scripts are only applied if there is a corresponding migration or"
-            " baseline script with the same version."
+            " baseline script with the same version.\n\n"
+            "Required environment variables:"
+            f" {', '.join(EnvVars.get_required_env_vars())}"
         ),
     )
     subparser.add_argument(
@@ -139,12 +133,13 @@ def parse_args():
 
 
 class MySQLClient:
-    def __init__(self, env_vars):
-        self.host = env_vars.mysql_host
-        self.user = env_vars.mysql_root_user
-        self.password = env_vars.mysql_root_password
-        self.database = env_vars.mysql_database
-        self.port = env_vars.mysql_tcp_port
+    def __init__(self, connection_string: str):
+        parsed = urlparse(connection_string)
+        self.host = parsed.hostname
+        self.user = parsed.username
+        self.password = parsed.password
+        self.port = parsed.port or 3306
+        self.database = parsed.path.lstrip("/")
 
     def run_sql_command(self, sql_cmd):
         cmd = (
@@ -277,9 +272,9 @@ def get_scripts_to_apply(
     return scripts_to_apply
 
 
-def perform_action(env_vars, args):
+def perform_action(env_vars: EnvVars, args):
     if args.action == "migrate":
-        client = MySQLClient(env_vars)
+        client = MySQLClient(env_vars.db_connection_string)
         check_mysql_connection(client)
         schema_status = get_schema_status(client)
         print(schema_status.describe())

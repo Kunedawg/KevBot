@@ -18,15 +18,14 @@ positional arguments:
 
 options:
   -h, --help  show this help message and exit
-
-Required environment variables: MYSQL_HOST, MYSQL_DATABASE, MYSQL_ROOT_USER,
-MYSQL_ROOT_PASSWORD, MYSQL_TCP_PORT
 ```
 
 ```txt
 $ python migration_manager migrate -h
 
-usage: __main__.py migrate [-h] [--env-file ENV_FILE] [--version VERSION] [--dry-run] scripts_directory
+usage: migration_manager migrate [-h] [--env-file ENV_FILE]
+                                 [--version VERSION] [--dry-run]
+                                 scripts_directory
 
 Migrate the database to the specified version. This command will apply migration scripts located in the specified directory.
 A new database will be created called schema_version that will be used to track the current version of the schema. The columns are (id, version, script_name, applied_at)
@@ -58,6 +57,8 @@ Notes:
   - The <name> must be at least one character long.
   - Scripts are applied in version order.
   - Seed scripts are only applied if there is a corresponding migration or baseline script with the same version.
+
+Required environment variables: DB_CONNECTION_STRING
 ```
 
 ## Build Docker Container
