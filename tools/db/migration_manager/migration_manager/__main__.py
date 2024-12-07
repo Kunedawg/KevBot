@@ -293,6 +293,15 @@ def perform_action(env_vars, args):
         else:
             target_version = parse_version(args.version)
         print(f"Target version: {target_version}")
+        if schema_status.version:
+            if target_version < schema_status.version:
+                raise MigrationManagerError("Target version < current version!")
+        if target_version not in [
+            s.version for s in all_scripts if s.type == ScriptType.MIGRATION
+        ]:
+            raise MigrationManagerError(
+                "Migration script with desired target version does not exist!"
+            )
         scripts = get_scripts_to_apply(all_scripts, schema_status, target_version)
         apply_scripts(client, scripts, args.dry_run, schema_status)
         print(
