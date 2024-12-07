@@ -1,7 +1,4 @@
-/*
- * Script:      : 2.6.0_update_audio_play_log_to_track_plays.sql
- * Description  : Renames audio_play_log table to track_plays, and updates columns of table as well
- */
+ -- Renames audio_play_log table to track_plays, and updates columns of table as well
 
 RENAME TABLE `audio_play_log` TO `track_plays`;
 
@@ -23,7 +20,3 @@ ALTER TABLE `track_plays`
     ADD CONSTRAINT `fk_track_plays_users_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE,
     ADD KEY `index_track_plays_track_id` (`track_id`),
     ADD KEY `index_track_plays_user_id` (`user_id`);
-    
--- Update the version and change_log tables
-INSERT INTO db_version (version) VALUES ('2.6.0');
-INSERT INTO change_log (script_name) VALUES ('2.6.0_update_audio_play_log_to_track_plays.sql');

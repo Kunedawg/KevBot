@@ -1,7 +1,4 @@
-/*
- * Script:      : 2.5.0_update_audio_category_to_playlist_tracks.sql
- * Description  : Renames audio_category table to playlist_tracks, and updates columns of table as well
- */
+ -- Renames audio_category table to playlist_tracks, and updates columns of table as well
 
 RENAME TABLE `audio_category` TO `playlist_tracks`;
 
@@ -28,7 +25,3 @@ ALTER TABLE `playlist_tracks`
     DROP PRIMARY KEY,
     ADD PRIMARY KEY (`track_id`, `playlist_id`),
     DROP COLUMN `audio_categoy_id`;
-
--- Update the version and change_log tables
-INSERT INTO db_version (version) VALUES ('2.5.0');
-INSERT INTO change_log (script_name) VALUES ('2.5.0_update_audio_category_to_playlist_tracks.sql');

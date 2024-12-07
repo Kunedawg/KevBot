@@ -1,7 +1,4 @@
-/*
- * Script:      : 2.9.0_update_player_greetings_to_user_greetings.sql
- * Description  : Updates player_greetings table
- */
+-- Updates player_greetings table
 
 START TRANSACTION;
 
@@ -62,9 +59,5 @@ ALTER TABLE `user_greetings`
     DROP COLUMN greeting,
     DROP COLUMN greeting_type,
     ADD COLUMN `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
-
--- Update the version and change_log tables
-INSERT INTO db_version (version) VALUES ('2.9.0');
-INSERT INTO change_log (script_name) VALUES ('2.9.0_update_player_greetings_to_user_greetings.sql');
 
 COMMIT;

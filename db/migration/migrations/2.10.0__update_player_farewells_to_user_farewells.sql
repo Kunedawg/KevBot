@@ -1,7 +1,4 @@
-/*
- * Script:      : 2.10.0_update_player_farewells_to_user_farewells.sql
- * Description  : Updates player_farewells table
- */
+-- Updates player_farewells table
 
 START TRANSACTION;
 
@@ -55,9 +52,5 @@ DELIMITER ;
 ALTER TABLE `user_farewells`
     DROP COLUMN farewell,
     ADD COLUMN `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
-
--- Update the version and change_log tables
-INSERT INTO db_version (version) VALUES ('2.10.0');
-INSERT INTO change_log (script_name) VALUES ('2.10.0_update_player_farewells_to_user_farewells.sql');
 
 COMMIT;

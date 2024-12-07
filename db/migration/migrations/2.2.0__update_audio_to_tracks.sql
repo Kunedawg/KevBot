@@ -1,7 +1,4 @@
-/*
- * Script:      : 2.2.0_update_audio_to_tracks.sql
- * Description  : Renames audio table to tracks, and updates columns of table as well
- */
+-- Renames audio table to tracks, and updates columns of table as well
 
 RENAME TABLE `audio` TO `tracks`;
 
@@ -24,7 +21,3 @@ ALTER TABLE `tracks`
     ADD KEY `index_tracks_user_id` (`user_id`);
 
 UPDATE `tracks` SET `updated_at` = `created_at`;
-    
--- Update the version and change_log tables
-INSERT INTO db_version (version) VALUES ('2.2.0');
-INSERT INTO change_log (script_name) VALUES ('2.2.0_update_audio_to_tracks.sql');
