@@ -1,7 +1,4 @@
-/*
- * Script:      : 2.4.0_update_categories_to_playlists.sql
- * Description  : Renames categories table to playlists, and updates columns of table as well
- */
+ -- Renames categories table to playlists, and updates columns of table as well
 
 RENAME TABLE `categories` TO `playlists`;
 
@@ -23,7 +20,3 @@ ALTER TABLE `playlists`
     ADD KEY `index_playlists_user_id` (`user_id`);
 
 UPDATE `playlists` SET `updated_at` = `created_at`;
-    
--- Update the version and change_log tables
-INSERT INTO db_version (version) VALUES ('2.4.0');
-INSERT INTO change_log (script_name) VALUES ('2.4.0_update_categories_to_playlists.sql');

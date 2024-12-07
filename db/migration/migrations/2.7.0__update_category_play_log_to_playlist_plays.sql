@@ -1,7 +1,4 @@
-/*
- * Script:      : 2.7.0_update_category_play_log_to_playlist_plays.sql
- * Description  : Renames category_play_log table to playlist_plays, and updates columns of table as well
- */
+ -- Renames category_play_log table to playlist_plays, and updates columns of table as well
 
 RENAME TABLE `category_play_log` TO `playlist_plays`;
 
@@ -20,7 +17,3 @@ ALTER TABLE `playlist_plays`
     ADD CONSTRAINT `fk_playlist_plays_users_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE,
     ADD KEY `index_playlist_plays_playlist_id` (`playlist_id`),
     ADD KEY `index_playlist_plays_user_id` (`user_id`);
-    
--- Update the version and change_log tables
-INSERT INTO db_version (version) VALUES ('2.7.0');
-INSERT INTO change_log (script_name) VALUES ('2.7.0_update_category_play_log_to_playlist_plays.sql');

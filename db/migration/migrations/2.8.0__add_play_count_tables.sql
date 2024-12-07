@@ -1,7 +1,4 @@
-/*
- * Script:      : 2.8.0_add_play_count_tables.sql
- * Description  : Creates new tables for tracking play counts
- */
+-- Creates new tables for tracking play counts
 
 CREATE TABLE IF NOT EXISTS track_play_counts (
   track_id INT PRIMARY KEY,
@@ -19,7 +16,3 @@ CREATE TABLE IF NOT EXISTS track_play_type_counts (
   PRIMARY KEY (track_id, play_type),
   CONSTRAINT fk_track_play_type_counts_tracks_id FOREIGN KEY (track_id) REFERENCES tracks (id) ON UPDATE CASCADE
 );
-
--- Update the version and change_log tables
-INSERT INTO db_version (version) VALUES ('2.8.0');
-INSERT INTO change_log (script_name) VALUES ('2.8.0_add_play_count_tables.sql');

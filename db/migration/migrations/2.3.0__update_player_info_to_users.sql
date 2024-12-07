@@ -1,7 +1,4 @@
-/*
- * Script:      : 2.3.0_update_player_info_to_users.sql
- * Description  : Renames player_info table to users, and updates columns as well
- */
+ -- Renames player_info table to users, and updates columns as well
 
 RENAME TABLE `player_info` TO `users`;
 
@@ -19,7 +16,3 @@ ALTER TABLE `users`
     DROP INDEX `discord_id_UNIQUE`,
     ADD UNIQUE INDEX `unique_users_discord_id` (`discord_id`),
     ADD UNIQUE INDEX `unique_users_username` (`username`);
-
--- Update the version and change_log tables
-INSERT INTO db_version (version) VALUES ('2.3.0');
-INSERT INTO change_log (script_name) VALUES ('2.3.0_update_player_info_to_users.sql');
