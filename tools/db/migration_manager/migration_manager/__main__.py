@@ -13,6 +13,14 @@ from typing import List, Optional
 from enum import Enum
 from collections import defaultdict
 
+VERSION_TABLE_NAME = "schema_version"
+
+
+class MigrationManagerError(Exception):
+    def __init__(self, message):
+        super().__init__(message)
+        self.message = message
+
 
 @dataclass
 class EnvVars:
@@ -40,13 +48,13 @@ class EnvVars:
             value = os.getenv(env_var)
             attr = env_var.lower()
             if value is None:
-                raise EnvironmentError(
+                raise MigrationManagerError(
                     f"Missing required environment variable: {env_var}"
                 )
             if hasattr(self, attr):
                 setattr(self, attr, value)
             else:
-                raise AttributeError(f"Unknown attribute: {attr}")
+                raise MigrationManagerError(f"Unknown attribute: {attr}")
 
 
 class SchemaState(Enum):
@@ -81,7 +89,10 @@ def parse_args():
         formatter_class=argparse.RawTextHelpFormatter,
         description=(
             "Migrate the database to the specified version. This command will apply"
-            " migration scripts located in the specified directory."
+            " migration scripts located in the specified directory.\nA new database"
+            f" will be created called {VERSION_TABLE_NAME} that will be used to track"
+            " the current version of the schema. The columns are (id, version,"
+            " script_name, applied_at)"
         ),
         epilog=(
             "Script Naming Conventions:\n  - Scripts must be named in the format"
@@ -144,7 +155,7 @@ class MySQLClient:
             shlex.split(cmd), capture_output=True, text=True, input=sql_cmd
         )
         if result.returncode != 0:
-            raise RuntimeError(f"SQL command failed!\n{result.stderr}")
+            raise MigrationManagerError(f"SQL command failed!\n{result.stderr}")
         return result
 
 
@@ -173,10 +184,10 @@ def parse_script_file(f: Path):
     )
     match = re.match(pattern, f.name)
     if not match:
-        raise ValueError(f"Invalid script filename: {f.name}")
+        raise MigrationManagerError(f"Invalid script filename: {f.name}")
     name = match.group("name")
     if name in ["baseline", "seed"]:
-        raise ValueError(f"Invalid script filename: {f.name}")
+        raise MigrationManagerError(f"Invalid script filename: {f.name}")
     version = parse_version(match.group("version_str"))
 
     match match.group("type_name"):
@@ -233,16 +244,20 @@ def get_scripts_to_apply(
     migration_scripts = [s for s in all_scripts if s.type == ScriptType.MIGRATION]
 
     if len(baseline_scripts) > 1:
-        raise ValueError("Multiple baseline scripts found.")
+        raise MigrationManagerError("Multiple baseline scripts found.")
     elif baseline_scripts:
         baseline_script = baseline_scripts[0]
         lowest_version = min(s.version for s in all_scripts)
         if baseline_script.version != lowest_version:
-            raise ValueError("Baseline script does not have the lowest version.")
+            raise MigrationManagerError(
+                "Baseline script does not have the lowest version."
+            )
 
     migration_versions = [s.version for s in migration_scripts]
     if len(migration_versions) != len(set(migration_versions)):
-        raise ValueError("Multiple migration scripts found for the same version.")
+        raise MigrationManagerError(
+            "Multiple migration scripts found for the same version."
+        )
 
     scripts_to_apply = [
         s
@@ -279,7 +294,7 @@ def perform_action(env_vars, args):
             target_version = parse_version(args.version)
         print(f"Target version: {target_version}")
         scripts = get_scripts_to_apply(all_scripts, schema_status, target_version)
-        apply_scripts(client, scripts, args.dry_run)
+        apply_scripts(client, scripts, args.dry_run, schema_status)
         print(
             f"Database migration complete! {schema_status.version} --> {target_version}"
         )
@@ -304,37 +319,95 @@ def check_mysql_connection(client: MySQLClient):
 def get_schema_status(client: MySQLClient) -> SchemaStatus:
     try:
         result = client.run_sql_command(
-            "SELECT count(*) FROM information_schema.tables WHERE table_schema"
-            f" = '{client.database}';"
+            f"""
+            SELECT count(*) FROM information_schema.tables
+            WHERE table_schema = '{client.database}';
+            """
         )
         if result.stdout.split("\n")[1] == "0":
             return SchemaStatus(SchemaState.EMPTY)
 
         result = client.run_sql_command(
-            "SELECT count(*) FROM information_schema.tables WHERE table_schema"
-            f" = '{client.database}' AND table_name = 'db_version' LIMIT 1;"
+            f"""
+            SELECT count(*) FROM information_schema.tables
+            WHERE table_schema= '{client.database}' AND
+            table_name = '{VERSION_TABLE_NAME}'
+            LIMIT 1;
+            """
         )
         if result.stdout.split("\n")[1] != "1":
             return SchemaStatus(SchemaState.NOT_EMPTY)
 
         result = client.run_sql_command(
-            f"SELECT version FROM {client.database}.db_version ORDER BY id"
-            " DESC LIMIT 1;"
+            f"""
+            SELECT version FROM {VERSION_TABLE_NAME}
+            ORDER BY id DESC
+            LIMIT 1;
+            """
         )
         return SchemaStatus(
             SchemaState.VERSIONED, parse_version(result.stdout.split("\n")[1])
         )
     except Exception:
-        raise RuntimeError("Failed to determine Schema Status")
+        raise MigrationManagerError("Failed to determine Schema Status")
 
 
-def apply_scripts(client: MySQLClient, scripts: List[Script], dry_run):
+def apply_version_to_version_table(script: Script, client):
+    check_version_sql = f"""
+        SELECT COUNT(*)
+        FROM {VERSION_TABLE_NAME}
+        WHERE version = '{str(script.version)}';
+    """
+    result = client.run_sql_command(check_version_sql)
+    version_exists = int(result.stdout.split("\n")[1]) > 0
+
+    if version_exists:
+        raise MigrationManagerError(
+            f"Version '{str(script.version)} has already been applied to database"
+        )
+
+    insert_version_sql = f"""
+        INSERT INTO {VERSION_TABLE_NAME} (version, script_name) VALUES
+        ('{str(script.version)}', '{script.path.name}');
+    """
+    client.run_sql_command(insert_version_sql)
+
+
+def create_version_table(script: Script, client):
+    check_table_sql = f"""
+        SELECT COUNT(*)
+        FROM information_schema.tables
+        WHERE table_schema = '{client.database}'
+        AND table_name = '{VERSION_TABLE_NAME}';
+    """
+    result = client.run_sql_command(check_table_sql)
+    table_exists = int(result.stdout.split("\n")[1]) > 0
+    if table_exists:
+        raise MigrationManagerError("Version table already exists, not expected")
+
+    create_table_sql = f"""
+        CREATE TABLE {VERSION_TABLE_NAME} (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            version VARCHAR(50) NOT NULL,
+            script_name VARCHAR(255) NOT NULL,
+            applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """
+    client.run_sql_command(create_table_sql)
+
+    apply_version_to_version_table(script, client)
+
+
+def apply_scripts(
+    client: MySQLClient, scripts: List[Script], dry_run, schema_status: SchemaStatus
+):
     if dry_run:
         print("DRY RUN. Scripts will not actually be applied.")
     if not scripts:
         print("No scripts to apply! Database is already up to date.")
         return
 
+    is_versioned = schema_status.state == SchemaState.VERSIONED
     headers = ["Script", "Status"]
     script_names = [s.path.name for s in scripts]
     script_width = max(len(s) for s in script_names + [headers[0]]) + 2
@@ -349,14 +422,23 @@ def apply_scripts(client: MySQLClient, scripts: List[Script], dry_run):
             with open(script_path, "r") as file:
                 script_str = file.read()
                 client.run_sql_command(script_str)
+            if script.type == ScriptType.MIGRATION:
+                if is_versioned:
+                    apply_version_to_version_table(script, client)
+                else:
+                    create_version_table(script, client)
+                    is_versioned = True
         print(f"{"DONE":<{status_width}}")
     print("")
 
 
 def main():
-    args = parse_args()
-    env_vars = EnvVars(env_file=args.env_file)
-    perform_action(env_vars, args)
+    try:
+        args = parse_args()
+        env_vars = EnvVars(env_file=args.env_file)
+        perform_action(env_vars, args)
+    except MigrationManagerError as e:
+        print(f"\nMigration failed with the following error: {e.message}")
 
 
 if __name__ == "__main__":

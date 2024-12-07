@@ -1,4 +1,4 @@
-FROM python:3.12.3-slim AS base
+FROM python:3.12.6-slim AS base
 
 # Set environment variables to avoid prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive

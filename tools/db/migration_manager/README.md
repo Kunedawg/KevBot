@@ -6,8 +6,8 @@
 > Run help command yourself to ensure you have latest usage details
 
 ```txt
-python migration_manager --help
--------------------------------
+$ python migration_manager -h
+
 usage: migration_manager [-h] {migrate} ...
 
 Tool for managing KevBot MySQL database.
@@ -24,35 +24,57 @@ MYSQL_ROOT_PASSWORD, MYSQL_TCP_PORT
 ```
 
 ```txt
-python migration_manager migrate --help
-----------------------------------------
-usage: migration_manager migrate [-h] [--env-file ENV_FILE] --schema-dir
-                                 SCHEMA_DIR
-                                 [--supplemental-dirs SUPPLEMENTAL_DIRS [SUPPLEMENTAL_DIRS ...]]
-                                 --version VERSION [--dry-run]
+$ python migration_manager migrate -h
+
+usage: __main__.py migrate [-h] [--env-file ENV_FILE] [--version VERSION] [--dry-run] scripts_directory
+
+Migrate the database to the specified version. This command will apply migration scripts located in the specified directory.
+A new database will be created called schema_version that will be used to track the current version of the schema. The columns are (id, version, script_name, applied_at)
+
+positional arguments:
+  scripts_directory     Directory containing migration scripts. This will be searched recursively.
 
 options:
   -h, --help            show this help message and exit
   --env-file ENV_FILE, -e ENV_FILE
                         Path to the .env file
-  --schema-dir SCHEMA_DIR
-                        Directory containing schema SQL scripts
-  --supplemental-dirs SUPPLEMENTAL_DIRS [SUPPLEMENTAL_DIRS ...]
-                        List of directories containing additional scripts to
-                        be applied
   --version VERSION, -v VERSION
                         Target database version
   --dry-run             Set to true to not actually apply scripts
+
+Script Naming Conventions:
+  - Scripts must be named in the format <version>__<name>.sql
+  - Optionally, scripts can include a type: <version>__<type>__<name>.sql
+    where <type> is 'baseline' or 'seed'.
+
+Examples:
+  0.0.0__baseline__pre_existing_schema.sql
+  2.0.0__add_users_table.sql
+  2.0.0__seed__populate_user_data.sql
+
+Notes:
+  - The <version> must follow the semantic versioning format 'major.minor.patch'.
+  - The <name> must not contain double underscores '__'.
+  - The <name> must be at least one character long.
+  - Scripts are applied in version order.
+  - Seed scripts are only applied if there is a corresponding migration or baseline script with the same version.
 ```
 
-## Example Call
+## Build Docker Container
 
-```sh
-python migration_manager migrate -v 1.1.0 -e ../../../.env --schema-dir ../../../db/migration/mysql_schema_change_scripts --supplemental-dirs ../../../db/migration/supplemental_scripts ../../../db/migration/sensitive_supplemental_scripts
+```bash
+cd tools/db/migration_manager
+docker build -t migration-manager .
+```
+
+## Example Calls
+
+```bash
+python -m migration_manager migrate -e ../../../.env ../../../db/migration/
 ```
 
 ## Running from Docker
 
 ```bash
-docker run --rm --env-file .env -v ./db/migration:/app/migration migration-manager migrate -v latest --schema-dir /app/migration/schema_change_scripts
+docker run --rm --env-file .env -v ./db/migration:/app/migration migration-manager migrate migration
 ```
