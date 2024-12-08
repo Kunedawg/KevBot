@@ -1,11 +1,14 @@
 import app from "./app";
 import initTaskSchedules from "./schedulers/taskScheduler";
+import { initDb } from "./db/connection";
+import secrets from "./config/secrets";
 
 const port = Number(process.env.PORT) || 3000;
 const address = process.env.ADDRESS || "0.0.0.0";
 
 async function startServer() {
   try {
+    initDb(secrets.DB_CONNECTION_STRING);
     await initTaskSchedules(); // Ensure tasks are initialized before starting the server
     const server = app.listen(port, address, () => {
       const addr = server.address();
