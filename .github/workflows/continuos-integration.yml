@@ -1,13 +1,13 @@
 name: Continuos Integration
 
 on:
-  workflow_dispatch
-  # pull_request:
-  #   branches:
-  #     - main
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  test_pull_request:
+  run_api_tests:
     runs-on: ubuntu-latest
     env:
       GCP_AUDIO_BUCKET: kevbot-local-audio
