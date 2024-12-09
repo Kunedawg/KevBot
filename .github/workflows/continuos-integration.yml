@@ -9,16 +9,21 @@ on:
 jobs:
   test_pull_request:
     runs-on: ubuntu-latest
-    # env:
-    #   ADDRESS: 127.0.0.1
-    #   PORT: 3000
+    env:
+      GCP_AUDIO_BUCKET: kevbot-local-audio
+      GCP_API_ENDPOINT: http://host.docker.internal:4443
+      API_JWT_SECRET: this_is_the_dev_jwt_secret
     defaults:
       run:
         working-directory: ./api
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: ">=20.17.0"
+      - name: Build docker image for migration manager
+        run: |
+          cd $GITHUB_WORKSPACE/tools/db/migration_manager
+          docker build -t migration-manager .
       - run: npm ci
       - run: npm run test
