@@ -1,8 +1,7 @@
 import { ColumnType, Generated, Insertable, Selectable, Updateable } from "kysely";
 
 export interface Database {
-  change_log: ChangeLogTable;
-  db_version: DbVersionTable;
+  schema_version: SchemaVersionTable;
   playlist_plays: PlaylistPlaysTable;
   playlists: PlaylistsTable;
   playlist_tracks: PlaylistTracksTable;
@@ -15,23 +14,15 @@ export interface Database {
   users: UsersTable;
 }
 
-export interface ChangeLogTable {
+export interface SchemaVersionTable {
   id: Generated<number>;
+  version: string;
   script_name: string;
   applied_at: Generated<Date>;
 }
-export type ChangeLog = Selectable<ChangeLogTable>;
-export type NewChangeLog = Insertable<ChangeLogTable>;
-export type ChangeLogUpdate = Updateable<ChangeLogTable>;
-
-export interface DbVersionTable {
-  id: Generated<number>;
-  version: string;
-  applied_at: Generated<Date>;
-}
-export type DbVersion = Selectable<DbVersionTable>;
-export type NewDbVersion = Insertable<DbVersionTable>;
-export type DbVersionUpdate = Updateable<DbVersionTable>;
+export type SchemaVersion = Selectable<SchemaVersionTable>;
+export type NewSchemaVersion = Insertable<SchemaVersionTable>;
+export type SchemaVersionUpdate = Updateable<SchemaVersionTable>;
 
 export interface PlaylistPlaysTable {
   id: Generated<number>;

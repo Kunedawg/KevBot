@@ -2,8 +2,9 @@
 module.exports = {
   preset: "ts-jest",
   testEnvironment: "node",
+  setupFilesAfterEnv: ["./tests/setupTestContainers.ts"],
   testMatch: ["**/tests/**/*.test.ts", "**/tests/**/*.spec.ts"],
   transform: {
-    "^.+.tsx?$": ["ts-jest", { tsconfig: "tsconfig.test.json" }],
+    "^.+.tsx?$": ["ts-jest", { tsconfig: "tests/tsconfig.json" }],
   },
 };
