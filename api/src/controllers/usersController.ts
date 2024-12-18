@@ -34,7 +34,7 @@ export const patchUser = async (req: Request, res: Response) => {
   const { username } = usersSchemas.patchUserBodySchema.parse(req.body);
   const user = getAuthenticatedUser(req);
   const updatedUser = await usersService.patchUser(id, username, user.id);
-  res.status(StatusCodes.CREATED).json(updatedUser);
+  res.status(StatusCodes.OK).json(updatedUser);
 };
 
 export const putGreeting = async (req: Request, res: Response) => {
