@@ -1,11 +1,13 @@
 import { z } from "zod";
 import { usernameValidation } from "./sharedSchemas";
 
-export const getUsersQuerySchema = z.object({
-  username: z.string().optional(),
-  discordId: z.string().optional(),
-  discordUsername: z.string().optional(),
-});
+export const getUsersQuerySchema = z
+  .object({
+    username: z.string().optional(),
+    discordId: z.string().optional(),
+    discordUsername: z.string().optional(),
+  })
+  .strict();
 
 export const patchUserBodySchema = z.object({
   username: usernameValidation,
