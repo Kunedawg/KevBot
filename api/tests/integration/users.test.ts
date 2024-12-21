@@ -56,13 +56,81 @@ describe("GET /v1/users", () => {
       },
     ]);
   });
-  // TODO: test filters
-  // it("username");
-  // it("discordId");
-  // it("discordUsername");
-  // it("filterAll");
-  // it("filterToNone");
-  // TODO: error cases
+
+  it("should return 200 and a list of filtered list of users based on username.", async () => {
+    const res = await request(app).get("/v1/users?username=mr_anderson");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([
+      {
+        id: 1,
+        discord_id: "123711472041781240",
+        discord_username: "mr_anderson",
+        created_at: "2024-11-11T07:21:03.000Z",
+        updated_at: "2024-11-11T07:21:03.000Z",
+        username: "mr_anderson",
+      },
+    ]);
+  });
+
+  it("should return 200 and a list of filtered list of users based on discordId.", async () => {
+    const res = await request(app).get("/v1/users?discordId=135319472041781248");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([
+      {
+        id: 1337,
+        discord_id: "135319472041781248",
+        discord_username: "discord_seed_user",
+        created_at: "2024-12-07T04:29:04.000Z",
+        updated_at: "2024-12-07T04:29:04.000Z",
+        username: null,
+      },
+    ]);
+  });
+
+  it("should return 200 and a list of filtered list of users based on discordUsername.", async () => {
+    const res = await request(app).get("/v1/users?discordUsername=discord_seed_user");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([
+      {
+        id: 1337,
+        discord_id: "135319472041781248",
+        discord_username: "discord_seed_user",
+        created_at: "2024-12-07T04:29:04.000Z",
+        updated_at: "2024-12-07T04:29:04.000Z",
+        username: null,
+      },
+    ]);
+  });
+
+  it("should return 200 and a list of filtered list of users based on all available filters.", async () => {
+    const res = await request(app).get(
+      "/v1/users?username=mr_anderson&discordId=123711472041781240&discordUsername=mr_anderson"
+    );
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([
+      {
+        id: 1,
+        discord_id: "123711472041781240",
+        discord_username: "mr_anderson",
+        created_at: "2024-11-11T07:21:03.000Z",
+        updated_at: "2024-11-11T07:21:03.000Z",
+        username: "mr_anderson",
+      },
+    ]);
+  });
+
+  it("should return 200 and a empty list of users because username does not exist.", async () => {
+    const res = await request(app).get("/v1/users?username=does_not_exist");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it("returns error if invalid query parameter is provided", async () => {
+    const res = await request(app).get("/v1/users?dne=hello");
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ statusCode: 400, error: "Bad Request", message: expect.any(String) });
+    expect(res.body?.message).toMatch(/validation error.*dne/i);
+  });
 });
 
 async function getLoginTokenAndTestResult(user: { username: string; password: string }) {
@@ -88,7 +156,7 @@ describe("GET /v1/users/@me", () => {
       username: "mr_anderson",
     });
   });
-  // TODO: error cases
+  // No error conditions require handling at this time
 });
 
 describe("GET /v1/users/@me/greeting", () => {
@@ -101,7 +169,7 @@ describe("GET /v1/users/@me/greeting", () => {
       greeting_playlist_id: null,
     });
   });
-  // TODO: error cases
+  // No error conditions require handling at this time
 });
 
 describe("GET /v1/users/@me/farewell", () => {
@@ -114,8 +182,30 @@ describe("GET /v1/users/@me/farewell", () => {
       farewell_playlist_id: 55,
     });
   });
-  // TODO: error cases
+  // No error conditions require handling at this time
 });
+
+async function i32IdCheck(requestBuilder: any) {
+  let res = await requestBuilder("hello");
+  expect(res.status).toBe(400);
+  expect(res.body).toEqual({ statusCode: 400, error: "Bad Request", message: expect.any(String) });
+  expect(res.body?.message).toMatch(/validation error.*nan/i);
+
+  res = await requestBuilder(5.4);
+  expect(res.status).toBe(400);
+  expect(res.body).toEqual({ statusCode: 400, error: "Bad Request", message: expect.any(String) });
+  expect(res.body?.message).toMatch(/validation error.*float/i);
+
+  res = await requestBuilder(-5);
+  expect(res.status).toBe(400);
+  expect(res.body).toEqual({ statusCode: 400, error: "Bad Request", message: expect.any(String) });
+  expect(res.body?.message).toMatch(/validation error.*greater.*0/i);
+
+  res = await requestBuilder(3147483647);
+  expect(res.status).toBe(400);
+  expect(res.body).toEqual({ statusCode: 400, error: "Bad Request", message: expect.any(String) });
+  expect(res.body?.message).toMatch(/validation error.*less.*2147483647/i);
+}
 
 describe("GET /v1/users/:id", () => {
   it("should return 200 and the user", async () => {
@@ -130,7 +220,19 @@ describe("GET /v1/users/:id", () => {
       username: "mr_anderson",
     });
   });
-  // TODO: error cases
+
+  it("returns error if invalid user_id is provided", async () => {
+    const res = await request(app).get("/v1/users/404");
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ statusCode: 404, error: "Not Found", message: expect.any(String) });
+    expect(res.body?.message).toMatch(/user not found/i);
+  });
+
+  it("id should be i32", async () => {
+    await i32IdCheck(async (id: any) => {
+      return request(app).get(`/v1/users/${id}`);
+    });
+  });
 });
 
 describe("GET /v1/users/:id/greeting", () => {
@@ -142,7 +244,12 @@ describe("GET /v1/users/:id/greeting", () => {
       greeting_playlist_id: null,
     });
   });
-  // TODO: error cases
+
+  it("id should be i32", async () => {
+    await i32IdCheck(async (id: any) => {
+      return request(app).get(`/v1/users/${id}/greeting`);
+    });
+  });
 });
 
 describe("GET /v1/users/:id/farewell", () => {
@@ -154,8 +261,25 @@ describe("GET /v1/users/:id/farewell", () => {
       farewell_playlist_id: 55,
     });
   });
-  // TODO: error cases
+
+  it("id should be i32", async () => {
+    await i32IdCheck(async (id: any) => {
+      return request(app).get(`/v1/users/${id}/farewell`);
+    });
+  });
 });
+
+async function usernameCheck(requestStarter: any) {
+  let res = await requestStarter.send({ username: "neoA" });
+  expect(res.status).toBe(400);
+  expect(res.body).toEqual({ statusCode: 400, error: "Bad Request", message: expect.any(String) });
+  expect(res.body?.message).toMatch(/validation error.*username/i);
+
+  res = await requestStarter.send({ username: "neo%" });
+  expect(res.status).toBe(400);
+  expect(res.body).toEqual({ statusCode: 400, error: "Bad Request", message: expect.any(String) });
+  expect(res.body?.message).toMatch(/validation error.*username/i);
+}
 
 describe("PATCH /v1/users/@me", () => {
   it("should update username", async () => {
@@ -187,7 +311,11 @@ describe("PATCH /v1/users/@me", () => {
       username: "mr_anderson",
     });
   });
-  // TODO: error cases
+
+  it("does not allow invalid usernames", async () => {
+    const jwtToken = await getLoginTokenAndTestResult(ME_USER);
+    await usernameCheck(request(app).patch("/v1/users/@me").set("Authorization", `Bearer ${jwtToken}`));
+  });
 });
 
 describe("PATCH /v1/users/:id", () => {
@@ -220,133 +348,106 @@ describe("PATCH /v1/users/:id", () => {
       username: "mr_anderson",
     });
   });
-  // TODO: error cases
+
+  it("does not allow invalid usernames", async () => {
+    const jwtToken = await getLoginTokenAndTestResult(ME_USER);
+    await usernameCheck(request(app).patch("/v1/users/1").set("Authorization", `Bearer ${jwtToken}`));
+  });
 });
 
-describe("PUT /v1/users/@me/greeting", () => {
-  it("should update user greeting track", async () => {
+async function greetingFarewellChecks(type: "greeting" | "farewell", endpoint: string) {
+  const castSalutation = (salutation: { track_id: any; playlist_id: any }) => {
+    return type === "greeting"
+      ? { greeting_track_id: salutation.track_id, greeting_playlist_id: salutation.playlist_id }
+      : { farewell_track_id: salutation.track_id, farewell_playlist_id: salutation.playlist_id };
+  };
+
+  const sendAndCheckValidSalutationPutRequest = async (salutation: { track_id: any; playlist_id: any }) => {
     const jwtToken = await getLoginTokenAndTestResult(ME_USER);
-    let res = await request(app)
-      .put("/v1/users/@me/greeting")
-      .send({ greeting_track_id: 40, greeting_playlist_id: null })
+    const res = await request(app)
+      .put(endpoint)
+      .send(castSalutation(salutation))
       .set("Authorization", `Bearer ${jwtToken}`);
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ greeting_track_id: 40, greeting_playlist_id: null });
-  });
-  it("should update user greeting playlist", async () => {
+    expect(res.body).toEqual(castSalutation(salutation));
+  };
+
+  const sendAndCheckInvalidSalutationPutRequest = async (
+    salutation: { track_id: any; playlist_id: any },
+    statusCode: 400 | 404,
+    errorRegex: RegExp
+  ) => {
     const jwtToken = await getLoginTokenAndTestResult(ME_USER);
     let res = await request(app)
-      .put("/v1/users/@me/greeting")
-      .send({ greeting_track_id: null, greeting_playlist_id: 55 })
+      .put(endpoint)
+      .send(castSalutation(salutation))
       .set("Authorization", `Bearer ${jwtToken}`);
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ greeting_track_id: null, greeting_playlist_id: 55 });
-  });
-  it("should clear user greeting", async () => {
-    const jwtToken = await getLoginTokenAndTestResult(ME_USER);
-    let res = await request(app)
-      .put("/v1/users/@me/greeting")
-      .send({ greeting_track_id: null, greeting_playlist_id: null })
-      .set("Authorization", `Bearer ${jwtToken}`);
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ greeting_track_id: null, greeting_playlist_id: null });
+    expect(res.status).toBe(statusCode);
+    const errorStringLookup = {
+      400: "Bad Request",
+      404: "Not Found",
+    };
+    expect(res.body).toEqual({ statusCode, error: errorStringLookup[statusCode], message: expect.any(String) });
+    expect(res.body?.message).toMatch(errorRegex);
+  };
+
+  it(`should update user ${type} track`, async () => {
+    await sendAndCheckValidSalutationPutRequest({ track_id: 40, playlist_id: null });
   });
 
-  // TODO: error cases
+  it(`should update user ${type} playlist`, async () => {
+    await sendAndCheckValidSalutationPutRequest({ track_id: null, playlist_id: 55 });
+  });
+
+  it(`should clear user ${type}`, async () => {
+    await sendAndCheckValidSalutationPutRequest({ track_id: null, playlist_id: null });
+  });
+
+  it("track must be int", async () => {
+    await sendAndCheckInvalidSalutationPutRequest(
+      { track_id: "hello", playlist_id: null },
+      400,
+      new RegExp(`validation error.*string.*${type}_track_id`, "i")
+    );
+  });
+
+  it("playlist must be int", async () => {
+    await sendAndCheckInvalidSalutationPutRequest(
+      { track_id: null, playlist_id: "hello" },
+      400,
+      new RegExp(`validation error.*string.*${type}_playlist_id`, "i")
+    );
+  });
+
+  it("cannot be both not null", async () => {
+    await sendAndCheckInvalidSalutationPutRequest(
+      { track_id: 1, playlist_id: 1 },
+      400,
+      new RegExp(`validation error.*only one ${type} id`, "i")
+    );
+  });
+
+  it("track must exist", async () => {
+    await sendAndCheckInvalidSalutationPutRequest({ track_id: 88, playlist_id: null }, 404, /track not found/i);
+  });
+
+  it("playlist must exist", async () => {
+    await sendAndCheckInvalidSalutationPutRequest({ track_id: null, playlist_id: 88 }, 404, /playlist not found/i);
+  });
+}
+
+describe("PUT /v1/users/@me/greeting", () => {
+  greetingFarewellChecks("greeting", "/v1/users/@me/greeting");
 });
 
 describe("PUT /v1/users/@me/farewell", () => {
-  it("should update user farewell track", async () => {
-    const jwtToken = await getLoginTokenAndTestResult(ME_USER);
-    let res = await request(app)
-      .put("/v1/users/@me/farewell")
-      .send({ farewell_track_id: 40, farewell_playlist_id: null })
-      .set("Authorization", `Bearer ${jwtToken}`);
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ farewell_track_id: 40, farewell_playlist_id: null });
-  });
-  it("should update user farewell playlist", async () => {
-    const jwtToken = await getLoginTokenAndTestResult(ME_USER);
-    let res = await request(app)
-      .put("/v1/users/@me/farewell")
-      .send({ farewell_track_id: null, farewell_playlist_id: 55 })
-      .set("Authorization", `Bearer ${jwtToken}`);
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ farewell_track_id: null, farewell_playlist_id: 55 });
-  });
-  it("should clear user farewell", async () => {
-    const jwtToken = await getLoginTokenAndTestResult(ME_USER);
-    let res = await request(app)
-      .put("/v1/users/@me/farewell")
-      .send({ farewell_track_id: null, farewell_playlist_id: null })
-      .set("Authorization", `Bearer ${jwtToken}`);
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ farewell_track_id: null, farewell_playlist_id: null });
-  });
-
-  // TODO: error cases
+  greetingFarewellChecks("farewell", "/v1/users/@me/farewell");
 });
 
 describe("PUT /v1/users/:id/greeting", () => {
-  it("should update user greeting track", async () => {
-    const jwtToken = await getLoginTokenAndTestResult(ME_USER);
-    let res = await request(app)
-      .put("/v1/users/1/greeting")
-      .send({ greeting_track_id: 40, greeting_playlist_id: null })
-      .set("Authorization", `Bearer ${jwtToken}`);
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ greeting_track_id: 40, greeting_playlist_id: null });
-  });
-  it("should update user greeting playlist", async () => {
-    const jwtToken = await getLoginTokenAndTestResult(ME_USER);
-    let res = await request(app)
-      .put("/v1/users/1/greeting")
-      .send({ greeting_track_id: null, greeting_playlist_id: 55 })
-      .set("Authorization", `Bearer ${jwtToken}`);
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ greeting_track_id: null, greeting_playlist_id: 55 });
-  });
-  it("should clear user greeting", async () => {
-    const jwtToken = await getLoginTokenAndTestResult(ME_USER);
-    let res = await request(app)
-      .put("/v1/users/1/greeting")
-      .send({ greeting_track_id: null, greeting_playlist_id: null })
-      .set("Authorization", `Bearer ${jwtToken}`);
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ greeting_track_id: null, greeting_playlist_id: null });
-  });
-
-  // TODO: error cases
+  greetingFarewellChecks("greeting", "/v1/users/1/greeting");
 });
 
 describe("PUT /v1/users/:id/farewell", () => {
-  it("should update user farewell track", async () => {
-    const jwtToken = await getLoginTokenAndTestResult(ME_USER);
-    let res = await request(app)
-      .put("/v1/users/1/farewell")
-      .send({ farewell_track_id: 40, farewell_playlist_id: null })
-      .set("Authorization", `Bearer ${jwtToken}`);
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ farewell_track_id: 40, farewell_playlist_id: null });
-  });
-  it("should update user farewell playlist", async () => {
-    const jwtToken = await getLoginTokenAndTestResult(ME_USER);
-    let res = await request(app)
-      .put("/v1/users/1/farewell")
-      .send({ farewell_track_id: null, farewell_playlist_id: 55 })
-      .set("Authorization", `Bearer ${jwtToken}`);
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ farewell_track_id: null, farewell_playlist_id: 55 });
-  });
-  it("should clear user farewell", async () => {
-    const jwtToken = await getLoginTokenAndTestResult(ME_USER);
-    let res = await request(app)
-      .put("/v1/users/1/farewell")
-      .send({ farewell_track_id: null, farewell_playlist_id: null })
-      .set("Authorization", `Bearer ${jwtToken}`);
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ farewell_track_id: null, farewell_playlist_id: null });
-  });
-
-  // TODO: error cases
+  greetingFarewellChecks("farewell", "/v1/users/1/farewell");
 });

@@ -8,7 +8,9 @@ import { StatusCodes } from "http-status-codes";
 
 const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
   // TODO: improve this lazy and overly verbose error logging
-  console.error(err);
+  if (process.env.NODE_ENV !== "test") {
+    console.error(err);
+  }
 
   if (err instanceof multer.MulterError) {
     let message = "An error occurred during file upload.";
