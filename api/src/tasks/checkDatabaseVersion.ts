@@ -1,7 +1,7 @@
-import { db } from "../db/connection";
-import config from "../config/config";
+import { KevbotDb } from "../db/connection";
+import { Config } from "../config/config";
 
-export const checkDatabaseVersion = async () => {
+export const checkDatabaseVersion = async (config: Config, db: KevbotDb) => {
   console.log(`[${new Date().toISOString()}] Checking database version...`);
   const data = await db.selectFrom("schema_version").selectAll().orderBy("id", "desc").limit(1).execute();
   const dbVersion = data[0].version;

@@ -1,27 +1,41 @@
 import { z } from "zod";
-import { playlistNameValidation } from "./sharedSchemas";
+import { playlistNameValidationFactory } from "./sharedSchemas";
+import { Config } from "../config/config";
 
-export const getPlaylistsQuerySchema = z.object({
-  name: z.string().optional(),
-  include_deleted: z.coerce.boolean().optional().default(false),
-});
+export function playlistsSchemaFactory(config: Config) {
+  const playlistNameValidation = playlistNameValidationFactory(config);
 
-export const patchPlaylistBodySchema = z.object({
-  name: playlistNameValidation,
-});
+  const getPlaylistsQuerySchema = z.object({
+    name: z.string().optional(),
+    include_deleted: z.coerce.boolean().optional().default(false),
+  });
 
-export const postPlaylistBodySchema = z.object({
-  name: playlistNameValidation,
-});
+  const patchPlaylistBodySchema = z.object({
+    name: playlistNameValidation,
+  });
 
-export const restorePlaylistBodySchema = z.object({
-  name: playlistNameValidation.optional(),
-});
+  const postPlaylistBodySchema = z.object({
+    name: playlistNameValidation,
+  });
 
-export const postPlaylistTracksBodySchema = z.object({
-  track_ids: z.array(z.number().int()).min(1),
-});
+  const restorePlaylistBodySchema = z.object({
+    name: playlistNameValidation.optional(),
+  });
 
-export const deletePlaylistTracksBodySchema = z.object({
-  track_ids: z.array(z.number().int()).min(1),
-});
+  const postPlaylistTracksBodySchema = z.object({
+    track_ids: z.array(z.number().int()).min(1),
+  });
+
+  const deletePlaylistTracksBodySchema = z.object({
+    track_ids: z.array(z.number().int()).min(1),
+  });
+
+  return {
+    getPlaylistsQuerySchema,
+    patchPlaylistBodySchema,
+    postPlaylistBodySchema,
+    restorePlaylistBodySchema,
+    postPlaylistTracksBodySchema,
+    deletePlaylistTracksBodySchema,
+  };
+}

@@ -1,17 +1,19 @@
 import cron from "node-cron";
-import aggregatePlayCounts from "../tasks/aggregatePlayCounts";
+import { aggregatePlayCounts } from "../tasks/aggregatePlayCounts";
 import { checkDatabaseVersion } from "../tasks/checkDatabaseVersion";
+import { KevbotDb } from "../db/connection";
+import { Config } from "../config/config";
 
-const initTaskSchedules = async () => {
+const initTaskSchedules = async (config: Config, db: KevbotDb) => {
   // run on startup
-  await aggregatePlayCounts();
-  await checkDatabaseVersion();
+  await aggregatePlayCounts(db);
+  await checkDatabaseVersion(config, db);
 
   // run on schedule
   cron.schedule(
     "0 * * * *",
     () => {
-      aggregatePlayCounts();
+      aggregatePlayCounts(db);
     },
     {
       timezone: "UTC",

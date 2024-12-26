@@ -1,28 +1,28 @@
 import request from "supertest";
-import app from "../../src/app";
+import { appFactory } from "../../src/app";
 import { seedUsers } from "../seeds/seedUsers";
 import { seedTracks } from "../seeds/seedTracks";
 import { seedUserGreetingsAndFarewells } from "../seeds/seedUserGreetingsAndFarewells";
 import { seedPlaylists } from "../seeds/seedPlaylists";
-import { Kysely, MysqlDialect } from "kysely";
-import { createPool } from "mysql2";
+import { Kysely } from "kysely";
 import { Database } from "../../src/db/schema";
-import { initDb } from "../../src/db/connection";
+import { dbFactory } from "../../src/db/connection";
+import { Express } from "express";
+import { configFactory } from "../../src/config/config";
+import { Bucket } from "@google-cloud/storage";
 
 let db: Kysely<Database>;
+let app: Express;
 
 beforeAll(async () => {
-  db = new Kysely<Database>({
-    dialect: new MysqlDialect({
-      pool: createPool({
-        uri: process.env.DB_CONNECTION_STRING,
-      }),
-    }),
-  });
-  if (!process.env.DB_CONNECTION_STRING) {
-    throw Error("DB_CONNECTION_STRING is not defined!");
-  }
-  initDb(process.env.DB_CONNECTION_STRING);
+  process.env.GCP_TRACKS_BUCKET_NAME = "dummy";
+  process.env.KEVBOT_API_ADDRESS = "0.0.0.0";
+  process.env.KEVBOT_API_JWT_SECRET = "jwt_secret";
+  process.env.KEVBOT_API_PORT = "3000";
+  const { config, secrets } = configFactory();
+  const dummyTracksBucket = {} as Bucket;
+  db = dbFactory(secrets.DB_CONNECTION_STRING);
+  app = appFactory(config, secrets, db, dummyTracksBucket);
   await seedUsers(db);
   await seedTracks(db);
   await seedPlaylists(db);
