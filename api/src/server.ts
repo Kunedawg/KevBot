@@ -1,16 +1,17 @@
-import app from "./app";
 import initTaskSchedules from "./schedulers/taskScheduler";
-import { initDb } from "./db/connection";
-import secrets from "./config/secrets";
-
-const port = Number(process.env.PORT) || 3000;
-const address = process.env.ADDRESS || "0.0.0.0";
+import { configFactory } from "./config/config";
+import { appFactory } from "./app";
+import { dbFactory } from "./db/connection";
+import { tracksBucketFactory } from "./storage/tracksBucket";
 
 async function startServer() {
   try {
-    initDb(secrets.DB_CONNECTION_STRING);
-    await initTaskSchedules(); // Ensure tasks are initialized before starting the server
-    const server = app.listen(port, address, () => {
+    const { config, secrets } = configFactory();
+    const db = dbFactory(secrets.DB_CONNECTION_STRING);
+    const tracksBucket = tracksBucketFactory(secrets.GCP_API_ENDPOINT, secrets.GCP_TRACKS_BUCKET_NAME);
+    await initTaskSchedules(config, db);
+    const app = appFactory(config, secrets, db, tracksBucket);
+    const server = app.listen(secrets.KEVBOT_API_PORT, secrets.KEVBOT_API_ADDRESS, () => {
       const addr = server.address();
       if (addr === null) {
         console.error("Server address is null. The server might not be listening.");

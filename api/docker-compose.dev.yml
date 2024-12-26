@@ -6,14 +6,14 @@ services:
       target: development
     container_name: kevbot_api
     environment:
-      PORT: ${PORT}
-      ADDRESS: ${ADDRESS}
       DB_CONNECTION_STRING: ${DB_CONNECTION_STRING}
       GCP_API_ENDPOINT: ${GCP_API_ENDPOINT}
-      GCP_AUDIO_BUCKET: ${GCP_AUDIO_BUCKET}
-      API_JWT_SECRET: ${API_JWT_SECRET}
+      GCP_TRACKS_BUCKET_NAME: ${GCP_TRACKS_BUCKET_NAME}
+      KEVBOT_API_ADDRESS: ${KEVBOT_API_ADDRESS}
+      KEVBOT_API_JWT_SECRET: ${KEVBOT_API_JWT_SECRET}
+      KEVBOT_API_PORT: ${KEVBOT_API_PORT}
     volumes:
       - .:/api
       - /api/node_modules/ # use containers node_modules
     ports:
-      - ${PORT}:${PORT}
+      - ${KEVBOT_API_PORT}:${KEVBOT_API_PORT}

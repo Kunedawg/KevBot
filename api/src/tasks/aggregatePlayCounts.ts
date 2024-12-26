@@ -1,4 +1,4 @@
-import { db } from "../db/connection";
+import { KevbotDb } from "../db/connection";
 import { PlayType, PLAY_TYPES_OF_TOTAL_PLAY_COUNT } from "../services/playsService";
 
 interface AggregatedCounts {
@@ -6,7 +6,7 @@ interface AggregatedCounts {
   total_play_count: number;
 }
 
-const aggregatePlayCounts = async () => {
+export const aggregatePlayCounts = async (db: KevbotDb) => {
   console.log(`[${new Date().toISOString()}] Starting play count aggregation...`);
   try {
     return await db.transaction().execute(async (trx) => {
@@ -116,5 +116,3 @@ const aggregatePlayCounts = async () => {
     console.error(`[${new Date().toISOString()}] Error during aggregation:`, error);
   }
 };
-
-export default aggregatePlayCounts;

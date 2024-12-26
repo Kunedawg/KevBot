@@ -1,28 +1,30 @@
-import express, { Request, Response } from "express";
-import docRoutes from "./routes/docRoutes";
-import authRoutes from "./routes/authRoutes";
-import usersRoutes from "./routes/usersRoutes";
-import tracksRoutes from "./routes/tracksRoutes";
-import playlistsRoutes from "./routes/playlistsRoutes";
-import playsRoutes from "./routes/playsRoutes";
-import errorHandler from "./middlewares/errorHandler";
-import * as auth from "./middlewares/auth";
+import express from "express";
+import { serviceFactory } from "./services";
+import { docRoutesFactory } from "./routes/docRoutes";
+import { authRoutesFactory } from "./routes/authRoutes";
+import { usersRoutesFactory } from "./routes/usersRoutes";
+import { tracksRoutesFactory } from "./routes/tracksRoutes";
+import { playlistsRoutesFactory } from "./routes/playlistsRoutes";
+import { playsRoutesFactory } from "./routes/playsRoutes";
+import { errorHandlerFactory } from "./middlewares/errorHandler";
+import { Config, Secrets } from "./config/config";
+import { Kysely } from "kysely";
+import { Database } from "./db/schema";
+import { Bucket } from "@google-cloud/storage";
+import path from "path";
+import { authMiddlewareFactory } from "./middlewares/auth";
 
-const app = express();
-
-app.use(express.json());
-
-app.use("/v1/docs", docRoutes);
-app.use("/v1/auth", authRoutes);
-app.use("/v1/users", usersRoutes);
-app.use("/v1/tracks", tracksRoutes);
-app.use("/v1/playlists", playlistsRoutes);
-app.use("/v1/plays", playsRoutes);
-// testing - remove
-app.get("/v1/protected", auth.requireAuth, (req: Request, res: Response) => {
-  res.send(`Hello ${req.user?.username}`);
-});
-
-app.use(errorHandler);
-
-export default app;
+export function appFactory(config: Config, secrets: Secrets, db: Kysely<Database>, tracksBucket: Bucket) {
+  const app = express();
+  app.use(express.json());
+  const services = serviceFactory(config, secrets, db, tracksBucket);
+  const auth = authMiddlewareFactory(services.authService);
+  app.use("/v1/docs", docRoutesFactory(path.join(__dirname, "docs", "kevbot-api.yml")));
+  app.use("/v1/auth", authRoutesFactory(config, services.authService));
+  app.use("/v1/users", usersRoutesFactory(config, auth, services.usersService));
+  app.use("/v1/tracks", tracksRoutesFactory(config, auth, services.tracksService));
+  app.use("/v1/playlists", playlistsRoutesFactory(config, auth, services.playlistsService));
+  app.use("/v1/plays", playsRoutesFactory(auth, services.playsService));
+  app.use(errorHandlerFactory(config.maxFileSizeInBytes));
+  return app;
+}
