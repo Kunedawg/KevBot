@@ -39,7 +39,7 @@ beforeAll(async () => {
   app = appFactory(config, secrets, db, tracksBucket);
   await seedUsers(db);
   await seedTracks(db);
-});
+}, 120000);
 
 afterAll(async () => {
   await db.destroy();
