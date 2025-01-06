@@ -28,7 +28,10 @@ beforeAll(async () => {
     .start();
   const gcsPort = gcsContainer.getMappedPort(GCS_PORT);
   process.env.GCP_API_ENDPOINT = `http://localhost:${gcsPort}`;
-  const storage = new Storage({ apiEndpoint: process.env.GCP_API_ENDPOINT });
+  const storage = new Storage({
+    projectId: "TODO-CHANGE-THIS",
+    apiEndpoint: process.env.GCP_API_ENDPOINT,
+  });
   process.env.GCP_TRACKS_BUCKET_NAME = "kevbot-tracks-testing";
   await storage.createBucket(process.env.GCP_TRACKS_BUCKET_NAME);
 
