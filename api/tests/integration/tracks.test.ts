@@ -183,13 +183,13 @@ describe("GET /v1/tracks/:id", () => {
 describe("POST /v1/tracks/", () => {
   it("should upload track and return metadata", async () => {
     const filePath = fixturePath("boysareback.mp3");
+    expect(fs.existsSync(filePath)).toBe(true);
     const jwtToken = await getLoginTokenAndTestResult(user_login, app);
     const res = await request(app)
       .post("/v1/tracks")
       .field("name", "boysareback")
       .attach("file", filePath)
       .set("Authorization", `Bearer ${jwtToken}`);
-    console.log(res.body);
     expect(res.status).toBe(201);
     expect(res.body).toEqual({
       id: 51,
