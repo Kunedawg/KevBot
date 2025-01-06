@@ -23,7 +23,8 @@ beforeAll(async () => {
   gcsContainer = await new GenericContainer("fsouza/fake-gcs-server")
     .withExposedPorts(GCS_PORT)
     .withCommand(["-scheme", "http"])
-    .withWaitStrategy(Wait.forHttp("/", GCS_PORT))
+    .withWaitStrategy(Wait.forListeningPorts())
+    .withStartupTimeout(120000)
     .start();
   const gcsPort = gcsContainer.getMappedPort(GCS_PORT);
   process.env.GCP_API_ENDPOINT = `http://localhost:${gcsPort}`;
