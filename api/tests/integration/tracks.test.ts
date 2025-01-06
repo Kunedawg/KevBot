@@ -8,7 +8,7 @@ import { dbFactory } from "../../src/db/connection";
 import { Express } from "express";
 import { configFactory } from "../../src/config/config";
 import { i32IdCheck, getLoginTokenAndTestResult, fixturePath } from "../utils";
-import { GenericContainer, StartedTestContainer } from "testcontainers";
+import { GenericContainer, StartedTestContainer, Wait } from "testcontainers";
 import { Storage } from "@google-cloud/storage";
 import { tracksBucketFactory } from "../../src/storage/tracksBucket";
 import { user_login } from "../seeds/seedUsers";
@@ -23,6 +23,7 @@ beforeAll(async () => {
   gcsContainer = await new GenericContainer("fsouza/fake-gcs-server")
     .withExposedPorts(GCS_PORT)
     .withCommand(["-scheme", "http"])
+    .withWaitStrategy(Wait.forHttp("/", GCS_PORT))
     .start();
   const gcsPort = gcsContainer.getMappedPort(GCS_PORT);
   process.env.GCP_API_ENDPOINT = `http://localhost:${gcsPort}`;
