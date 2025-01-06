@@ -41,7 +41,7 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
 
   const trackPermissionCheck = (track: Track, req_user_id: number) => {
     if (track.user_id !== req_user_id) {
-      throw Boom.forbidden("You do not have permission to modify this playlist.");
+      throw Boom.forbidden("You do not have permission to modify this track.");
     }
   };
 
@@ -107,7 +107,17 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     return await getTrackById(id);
   };
 
-  const postTrack = async (filepath: string, name: string, duration: number, req_user_id: number) => {
+  /**
+   * The normalized file is the main file that gets uploaded, but the original is posted too.
+   * It uses the loudnorm filter with print_format=json to gather stats.
+   */
+  const postTrack = async (
+    filepath: string,
+    normalizedFilepath: string,
+    name: string,
+    duration: number,
+    req_user_id: number
+  ) => {
     await validateTrackNameIsUnique(name);
     return await db.transaction().execute(async (trx) => {
       // TODO: why is the insertId incrementing even on failed inserts?
@@ -116,8 +126,15 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
         .values({ name, duration, user_id: req_user_id })
         .executeTakeFirstOrThrow();
       const track = await getTrackById(Number(insertId), trx);
-      await tracksBucket.upload(filepath, {
+      await tracksBucket.upload(normalizedFilepath, {
         destination: `${track.id}.mp3`,
+        resumable: false,
+        metadata: {
+          contentType: "audio/mpeg",
+        },
+      });
+      await tracksBucket.upload(filepath, {
+        destination: `${track.id}.original.mp3`,
         resumable: false,
         metadata: {
           contentType: "audio/mpeg",

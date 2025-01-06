@@ -2,7 +2,6 @@ import { Network, GenericContainer, StartedTestContainer, Wait, StartedNetwork }
 import path from "path";
 
 let mysqlContainer: StartedTestContainer;
-let gcsContainer: StartedTestContainer;
 let network: StartedNetwork;
 
 const runMigrationManager = async (db_connection_string: string) => {
@@ -22,39 +21,41 @@ const runMigrationManager = async (db_connection_string: string) => {
 };
 
 beforeAll(async () => {
+  const mysql = {
+    ROOT_USER: "root",
+    ROOT_PASSWORD: "1",
+    DATABASE: "test_db",
+    TCP_PORT: "25060",
+    host: "placeholder",
+    mappedPort: "placeholder",
+    dockerIpAddr: "placeholder",
+  };
+
   network = await new Network().start();
 
   const MYSQL_TCP_PORT = 25060;
   mysqlContainer = await new GenericContainer("mysql:8.0.30")
     .withNetwork(network)
     .withEnvironment({
-      MYSQL_ROOT_USER: "root",
-      MYSQL_ROOT_PASSWORD: "1",
-      MYSQL_DATABASE: "test_db",
+      MYSQL_ROOT_USER: mysql.ROOT_USER,
+      MYSQL_ROOT_PASSWORD: mysql.ROOT_PASSWORD,
+      MYSQL_DATABASE: mysql.DATABASE,
       MYSQL_TCP_PORT: String(MYSQL_TCP_PORT),
     })
     .withExposedPorts(MYSQL_TCP_PORT)
     .start();
 
-  const GCS_PORT = 4443;
-  gcsContainer = await new GenericContainer("fsouza/fake-gcs-server")
-    .withNetwork(network)
-    .withExposedPorts(GCS_PORT)
-    .withCommand(["-scheme", "http", "-filesystem-root", "/data"])
-    .start();
-
-  process.env.TEST_DB_HOST = mysqlContainer.getHost();
-  process.env.TEST_DB_PORT = mysqlContainer.getMappedPort(MYSQL_TCP_PORT).toString();
-  process.env.TEST_GCS_URL = `http://${gcsContainer.getHost()}:${gcsContainer.getMappedPort(GCS_PORT)}`;
-  process.env.DB_CONNECTION_STRING = `mysql://root:1@${process.env.TEST_DB_HOST}:${process.env.TEST_DB_PORT}/test_db`;
-  const migration_db_connection_string = `mysql://root:1@${mysqlContainer.getIpAddress(
-    network.getName()
-  )}:${MYSQL_TCP_PORT}/test_db`;
+  mysql.host = mysqlContainer.getHost();
+  mysql.mappedPort = mysqlContainer.getMappedPort(MYSQL_TCP_PORT).toString();
+  mysql.dockerIpAddr = mysqlContainer.getIpAddress(network.getName());
+  const factory = (addrPort: string) =>
+    `mysql://${mysql.ROOT_USER}:${mysql.ROOT_PASSWORD}@${addrPort}/${mysql.DATABASE}`;
+  process.env.DB_CONNECTION_STRING = factory(`${mysql.host}:${mysql.mappedPort}`);
+  const migration_db_connection_string = factory(`${mysql.dockerIpAddr}:${mysql.TCP_PORT}`);
 
   await runMigrationManager(migration_db_connection_string);
 }, 60000);
 
 afterAll(async () => {
   await mysqlContainer.stop();
-  await gcsContainer.stop();
 });

@@ -19,6 +19,7 @@ beforeAll(async () => {
   process.env.KEVBOT_API_ADDRESS = "0.0.0.0";
   process.env.KEVBOT_API_JWT_SECRET = TEST_API_JWT_SECRET;
   process.env.KEVBOT_API_PORT = "3000";
+  process.env.GCP_API_ENDPOINT = "dummy";
   const appConfig = configFactory();
   config = appConfig.config;
   const dummyTracksBucket = {} as Bucket;
