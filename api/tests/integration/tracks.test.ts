@@ -189,6 +189,7 @@ describe("POST /v1/tracks/", () => {
       .field("name", "boysareback")
       .attach("file", filePath)
       .set("Authorization", `Bearer ${jwtToken}`);
+    console.log(res.body);
     expect(res.status).toBe(201);
     expect(res.body).toEqual({
       id: 51,
