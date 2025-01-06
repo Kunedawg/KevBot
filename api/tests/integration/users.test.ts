@@ -10,6 +10,7 @@ import { dbFactory } from "../../src/db/connection";
 import { Express } from "express";
 import { configFactory } from "../../src/config/config";
 import { Bucket } from "@google-cloud/storage";
+import { i32IdCheck } from "../utils";
 
 let db: Kysely<Database>;
 let app: Express;
@@ -184,28 +185,6 @@ describe("GET /v1/users/@me/farewell", () => {
   });
   // No error conditions require handling at this time
 });
-
-async function i32IdCheck(requestBuilder: any) {
-  let res = await requestBuilder("hello");
-  expect(res.status).toBe(400);
-  expect(res.body).toEqual({ statusCode: 400, error: "Bad Request", message: expect.any(String) });
-  expect(res.body?.message).toMatch(/validation error.*nan/i);
-
-  res = await requestBuilder(5.4);
-  expect(res.status).toBe(400);
-  expect(res.body).toEqual({ statusCode: 400, error: "Bad Request", message: expect.any(String) });
-  expect(res.body?.message).toMatch(/validation error.*float/i);
-
-  res = await requestBuilder(-5);
-  expect(res.status).toBe(400);
-  expect(res.body).toEqual({ statusCode: 400, error: "Bad Request", message: expect.any(String) });
-  expect(res.body?.message).toMatch(/validation error.*greater.*0/i);
-
-  res = await requestBuilder(3147483647);
-  expect(res.status).toBe(400);
-  expect(res.body).toEqual({ statusCode: 400, error: "Bad Request", message: expect.any(String) });
-  expect(res.body?.message).toMatch(/validation error.*less.*2147483647/i);
-}
 
 describe("GET /v1/users/:id", () => {
   it("should return 200 and the user", async () => {
