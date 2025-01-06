@@ -106,7 +106,6 @@ export function tracksControllerFactory(config: Config, tracksService: TracksSer
       }
 
       const metadata = await getTrackMetaData(file.path).catch((err) => {
-        console.error(err);
         throw Boom.badRequest("Unsupported or corrupt file was received. Failed to parse track metadata from file.", {
           cause: err,
         });

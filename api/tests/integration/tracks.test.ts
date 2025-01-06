@@ -183,7 +183,6 @@ describe("GET /v1/tracks/:id", () => {
 describe("POST /v1/tracks/", () => {
   it("should upload track and return metadata", async () => {
     const filePath = fixturePath("boysareback.mp3");
-    expect(fs.existsSync(filePath)).toBe(true);
     const jwtToken = await getLoginTokenAndTestResult(user_login, app);
     const res = await request(app)
       .post("/v1/tracks")
