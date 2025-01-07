@@ -22,6 +22,8 @@ jobs:
           cd $GITHUB_WORKSPACE/tools/db/migration_manager
           docker build -t migration-manager .
       - name: Install FFmpeg
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+        run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg
+          ffmpeg -version
       - run: npm ci
       - run: npm run test
