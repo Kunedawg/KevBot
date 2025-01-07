@@ -331,7 +331,6 @@ describe("GET /v1/tracks/:id/download", () => {
       .expect("Content-Type", "audio/mpeg")
       .expect("Content-Disposition", 'attachment; filename="boysareback.mp3"')
       .expect(200);
-    fs.writeFileSync("boysareback_normalized2.mp3", res.body);
     const fixtureBuffer = fs.readFileSync(fixturePath("boysareback_normalized.mp3"));
     expect(res.body.equals(fixtureBuffer)).toBe(true);
   });
