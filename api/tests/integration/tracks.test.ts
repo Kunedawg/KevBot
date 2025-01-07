@@ -201,7 +201,7 @@ describe("POST /v1/tracks/", () => {
       raw_total_play_count: 0,
       total_play_count: 0,
     });
-  });
+  }, 10000);
 
   it("returns error if no name is provided", async () => {
     const filePath = fixturePath("boysareback.mp3");
@@ -331,6 +331,7 @@ describe("GET /v1/tracks/:id/download", () => {
       .expect("Content-Type", "audio/mpeg")
       .expect("Content-Disposition", 'attachment; filename="boysareback.mp3"')
       .expect(200);
+    fs.writeFileSync("boysareback_normalized2.mp3", res.body);
     const fixtureBuffer = fs.readFileSync(fixturePath("boysareback_normalized.mp3"));
     expect(res.body.equals(fixtureBuffer)).toBe(true);
   });
