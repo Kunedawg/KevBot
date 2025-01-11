@@ -6,12 +6,19 @@ RUN apk add --no-cache ffmpeg
 
 COPY package*.json ./
 
-FROM base AS production
-RUN npm install --production
+FROM base as dependencies
+RUN npm ci
+
+FROM dependencies AS production
+RUN npm prune --production
 COPY . .
 CMD ["npm", "start"]
 
-FROM base AS development
-RUN npm install
+FROM dependencies AS development
 COPY . .
 CMD ["npm", "run", "dev"]
+
+FROM dependencies AS test
+COPY . .
+ENV NODE_ENV=test
+CMD ["npm", "run", "test"]

@@ -9,10 +9,6 @@ on:
 jobs:
   run_api_tests:
     runs-on: ubuntu-latest
-    env:
-      GCP_AUDIO_BUCKET: kevbot-local-audio
-      GCP_API_ENDPOINT: http://host.docker.internal:4443
-      API_JWT_SECRET: this_is_the_dev_jwt_secret
     defaults:
       run:
         working-directory: ./api
@@ -25,5 +21,14 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/tools/db/migration_manager
           docker build -t migration-manager .
-      - run: npm ci
-      - run: npm run test
+      - name: Build docker image for api tests
+        run: |
+          docker build --target test -t kevbot_api_test .
+      - name: Run tests
+        run: |
+          docker run --rm \
+          --network host \
+          -v ./../db/migration:/db/migration \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -e DOCKER_HOST=unix:///var/run/docker.sock \
+          kevbot_api_test

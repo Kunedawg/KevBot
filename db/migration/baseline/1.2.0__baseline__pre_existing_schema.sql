@@ -32,7 +32,7 @@ CREATE TABLE `audio` (
   UNIQUE KEY `audio_name_UNIQUE` (`audio_name`),
   KEY `fk_audio_player_id_idx` (`player_id`),
   CONSTRAINT `fk_audio_player_id` FOREIGN KEY (`player_id`) REFERENCES `player_info` (`player_id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=22362 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
