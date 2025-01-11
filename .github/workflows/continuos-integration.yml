@@ -21,9 +21,14 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/tools/db/migration_manager
           docker build -t migration-manager .
-      - name: Install FFmpeg
+      - name: Build docker image for api tests
         run: |
-          sudo apt-get update && sudo apt-get install -y ffmpeg
-          ffmpeg -version
-      - run: npm ci
-      - run: npm run test
+          docker build --target test -t kevbot_api_test .
+      - name: Run tests
+        run: |
+          docker run --rm \
+          --network host \
+          -v ./../db/migration:/db/migration \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -e DOCKER_HOST=unix:///var/run/docker.sock \
+          kevbot_api_test

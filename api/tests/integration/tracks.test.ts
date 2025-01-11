@@ -27,7 +27,8 @@ beforeAll(async () => {
     .withStartupTimeout(120000)
     .start();
   const gcsPort = gcsContainer.getMappedPort(GCS_PORT);
-  process.env.GCP_API_ENDPOINT = `http://localhost:${gcsPort}`;
+  const gcsHost = gcsContainer.getHost();
+  process.env.GCP_API_ENDPOINT = `http://${gcsHost}:${gcsPort}`;
   const storage = new Storage({
     projectId: "TODO-CHANGE-THIS",
     apiEndpoint: process.env.GCP_API_ENDPOINT,
@@ -326,6 +327,7 @@ describe("GET /v1/tracks/:id/download", () => {
   });
 
   it("should download the track successfully", async () => {
+    // NOTE: The normalized audio test fixture seems heavily dependent on ffmpeg version, even a minor change seems to affect it.
     const res = await request(app)
       .get(`/v1/tracks/51/download`)
       .expect("Content-Type", "audio/mpeg")
