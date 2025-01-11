@@ -40,4 +40,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: boysareback_normalized_artifact.mp3
-          path: ./tests/fixtures/boysareback_normalized_artifact.mp3
+          path: api/tests/fixtures/boysareback_normalized_artifact.mp3
