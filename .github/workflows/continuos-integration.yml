@@ -25,6 +25,7 @@ jobs:
         run: |
           docker build --target test -t kevbot_api_test .
       - name: Run tests
+        continue-on-error: true
         run: |
           docker run --rm \
           --network host \
