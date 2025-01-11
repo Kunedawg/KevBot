@@ -47,10 +47,6 @@ export const errorHandlerFactory =
     }
 
     if (Boom.isBoom(err)) {
-      if (err.data) {
-        res.status(err.output.statusCode).json({ ...err.output.payload, ...err.data });
-        return;
-      }
       res.status(err.output.statusCode).json(err.output.payload);
       return;
     }

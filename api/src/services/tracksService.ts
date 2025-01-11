@@ -41,7 +41,7 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
 
   const trackPermissionCheck = (track: Track, req_user_id: number) => {
     if (track.user_id !== req_user_id) {
-      throw Boom.forbidden("You do not have permission to modify this playlist.");
+      throw Boom.forbidden("You do not have permission to modify this track.");
     }
   };
 
