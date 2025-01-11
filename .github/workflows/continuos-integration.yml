@@ -29,6 +29,12 @@ jobs:
           docker run --rm \
           --network host \
           -v ./../db/migration:/db/migration \
+          -v ./tests/fixtures:/api/tests/fixtures \
           -v /var/run/docker.sock:/var/run/docker.sock \
           -e DOCKER_HOST=unix:///var/run/docker.sock \
           kevbot_api_test
+      - name: Save normalized MP3 as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: boysareback_normalized_artifact.mp3
+          path: ./tests/fixtures/boysareback_normalized_artifact.mp3
