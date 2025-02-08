@@ -33,6 +33,8 @@ const configSchema = z.object({
   minPasswordLength: z.number().int().positive(),
   maxPasswordLength: z.number().int().positive(),
   supportedTrackExtensions: z.array(z.string()).nonempty(),
+  acceptableIntegratedLoudnessBand: z.number(),
+  acceptableDurationChangeInSeconds: z.number(),
   jwtTokenExpirationTime: z
     .string()
     .regex(/^\d+[smhd]$/, "jwtTokenExpirationTime must be a valid time string like '1h', '30m', '60s', etc."),
@@ -69,6 +71,8 @@ export function configFactory(): AppConfig {
       supportedTrackExtensions: [".mp3"],
       jwtTokenExpirationTime: "1h",
       expectedDbVersion: "2.10.0",
+      acceptableIntegratedLoudnessBand: 2.5,
+      acceptableDurationChangeInSeconds: 0.01,
     };
     const validatedSecrets = secretsSchema.parse(secrets);
     const validatedConfig = configSchema.parse(config);

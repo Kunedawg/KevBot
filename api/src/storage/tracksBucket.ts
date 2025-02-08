@@ -1,17 +1,9 @@
-import { Storage, Bucket } from "@google-cloud/storage";
-
-const storage = new Storage({
-  apiEndpoint: process.env.GCP_API_ENDPOINT,
-});
-
-const bucketName = process.env.GCP_TRACKS_BUCKET_NAME as string;
-const bucket: Bucket = storage.bucket(bucketName);
+import { Storage } from "@google-cloud/storage";
 
 export const tracksBucketFactory = (gcpApiEndpoint: string, tracksBucketName: string) => {
   const storage = new Storage({
+    projectId: "TODO-CHANGE-THIS",
     apiEndpoint: gcpApiEndpoint,
   });
   return storage.bucket(tracksBucketName);
 };
-
-export default bucket;

@@ -26,3 +26,5 @@ export async function seedUsers(db: Kysely<Database>) {
     ])
     .execute();
 }
+
+export const user_login = { username: "mr_anderson", password: "Testpw1!" };
