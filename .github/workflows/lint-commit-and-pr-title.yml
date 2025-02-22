@@ -1,0 +1,24 @@
+name: Lint Commit and PR Title
+
+on: [pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Lint Commit Messages
+        uses: wagoid/commitlint-github-action@v5
+        with:
+          configFile: commitlint.config.js
+
+      - name: Install node
+        uses: actions/setup-node@v3
+
+      - name: Install commitlint CLI
+        run: npm install -g @commitlint/cli
+
+      - name: Lint PR Title with commitlint
+        run: |
+          echo "${{ github.event.pull_request.title }}" | commitlint --config commitlint.config.js
