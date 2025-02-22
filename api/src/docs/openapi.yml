@@ -1,0 +1,1130 @@
+openapi: 3.0.3
+info:
+  title: Kevbot API
+  version: "1.0.0"
+servers:
+  - url: http://localhost:3000/v1
+paths:
+  /auth/login:
+    post:
+      summary: Login a user and return a JWT token
+      requestBody:
+        description: User credentials for login.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required:
+                - username
+                - password
+      responses:
+        "200":
+          description: Successful login returning a JWT token.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/register:
+    post:
+      summary: Register a new user.
+      requestBody:
+        description: User details for registration.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required:
+                - username
+                - password
+      responses:
+        "201":
+          description: New user created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /users:
+    get:
+      summary: Retrieve a list of users.
+      parameters:
+        - in: query
+          name: username
+          schema:
+            type: string
+          description: Filter by username.
+        - in: query
+          name: discordId
+          schema:
+            type: string
+          description: Filter by discord id.
+        - in: query
+          name: discordUsername
+          schema:
+            type: string
+          description: Filter by discord username.
+      responses:
+        "200":
+          description: A list of users.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /users/@me:
+    get:
+      summary: Retrieve the currently authenticated user.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: The current user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    patch:
+      summary: Update the currently authenticated user.
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Fields to update (e.g. username).
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+      responses:
+        "200":
+          description: Updated user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /users/@me/greeting:
+    get:
+      summary: Get greeting settings for the current user.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Greeting settings.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Salutation"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      summary: Update greeting settings for the current user.
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Greeting settings. Provide either a track or playlist (but not both).
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  properties:
+                    greeting_track_id:
+                      type: integer
+                    greeting_playlist_id:
+                      nullable: true
+                      type: integer
+                  required:
+                    - greeting_track_id
+                - type: object
+                  properties:
+                    greeting_playlist_id:
+                      type: integer
+                    greeting_track_id:
+                      nullable: true
+                      type: integer
+                  required:
+                    - greeting_playlist_id
+      responses:
+        "200":
+          description: Updated greeting settings.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Salutation"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /users/@me/farewell:
+    get:
+      summary: Get farewell settings for the current user.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Farewell settings.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Salutation"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      summary: Update farewell settings for the current user.
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Farewell settings. Provide either a track or playlist (but not both).
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  properties:
+                    farewell_track_id:
+                      type: integer
+                    farewell_playlist_id:
+                      nullable: true
+                      type: integer
+                  required:
+                    - farewell_track_id
+                - type: object
+                  properties:
+                    farewell_playlist_id:
+                      type: integer
+                    farewell_track_id:
+                      nullable: true
+                      type: integer
+                  required:
+                    - farewell_playlist_id
+      responses:
+        "200":
+          description: Updated farewell settings.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Salutation"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /users/{id}:
+    get:
+      summary: Get a user by ID.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Numeric user ID.
+      responses:
+        "200":
+          description: A user object.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      summary: Update a user by ID.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        description: Fields to update (e.g. username).
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+      responses:
+        "200":
+          description: Updated user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /users/{id}/greeting:
+    get:
+      summary: Get greeting settings for a user.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        "200":
+          description: Greeting settings.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Salutation"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      summary: Update greeting settings for a user.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        description: Greeting settings. Provide either a track or playlist.
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  properties:
+                    greeting_track_id:
+                      type: integer
+                    greeting_playlist_id:
+                      nullable: true
+                      type: integer
+                  required:
+                    - greeting_track_id
+                - type: object
+                  properties:
+                    greeting_playlist_id:
+                      type: integer
+                    greeting_track_id:
+                      nullable: true
+                      type: integer
+                  required:
+                    - greeting_playlist_id
+      responses:
+        "200":
+          description: Updated greeting settings.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Salutation"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /users/{id}/farewell:
+    get:
+      summary: Get farewell settings for a user.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        "200":
+          description: Farewell settings.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Salutation"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      summary: Update farewell settings for a user.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        description: Farewell settings. Provide either a track or playlist.
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  properties:
+                    farewell_track_id:
+                      type: integer
+                    farewell_playlist_id:
+                      nullable: true
+                      type: integer
+                  required:
+                    - farewell_track_id
+                - type: object
+                  properties:
+                    farewell_playlist_id:
+                      type: integer
+                    farewell_track_id:
+                      nullable: true
+                      type: integer
+                  required:
+                    - farewell_playlist_id
+      responses:
+        "200":
+          description: Updated farewell settings.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Salutation"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /tracks:
+    get:
+      summary: Retrieve a list of tracks.
+      parameters:
+        - in: query
+          name: name
+          schema:
+            type: string
+          description: Filter tracks by name.
+        - in: query
+          name: include_deleted
+          schema:
+            type: boolean
+          description: Whether to include deleted tracks.
+      responses:
+        "200":
+          description: A list of tracks.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Track"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+    post:
+      summary: Upload a new track.
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Multipart form data with track name and file.
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                file:
+                  type: string
+                  format: binary
+              required:
+                - name
+                - file
+      responses:
+        "201":
+          description: Track uploaded successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Track"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /tracks/{id}:
+    get:
+      summary: Retrieve a track by ID.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        "200":
+          description: A track object.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Track"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      summary: Update a track's name.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        description: New track name.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required:
+                - name
+      responses:
+        "200":
+          description: Updated track.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Track"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      summary: Soft delete a track.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        "200":
+          description: Deleted track object.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Track"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /tracks/{id}/restore:
+    patch:
+      summary: Restore a deleted track (optionally renaming it).
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        description: Optional new name for the restored track.
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        "200":
+          description: Restored track.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Track"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /tracks/{id}/download:
+    get:
+      summary: Download a track.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        "200":
+          description: MP3 file as attachment.
+          content:
+            audio/mpeg:
+              schema:
+                type: string
+                format: binary
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /tracks/{id}/stream:
+    get:
+      summary: Stream a track with support for range requests.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+        - in: header
+          name: Range
+          schema:
+            type: string
+          description: Byte range header.
+      responses:
+        "200":
+          description: Full track stream.
+          content:
+            audio/mpeg:
+              schema:
+                type: string
+                format: binary
+        "206":
+          description: Partial content.
+          content:
+            audio/mpeg:
+              schema:
+                type: string
+                format: binary
+        "416":
+          description: Requested Range Not Satisfiable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /playlists:
+    get:
+      summary: Retrieve a list of playlists.
+      parameters:
+        - in: query
+          name: name
+          schema:
+            type: string
+          description: Filter by playlist name.
+        - in: query
+          name: include_deleted
+          schema:
+            type: boolean
+          description: Whether to include deleted playlists.
+      responses:
+        "200":
+          description: A list of playlists.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Playlist"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+    post:
+      summary: Create a new playlist.
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Playlist creation data.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required:
+                - name
+      responses:
+        "201":
+          description: Playlist created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Playlist"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /playlists/{id}:
+    get:
+      summary: Get a playlist by ID.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        "200":
+          description: A playlist.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Playlist"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      summary: Update a playlist (e.g. change its name).
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        description: New playlist data.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required:
+                - name
+      responses:
+        "200":
+          description: Updated playlist.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Playlist"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      summary: Soft delete a playlist.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        "200":
+          description: Deleted playlist.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Playlist"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /playlists/{id}/restore:
+    patch:
+      summary: Restore a soft-deleted playlist.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        description: Optional new name when restoring.
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        "200":
+          description: Restored playlist.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Playlist"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /playlists/{id}/tracks:
+    post:
+      summary: Add tracks to a playlist.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        description: An array of track IDs to add.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                track_ids:
+                  type: array
+                  items:
+                    type: integer
+              required:
+                - track_ids
+      responses:
+        "201":
+          description: Tracks added to the playlist.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  playlist_id:
+                    type: integer
+                  added_track_ids:
+                    type: array
+                    items:
+                      type: integer
+                  message:
+                    type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    get:
+      summary: Get all tracks in a playlist.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        "200":
+          description: List of tracks.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Track"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      summary: Remove tracks from a playlist.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        description: An array of track IDs to remove.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                track_ids:
+                  type: array
+                  items:
+                    type: integer
+              required:
+                - track_ids
+      responses:
+        "200":
+          description: Tracks removed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted_track_ids:
+                    type: array
+                    items:
+                      type: integer
+                  not_in_playlist_track_ids:
+                    type: array
+                    items:
+                      type: integer
+                  message:
+                    type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /plays/tracks:
+    post:
+      summary: Log a track play.
+      requestBody:
+        description: Data for logging a play.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                track_id:
+                  type: integer
+                play_type:
+                  type: integer
+              required:
+                - track_id
+                - play_type
+      responses:
+        "201":
+          description: Play logged.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /plays/playlists/random:
+    post:
+      summary: Log a random playlist play.
+      requestBody:
+        description: Playlist ID to log.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                playlist_id:
+                  type: integer
+              required:
+                - playlist_id
+      responses:
+        "201":
+          description: Play logged.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /docs:
+    get:
+      summary: API documentation page.
+      responses:
+        "200":
+          description: Swagger UI HTML
+          content:
+            text/html:
+              schema:
+                type: string
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        discord_id:
+          type: string
+          nullable: true
+        discord_username:
+          type: string
+          nullable: true
+        username:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Track:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        user_id:
+          type: integer
+        duration:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+        raw_total_play_count:
+          type: integer
+        total_play_count:
+          type: integer
+    Playlist:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        user_id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+    Salutation:
+      type: object
+      description: Either greeting or farewell settings.
+      properties:
+        greeting_track_id:
+          type: integer
+          nullable: true
+        greeting_playlist_id:
+          type: integer
+          nullable: true
+        farewell_track_id:
+          type: integer
+          nullable: true
+        farewell_playlist_id:
+          type: integer
+          nullable: true
+    Error:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Bad Request – validation error or missing fields.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: Unauthorized – missing or invalid authentication.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: Forbidden – not permitted.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Conflict:
+      description: Conflict – duplicate resource.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
