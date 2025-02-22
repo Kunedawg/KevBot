@@ -21,7 +21,7 @@ export function playsServiceFactory(db: KevbotDb, tracksService: TracksService, 
   }
 
   const logTracksPlay = async (track_id: number, play_type: PlayType, options: LogOptions = {}) => {
-    return await db.transaction().execute(async (trx) => {
+    await db.transaction().execute(async (trx) => {
       await tracksService.getTrackById(track_id); // ensures that the track_id is actually valid
       const { user_id } = options;
       await trx.insertInto("track_plays").values({ track_id, play_type, user_id }).execute();
@@ -62,17 +62,14 @@ export function playsServiceFactory(db: KevbotDb, tracksService: TracksService, 
           play_count: eb("play_count", "+", 1),
         }))
         .execute();
-
-      return { message: "Successfully logged track play." };
     });
   };
 
   const logRandomPlaylistPlay = async (playlist_id: number, options: LogOptions = {}) => {
-    return await db.transaction().execute(async (trx) => {
+    await db.transaction().execute(async (trx) => {
       await playlistsService.getPlaylistById(playlist_id); // ensures playlist exists
       const { user_id } = options;
       await trx.insertInto("playlist_plays").values({ playlist_id, user_id }).execute();
-      return { message: "Successfully logged random playlist play." };
     });
   };
 
