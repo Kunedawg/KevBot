@@ -17,7 +17,7 @@ jobs:
         uses: actions/setup-node@v3
 
       - name: Install commitlint CLI
-        run: npm install -g @commitlint/cli
+        run: npm install -g @commitlint/cli @commitlint/config-conventional
 
       - name: Lint PR Title with commitlint
         run: |
