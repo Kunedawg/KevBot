@@ -19,7 +19,7 @@ export function appFactory(config: Config, secrets: Secrets, db: Kysely<Database
   app.use(express.json());
   const services = serviceFactory(config, secrets, db, tracksBucket);
   const auth = authMiddlewareFactory(services.authService);
-  app.use("/v1/docs", docsRoutesFactory(path.join(__dirname, "docs", "kevbot-api.yml")));
+  app.use("/v1/docs", docsRoutesFactory(path.join(__dirname, "docs", "openapi.yml")));
   app.use("/v1/auth", authRoutesFactory(config, services.authService));
   app.use("/v1/users", usersRoutesFactory(config, auth, services.usersService));
   app.use("/v1/tracks", tracksRoutesFactory(config, auth, services.tracksService));
