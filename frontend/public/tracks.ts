@@ -6,6 +6,7 @@ export interface Track {
   artist: string;
   album: string;
   duration: string;
+  playCount: number;
 }
 
 const tracks: Track[] = [
@@ -15,6 +16,7 @@ const tracks: Track[] = [
     artist: "Artist 1",
     album: "Album X",
     duration: "3:45",
+    playCount: 5,
   },
   {
     id: 2,
@@ -22,6 +24,7 @@ const tracks: Track[] = [
     artist: "Artist 2",
     album: "Album Y",
     duration: "4:20",
+    playCount: 10,
   },
   {
     id: 3,
@@ -29,6 +32,7 @@ const tracks: Track[] = [
     artist: "Artist 3",
     album: "Album Z",
     duration: "2:50",
+    playCount: 2,
   },
 ];
 

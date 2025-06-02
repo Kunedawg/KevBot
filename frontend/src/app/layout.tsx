@@ -1,4 +1,3 @@
-// components/Layout.tsx
 import { ReactNode } from "react";
 import NavBar from "../components/NavBar";
 import SideBar from "../components/SideBar";
@@ -11,11 +10,11 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   return (
     <html lang="en">
-      <body className="h-screen flex flex-col bg-primary">
+      <body className="h-screen flex flex-col bg-background text-white">
         <NavBar />
         <div className="flex flex-1 gap-3 p-3">
           <SideBar />
-          <main className="flex-1 bg-secondary text-white p-4 overflow-y-auto rounded-lg">{children}</main>
+          <main className="flex-1 p-4 overflow-y-auto rounded-lg bg-foreground">{children}</main>
         </div>
       </body>
     </html>

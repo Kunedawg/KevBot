@@ -10,10 +10,13 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-        primary: "#000000",
-        secondary: "#121212",
+        background: "#000000",
+        foreground: "var(--background-base)",
+        primary: "var(--text-base)",
+        secondary: "var(--text-subdued)",
+        accent: "var(--text-bright-accent)",
+        "track-hover": "hsla(0, 0%, 100%, 0.1)",
+        "track-selected": "hsla(0, 0%, 100%, 0.3)",
       },
     },
   },
