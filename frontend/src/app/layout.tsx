@@ -10,6 +10,9 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   return (
     <html lang="en">
+      <head>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
+      </head>
       <body className="h-screen flex flex-col bg-background text-white">
         <NavBar />
         <div className="flex flex-1 gap-3 p-3">

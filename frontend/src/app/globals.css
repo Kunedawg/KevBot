@@ -26,6 +26,10 @@ body {
   overflow: hidden;
 }
 
+body {
+  font-family: "Inter", sans-serif;
+}
+
 :root {
   /* from inspecting spotify.com */
   --background-base: #121212; /* main content containers */
