@@ -3,6 +3,7 @@
 import { Button } from "./button";
 import { Sheet, SheetContent, SheetTrigger } from "./sheet";
 import { Menu } from "lucide-react";
+import { ThemeToggle } from "./theme-toggle";
 
 export function NavBar() {
   return (
@@ -32,7 +33,9 @@ export function NavBar() {
           </SheetContent>
         </Sheet>
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          <div className="w-full flex-1 md:w-auto md:flex-none">{/* Add search or other controls here */}</div>
+          <div className="w-full flex-1 md:w-auto md:flex-none flex items-center justify-end">
+            <ThemeToggle />
+          </div>
         </div>
       </div>
     </nav>

@@ -16,7 +16,7 @@ export function TrackList({ tracks }: TrackListProps) {
   };
 
   return (
-    <div className="rounded-md border bg-card">
+    <div className="rounded-md border dark:border-zinc-800 bg-card dark:bg-zinc-900">
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">

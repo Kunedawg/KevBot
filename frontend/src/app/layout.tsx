@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { ThemeProvider } from "next-themes";
 import "./globals.css";
 
 interface LayoutProps {
@@ -14,7 +15,11 @@ export default function RootLayout({ children }: LayoutProps) {
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen bg-background">{children}</body>
+      <body className="min-h-screen bg-background">
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

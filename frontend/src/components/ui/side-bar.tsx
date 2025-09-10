@@ -11,7 +11,7 @@ const MOCK_PLAYLISTS = Array.from({ length: 50 }, (_, i) => ({
 
 export function SideBar() {
   return (
-    <div className="hidden bg-background md:block md:w-60 lg:w-72">
+    <div className="hidden bg-transparent md:block md:w-60 lg:w-72">
       <div className="flex h-full flex-col">
         <div className="border-b px-6 py-4">
           <h2 className="text-lg font-semibold">Playlists</h2>
