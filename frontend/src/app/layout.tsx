@@ -1,6 +1,4 @@
 import { ReactNode } from "react";
-import { NavBar } from "@/components/ui/nav-bar";
-import { SideBar } from "@/components/ui/side-bar";
 import "./globals.css";
 
 interface LayoutProps {
@@ -16,15 +14,7 @@ export default function RootLayout({ children }: LayoutProps) {
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen bg-background">
-        <div className="relative flex min-h-screen flex-col">
-          <NavBar />
-          <div className="flex-1 flex pt-14">
-            <SideBar />
-            <main className="flex-1 overflow-auto">{children}</main>
-          </div>
-        </div>
-      </body>
+      <body className="min-h-screen bg-background">{children}</body>
     </html>
   );
 }
