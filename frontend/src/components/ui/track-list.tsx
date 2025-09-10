@@ -16,36 +16,36 @@ export function TrackList({ tracks }: TrackListProps) {
   };
 
   return (
-    <div className="w-full">
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50px]">#</TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead>Play Count</TableHead>
-              <TableHead className="text-right">Duration (s)</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {tracks.map((track, index) => {
-              const isSelected = selectedTrackId === track.id;
-              return (
-                <TableRow
-                  key={track.id}
-                  onClick={() => handleRowClick(track.id)}
-                  className={`cursor-pointer ${isSelected ? "bg-muted hover:bg-muted" : "hover:bg-muted/50"}`}
-                >
-                  <TableCell className="font-medium">{index + 1}</TableCell>
-                  <TableCell>{track.title}</TableCell>
-                  <TableCell>{track.playCount}</TableCell>
-                  <TableCell className="text-right">{track.duration}</TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+    <div className="rounded-md border bg-card">
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead className="w-[64px] font-medium">#</TableHead>
+            <TableHead className="font-medium">Title</TableHead>
+            <TableHead className="font-medium">Play Count</TableHead>
+            <TableHead className="text-right font-medium">Duration</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {tracks.map((track, index) => {
+            const isSelected = selectedTrackId === track.id;
+            return (
+              <TableRow
+                key={track.id}
+                onClick={() => handleRowClick(track.id)}
+                className={`cursor-pointer transition-colors ${
+                  isSelected ? "bg-muted hover:bg-muted" : "hover:bg-muted/50"
+                }`}
+              >
+                <TableCell>{index + 1}</TableCell>
+                <TableCell className="font-medium">{track.title}</TableCell>
+                <TableCell>{track.playCount}</TableCell>
+                <TableCell className="text-right">{track.duration}</TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
     </div>
   );
 }

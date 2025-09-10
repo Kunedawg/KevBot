@@ -19,9 +19,9 @@ export default function RootLayout({ children }: LayoutProps) {
       <body className="min-h-screen bg-background">
         <div className="relative flex min-h-screen flex-col">
           <NavBar />
-          <div className="flex-1 flex">
+          <div className="flex-1 flex pt-14">
             <SideBar />
-            <main className="flex-1 flex-col">{children}</main>
+            <main className="flex-1 overflow-auto">{children}</main>
           </div>
         </div>
       </body>
