@@ -2,25 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  @apply bg-background
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-} */
-
 html,
 body {
   overflow: hidden;
@@ -28,38 +9,6 @@ body {
 
 body {
   font-family: "Inter", sans-serif;
-}
-
-:root {
-  /* from inspecting spotify.com */
-  --background-base: #121212; /* main content containers */
-  --background-highlight: #1f1f1f;
-  --background-press: #000;
-  --background-elevated-base: #1f1f1f;
-  --background-elevated-highlight: #2a2a2a;
-  --background-elevated-press: #191919;
-  --background-tinted-base: hsla(0, 0%, 100%, 0.1); /* hover */
-  --background-tinted-highlight: hsla(0, 0%, 100%, 0.14);
-  --background-tinted-press: hsla(0, 0%, 100%, 0.21);
-  --text-base: #fff; /* main text */
-  --text-subdued: #b3b3b3; /* secondary text */
-  --text-bright-accent: #1ed760; /* bright highlight */
-  --text-negative: #f3727f;
-  --text-warning: #ffa42b;
-  --text-positive: #1ed760;
-  --text-announcement: #4cb3ff;
-  --essential-base: #fff;
-  --essential-subdued: #7c7c7c;
-  --essential-bright-accent: #1ed760;
-  --essential-negative: #ed2c3f;
-  --essential-warning: #ffa42b;
-  --essential-positive: #1ed760;
-  --essential-announcement: #4cb3ff;
-  --decorative-base: #fff;
-  --decorative-subdued: #292929;
-
-  /* custom */
-  --background-selected: hsla(0, 0%, 100%, 0.3); /* selected */
 }
 
 @layer base {
