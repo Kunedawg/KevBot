@@ -1,4 +1,4 @@
-import { TrackList } from "@/components/ui/track-list";
+import { TrackList } from "@/components/track-list";
 import tracks from "../../../../public/tracks";
 
 export default function TracksPage() {

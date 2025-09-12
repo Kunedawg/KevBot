@@ -1,6 +1,6 @@
 "use client";
 
-import { ScrollArea } from "./scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Mock data for playlists - in real app this would come from your API
 const MOCK_PLAYLISTS = Array.from({ length: 50 }, (_, i) => ({

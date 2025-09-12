@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Track } from "../../../public/tracks";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./table";
+import { Track } from "../../public/tracks";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface TrackListProps {
   tracks: Track[];
