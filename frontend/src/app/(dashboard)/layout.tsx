@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { NavBar } from "@/components/ui/nav-bar";
 import { SideBar } from "@/components/ui/side-bar";
+import { PlayBar } from "@/components/ui/play-bar";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -11,7 +12,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="relative min-h-screen flex flex-col dark:bg-black bg-zinc-50">
       <NavBar />
       <div className="flex-1 pt-14">
-        <div className="h-[calc(100vh-56px)] flex gap-3 p-3">
+        <div className="h-[calc(100vh-3.5rem-6rem)] flex gap-3 p-3">
           <div className="w-80 rounded-xl border dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
             <div className="h-full overflow-auto">
               <SideBar />
@@ -22,6 +23,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </main>
         </div>
       </div>
+      <PlayBar />
     </div>
   );
 }

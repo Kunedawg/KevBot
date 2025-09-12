@@ -1,6 +1,5 @@
 import { ReactNode } from "react";
 import { ThemeProvider } from "next-themes";
-import { PlayBar } from "@/components/ui/play-bar";
 import "./globals.css";
 
 interface LayoutProps {
@@ -19,7 +18,6 @@ export default function RootLayout({ children }: LayoutProps) {
       <body className="min-h-screen bg-background">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
-          <PlayBar />
         </ThemeProvider>
       </body>
     </html>
