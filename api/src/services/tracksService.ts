@@ -12,17 +12,6 @@ interface TrackOptions {
   offset?: number;
 }
 
-interface PaginatedTracksResult {
-  data: Awaited<ReturnType<ReturnType<typeof getTrackBaseQuery>["execute"]>>;
-  pagination: {
-    total: number;
-    limit: number;
-    offset: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  };
-}
-
 export const getTrackBaseQuery = (dbTrx: Kysely<Database> | Transaction<Database>) => {
   return dbTrx
     .selectFrom("tracks as t")
@@ -58,7 +47,7 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     }
   };
 
-  const getTracks = async (options: TrackOptions = {}): Promise<PaginatedTracksResult> => {
+  const getTracks = async (options: TrackOptions = {}) => {
     const { name, include_deleted = false, limit = 20, offset = 0 } = options;
 
     // Build the base query for counting total records
