@@ -44,6 +44,7 @@ const configSchema = z.object({
       /^\d+\.\d+\.\d+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$/,
       "expectedDbVersion must be a valid semantic version (e.g., 2.10.0, 1.0.0-beta, etc.)"
     ),
+  maxTracksPerPage: z.number().int().positive(),
 });
 
 export type Secrets = z.infer<typeof secretsSchema>;
@@ -73,6 +74,7 @@ export function configFactory(): AppConfig {
       expectedDbVersion: "2.10.0",
       acceptableIntegratedLoudnessBand: 2.5,
       acceptableDurationChangeInSeconds: 0.01,
+      maxTracksPerPage: 100,
     };
     const validatedSecrets = secretsSchema.parse(secrets);
     const validatedConfig = configSchema.parse(config);

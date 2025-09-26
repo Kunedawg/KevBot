@@ -21,8 +21,8 @@ export function tracksControllerFactory(config: Config, tracksService: TracksSer
   const tracksSchemas = tracksSchemasFactory(config);
 
   const getTracks = async (req: Request, res: Response) => {
-    const { name, include_deleted } = tracksSchemas.getTracksQuerySchema.parse(req.query);
-    const tracks = await tracksService.getTracks({ name: name, include_deleted: include_deleted });
+    const { name, include_deleted, limit, offset } = tracksSchemas.getTracksQuerySchema.parse(req.query);
+    const tracks = await tracksService.getTracks({ name, include_deleted, limit, offset });
     res.status(StatusCodes.OK).json(tracks);
   };
 

@@ -437,7 +437,7 @@ paths:
 
   /tracks:
     get:
-      summary: Retrieve a list of tracks.
+      summary: Retrieve a paginated list of tracks.
       parameters:
         - in: query
           name: name
@@ -449,15 +449,28 @@ paths:
           schema:
             type: boolean
           description: Whether to include deleted tracks.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Maximum number of tracks to return per page.
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of tracks to skip for pagination.
       responses:
         "200":
-          description: A list of tracks.
+          description: A paginated list of tracks.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Track"
+                $ref: "#/components/schemas/PaginatedTracksResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
     post:
@@ -1053,6 +1066,40 @@ components:
           type: integer
         total_play_count:
           type: integer
+    PaginatedTracksResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Track"
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              description: Total number of tracks available
+            limit:
+              type: integer
+              description: Maximum number of tracks returned per page
+            offset:
+              type: integer
+              description: Number of tracks skipped
+            hasNext:
+              type: boolean
+              description: Whether there are more tracks available
+            hasPrev:
+              type: boolean
+              description: Whether there are previous tracks available
+          required:
+            - total
+            - limit
+            - offset
+            - hasNext
+            - hasPrev
+      required:
+        - data
+        - pagination
     Playlist:
       type: object
       properties:

@@ -71,72 +71,108 @@ describe("GET /v1/tracks", () => {
   it("should return a list of tracks", async () => {
     const res = await request(app).get("/v1/tracks");
     expect(res.status).toBe(200);
-    expect(res.body).toEqual([
-      {
-        id: 23,
-        name: "happynewyear",
-        created_at: "2024-12-11T07:21:03.000Z",
-        user_id: 1337,
-        duration: 5.328,
-        updated_at: "2024-12-11T07:21:03.000Z",
-        deleted_at: null,
-        raw_total_play_count: 0,
-        total_play_count: 0,
+    expect(res.body).toEqual({
+      data: [
+        {
+          id: 40,
+          name: "yes",
+          created_at: "2024-12-11T08:21:03.000Z",
+          user_id: 1,
+          duration: 3.713,
+          updated_at: "2024-12-11T08:21:03.000Z",
+          deleted_at: null,
+          raw_total_play_count: 0,
+          total_play_count: 0,
+        },
+        {
+          id: 23,
+          name: "happynewyear",
+          created_at: "2024-12-11T07:21:03.000Z",
+          user_id: 1337,
+          duration: 5.328,
+          updated_at: "2024-12-11T07:21:03.000Z",
+          deleted_at: null,
+          raw_total_play_count: 0,
+          total_play_count: 0,
+        },
+      ],
+      pagination: {
+        total: 2,
+        limit: 20,
+        offset: 0,
+        hasNext: false,
+        hasPrev: false,
       },
-      {
-        id: 40,
-        name: "yes",
-        created_at: "2024-12-11T08:21:03.000Z",
-        user_id: 1,
-        duration: 3.713,
-        updated_at: "2024-12-11T08:21:03.000Z",
-        deleted_at: null,
-        raw_total_play_count: 0,
-        total_play_count: 0,
-      },
-    ]);
+    });
   });
 
   it("should return a filtered list of tracks based on name", async () => {
     const res = await request(app).get("/v1/tracks?name=happynewyear");
     expect(res.status).toBe(200);
-    expect(res.body).toEqual([
-      {
-        id: 23,
-        name: "happynewyear",
-        created_at: "2024-12-11T07:21:03.000Z",
-        user_id: 1337,
-        duration: 5.328,
-        updated_at: "2024-12-11T07:21:03.000Z",
-        deleted_at: null,
-        raw_total_play_count: 0,
-        total_play_count: 0,
+    expect(res.body).toEqual({
+      data: [
+        {
+          id: 23,
+          name: "happynewyear",
+          created_at: "2024-12-11T07:21:03.000Z",
+          user_id: 1337,
+          duration: 5.328,
+          updated_at: "2024-12-11T07:21:03.000Z",
+          deleted_at: null,
+          raw_total_play_count: 0,
+          total_play_count: 0,
+        },
+      ],
+      pagination: {
+        total: 1,
+        limit: 20,
+        offset: 0,
+        hasNext: false,
+        hasPrev: false,
       },
-    ]);
+    });
   });
 
   it("should return empty list because include deleted is false", async () => {
     const res = await request(app).get("/v1/tracks?name=deletedtrack");
     expect(res.status).toBe(200);
-    expect(res.body).toEqual([]);
+    expect(res.body).toEqual({
+      data: [],
+      pagination: {
+        total: 0,
+        limit: 20,
+        offset: 0,
+        hasNext: false,
+        hasPrev: false,
+      },
+    });
   });
 
   it("should return a filtered list of tracks based on name and include deleted", async () => {
     const res = await request(app).get("/v1/tracks?name=deletedtrack&include_deleted=true");
     expect(res.status).toBe(200);
-    expect(res.body).toEqual([
-      {
-        id: 50,
-        name: "deletedtrack",
-        created_at: "2024-12-11T08:21:03.000Z",
-        user_id: 1,
-        duration: 4.713,
-        updated_at: expect.any(String),
-        deleted_at: expect.any(String),
-        raw_total_play_count: 0,
-        total_play_count: 0,
+    expect(res.body).toEqual({
+      data: [
+        {
+          id: 50,
+          name: "deletedtrack",
+          created_at: "2024-12-11T08:21:03.000Z",
+          user_id: 1,
+          duration: 4.713,
+          updated_at: expect.any(String),
+          deleted_at: expect.any(String),
+          raw_total_play_count: 0,
+          total_play_count: 0,
+        },
+      ],
+      pagination: {
+        total: 1,
+        limit: 20,
+        offset: 0,
+        hasNext: false,
+        hasPrev: false,
       },
-    ]);
+    });
   });
 
   it("returns error if invalid query parameter is provided", async () => {

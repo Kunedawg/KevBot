@@ -9,6 +9,8 @@ export function tracksSchemasFactory(config: Config) {
     .object({
       name: z.string().optional(),
       include_deleted: z.coerce.boolean().optional().default(false),
+      limit: z.coerce.number().int().min(1).max(config.maxTracksPerPage).optional().default(20),
+      offset: z.coerce.number().int().min(0).optional().default(0),
     })
     .strict();
 

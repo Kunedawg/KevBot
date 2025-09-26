@@ -8,6 +8,19 @@ import { Bucket } from "@google-cloud/storage";
 interface TrackOptions {
   name?: string;
   include_deleted?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
+interface PaginatedTracksResult {
+  data: Awaited<ReturnType<ReturnType<typeof getTrackBaseQuery>["execute"]>>;
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
 }
 
 export const getTrackBaseQuery = (dbTrx: Kysely<Database> | Transaction<Database>) => {
@@ -45,8 +58,23 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     }
   };
 
-  const getTracks = async (options: TrackOptions = {}) => {
-    const { name, include_deleted = false } = options;
+  const getTracks = async (options: TrackOptions = {}): Promise<PaginatedTracksResult> => {
+    const { name, include_deleted = false, limit = 20, offset = 0 } = options;
+
+    // Build the base query for counting total records
+    let countQuery = db.selectFrom("tracks as t").select(({ fn }) => fn.count<number>("t.id").as("total"));
+
+    if (name) {
+      countQuery = countQuery.where("t.name", "=", name);
+    }
+    if (!include_deleted) {
+      countQuery = countQuery.where("t.deleted_at", "is", null);
+    }
+
+    // Get total count
+    const { total } = await countQuery.executeTakeFirstOrThrow();
+
+    // Build the main query with pagination
     let query = getTrackBaseQuery(db);
     if (name) {
       query = query.where("t.name", "=", name);
@@ -54,7 +82,22 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     if (!include_deleted) {
       query = query.where("t.deleted_at", "is", null);
     }
-    return await query.execute();
+
+    // Add pagination
+    query = query.limit(limit).offset(offset).orderBy("t.created_at", "desc");
+
+    const data = await query.execute();
+
+    return {
+      data,
+      pagination: {
+        total,
+        limit,
+        offset,
+        hasNext: offset + limit < total,
+        hasPrev: offset > 0,
+      },
+    };
   };
 
   const getTrackById = async (id: number, trx?: Transaction<Database>) => {
