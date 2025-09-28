@@ -1,11 +1,17 @@
 "use client";
 
 import React, { useState } from "react";
-import { Track } from "../../public/tracks";
+import { ApiTrack } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface TrackListProps {
-  tracks: Track[];
+  tracks: ApiTrack[];
+}
+
+function formatDuration(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.round(seconds % 60);
+  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 }
 
 export function TrackList({ tracks }: TrackListProps) {
@@ -38,9 +44,9 @@ export function TrackList({ tracks }: TrackListProps) {
                 }`}
               >
                 <TableCell>{index + 1}</TableCell>
-                <TableCell className="font-medium">{track.title}</TableCell>
-                <TableCell>{track.playCount}</TableCell>
-                <TableCell className="text-right">{track.duration}</TableCell>
+                <TableCell className="font-medium">{track.name}</TableCell>
+                <TableCell>{track.total_play_count}</TableCell>
+                <TableCell className="text-right">{formatDuration(track.duration)}</TableCell>
               </TableRow>
             );
           })}

@@ -1,7 +1,21 @@
 import { TrackList } from "@/components/track-list";
-import tracks from "../../../../public/tracks";
+import { ApiTrack, PaginatedResponse } from "@/lib/types";
 
-export default function TracksPage() {
+async function getTracks(): Promise<PaginatedResponse<ApiTrack>> {
+  const res = await fetch("http://localhost:3001/v1/tracks", {
+    cache: "no-store", // Disable caching for now
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch tracks");
+  }
+
+  return res.json();
+}
+
+export default async function TracksPage() {
+  const { data: tracks } = await getTracks();
+
   return (
     <div className="space-y-6">
       <div>
