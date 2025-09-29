@@ -10,6 +10,9 @@
 
 ## Low Priority
 
+- [ ] Release notes
+  - upload should be more consistent with normalization as well as not cutting off audio
+
 ## Designs
 
 ### OAuth2 for API
