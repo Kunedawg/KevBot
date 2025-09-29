@@ -1,57 +1,71 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useCallback } from "react";
 
 interface UseInfiniteScrollOptions {
   threshold?: number;
   rootMargin?: string;
+  disabled?: boolean;
 }
 
-export function useInfiniteScroll(onIntersect: () => Promise<void>, options: UseInfiniteScrollOptions = {}) {
-  const [isLoading, setIsLoading] = useState(false);
-  const observerRef = useRef<IntersectionObserver>(null);
-  const targetRef = useRef<HTMLDivElement>(null);
+export function useInfiniteScroll(
+  onIntersect: () => Promise<void>,
+  { threshold, rootMargin, disabled }: UseInfiniteScrollOptions = {}
+) {
+  const targetRef = useRef<HTMLDivElement | null>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadingRef = useRef(false); // guard without causing re-renders
 
-  useEffect(() => {
-    console.log("[create] creating observer...");
-    const observer = new IntersectionObserver(
-      async (entries) => {
-        const [entry] = entries;
-        if (entry.isIntersecting && !isLoading) {
-          setIsLoading(true);
-          try {
-            await onIntersect();
-          } finally {
-            setIsLoading(false);
-          }
-        }
-      },
-      {
-        threshold: options.threshold || 0.1,
-        rootMargin: options.rootMargin || "200px",
+  // Stable wrapper around onIntersect
+  const handleIntersect = useCallback(
+    async (entries: IntersectionObserverEntry[]) => {
+      const [entry] = entries;
+      if (!entry.isIntersecting) return;
+      if (disabled || loadingRef.current) return;
+
+      loadingRef.current = true;
+      try {
+        await onIntersect();
+      } finally {
+        loadingRef.current = false;
       }
-    );
+    },
+    [onIntersect, disabled]
+  );
 
-    observerRef.current = observer;
+  // Create observer and attach to target in ONE effect
+  useEffect(() => {
+    if (disabled) return;
+
+    const obs = new IntersectionObserver(handleIntersect, {
+      threshold: threshold ?? 0.1,
+      rootMargin: rootMargin ?? "200px",
+    });
+    observerRef.current = obs;
+
+    const el = targetRef.current;
+    if (el) obs.observe(el);
 
     return () => {
-      console.log("[create] observer disconnecting...");
-      observer.disconnect();
+      obs.disconnect();
+      observerRef.current = null;
     };
-  }, [onIntersect, isLoading, options.threshold, options.rootMargin]);
+  }, [handleIntersect, threshold, rootMargin, disabled]);
 
-  useEffect(() => {
-    console.log("[observe] observer attaching effect running...");
-    const currentTarget = targetRef.current;
-    const currentObserver = observerRef.current;
+  // If the target ref node changes later, re-observe it
+  const setTarget = useCallback(
+    (node: HTMLDivElement | null) => {
+      // detach old
+      const prev = targetRef.current;
+      if (prev && observerRef.current) {
+        observerRef.current.unobserve(prev);
+      }
+      // attach new
+      targetRef.current = node;
+      if (node && observerRef.current && !disabled) {
+        observerRef.current.observe(node);
+      }
+    },
+    [disabled]
+  );
 
-    if (currentTarget && currentObserver) {
-      console.log("[observe] observer attaching to target...");
-      currentObserver.observe(currentTarget);
-      return () => {
-        console.log("[observe] observer unobserving...");
-        currentObserver.unobserve(currentTarget);
-      };
-    }
-  }, []);
-
-  return { targetRef, isLoading };
+  return { targetRef: setTarget, isLoadingRef: loadingRef };
 }

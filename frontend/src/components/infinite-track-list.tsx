@@ -18,7 +18,6 @@ export function InfiniteTrackList({ initialTracks, initialPagination }: Infinite
 
   const loadMoreTracks = async () => {
     try {
-      console.log("loading more tracks...");
       const response = await fetchMoreTracks(tracks.length);
       setTracks((prev) => [...prev, ...response.data]);
       setHasMore(response.pagination.hasNext);
@@ -28,7 +27,7 @@ export function InfiniteTrackList({ initialTracks, initialPagination }: Infinite
     }
   };
 
-  const { targetRef, isLoading } = useInfiniteScroll(loadMoreTracks, {
+  const { targetRef, isLoadingRef } = useInfiniteScroll(loadMoreTracks, {
     threshold: 0.1,
     rootMargin: "200px",
   });
@@ -40,8 +39,8 @@ export function InfiniteTrackList({ initialTracks, initialPagination }: Infinite
   return (
     <>
       <TrackList tracks={tracks} />
-      {isLoading && <div className="py-4 text-center text-muted-foreground">Loading more tracks...</div>}
-      {!isLoading && hasMore && <div ref={targetRef} className="h-10" />}
+      {isLoadingRef.current && <div className="py-4 text-center text-muted-foreground">Loading more tracks...</div>}
+      {!isLoadingRef.current && hasMore && <div ref={targetRef} className="h-10" />}
       {!hasMore && tracks.length > 0 && (
         <div className="py-4 text-center text-muted-foreground">No more tracks to load</div>
       )}
