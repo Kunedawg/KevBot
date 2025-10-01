@@ -10,7 +10,7 @@ type TrackSortOption = "relevance" | "created_at" | "name";
 type TrackSortOrder = "asc" | "desc";
 
 interface TrackOptions {
-  name?: string;
+  name?: Track["name"];
   q?: string;
   search_mode?: TrackSearchMode;
   sort?: TrackSortOption;
@@ -60,27 +60,27 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     }
   };
 
-  const applyTrackFilters = <QB extends SelectQueryBuilder<Database, any, any>>(
-    qb: QB,
+  const applyTrackFilters = (
+    qb: SelectQueryBuilder<Database, any, any>,
     {
       include_deleted = false,
       name,
       q,
       search_mode = "fulltext",
     }: Pick<TrackOptions, "include_deleted" | "name" | "q" | "search_mode">
-  ): QB => {
+  ): SelectQueryBuilder<Database, any, any> => {
     let query = qb;
     if (!include_deleted) {
       query = query.where("t.deleted_at", "is", null);
     }
     if (name) {
-      return query.where("t.name", "=", name);
-    }
-    if (q) {
+      query = query.where(sql<boolean>`t.name = ${name}`);
+    } else if (q) {
       if (search_mode === "contains") {
-        return query.where(sql`t.name LIKE ${`%${q}%`}`);
+        query = query.where(sql<boolean>`t.name LIKE ${`%${q}%`}`);
+      } else {
+        query = query.where(sql<boolean>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`);
       }
-      return query.where(sql`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`);
     }
     return query;
   };
@@ -99,7 +99,11 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
 
     const sanitizedOrder: TrackSortOrder = order === "asc" ? "asc" : "desc";
     const shouldRankByRelevance = Boolean(q && search_mode === "fulltext" && sort === "relevance");
-    const fallbackSort: TrackSortOption = shouldRankByRelevance ? "relevance" : sort === "relevance" ? "created_at" : sort;
+    const fallbackSort: TrackSortOption = shouldRankByRelevance
+      ? "relevance"
+      : sort === "relevance"
+      ? "created_at"
+      : sort;
 
     const countQuery = applyTrackFilters(
       db.selectFrom("tracks as t").select(({ fn }) => fn.count<number>("t.id").as("total")),
@@ -112,9 +116,7 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
 
     if (q && search_mode === "fulltext" && fallbackSort === "relevance") {
       const relevanceExpression = sql<number>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`;
-      query = query
-        .select(relevanceExpression.as("relevance"))
-        .orderBy("relevance", sanitizedOrder);
+      query = query.select(relevanceExpression.as("relevance")).orderBy("relevance", sanitizedOrder);
     } else {
       const sortColumn = fallbackSort === "name" ? "t.name" : "t.created_at";
       query = query.orderBy(sortColumn as "t.created_at" | "t.name", sanitizedOrder);
@@ -142,7 +144,7 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
       .selectFrom("tracks as t")
       .select(["t.id", "t.name"])
       .where("t.deleted_at", "is", null)
-      .where(sql`t.name LIKE ${`${q}%`}`)
+      .where(sql<boolean>`t.name LIKE ${`${q}%`}`)
       .orderBy("t.name", "asc")
       .limit(boundedLimit)
       .execute();
