@@ -71,7 +71,7 @@ export function configFactory(): AppConfig {
       maxPasswordLength: 64,
       supportedTrackExtensions: [".mp3"],
       jwtTokenExpirationTime: "1h",
-      expectedDbVersion: "2.10.0",
+      expectedDbVersion: "2.11.0",
       acceptableIntegratedLoudnessBand: 2.5,
       acceptableDurationChangeInSeconds: 0.01,
       maxTracksPerPage: 100,

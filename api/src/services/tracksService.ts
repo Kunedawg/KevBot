@@ -1,15 +1,28 @@
 import { KevbotDb } from "../db/connection";
 import { Track } from "../db/schema";
-import { Kysely, sql, Transaction } from "kysely";
+import { Kysely, SelectQueryBuilder, Transaction, sql } from "kysely";
 import { Database } from "../db/schema";
 import * as Boom from "@hapi/boom";
 import { Bucket } from "@google-cloud/storage";
 
+type TrackSearchMode = "fulltext" | "contains";
+type TrackSortOption = "relevance" | "created_at" | "name";
+type TrackSortOrder = "asc" | "desc";
+
 interface TrackOptions {
   name?: string;
+  q?: string;
+  search_mode?: TrackSearchMode;
+  sort?: TrackSortOption;
+  order?: TrackSortOrder;
   include_deleted?: boolean;
   limit?: number;
   offset?: number;
+}
+
+interface TrackSuggestOptions {
+  q: string;
+  limit?: number;
 }
 
 export const getTrackBaseQuery = (dbTrx: Kysely<Database> | Transaction<Database>) => {
@@ -47,35 +60,67 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     }
   };
 
-  const getTracks = async (options: TrackOptions = {}) => {
-    const { name, include_deleted = false, limit = 20, offset = 0 } = options;
-
-    // Build the base query for counting total records
-    let countQuery = db.selectFrom("tracks as t").select(({ fn }) => fn.count<number>("t.id").as("total"));
-
-    if (name) {
-      countQuery = countQuery.where("t.name", "=", name);
-    }
-    if (!include_deleted) {
-      countQuery = countQuery.where("t.deleted_at", "is", null);
-    }
-
-    // Get total count
-    const { total } = await countQuery.executeTakeFirstOrThrow();
-
-    // Build the main query with pagination
-    let query = getTrackBaseQuery(db);
-    if (name) {
-      query = query.where("t.name", "=", name);
-    }
+  const applyTrackFilters = <QB extends SelectQueryBuilder<Database, any, any>>(
+    qb: QB,
+    {
+      include_deleted = false,
+      name,
+      q,
+      search_mode = "fulltext",
+    }: Pick<TrackOptions, "include_deleted" | "name" | "q" | "search_mode">
+  ): QB => {
+    let query = qb;
     if (!include_deleted) {
       query = query.where("t.deleted_at", "is", null);
     }
+    if (name) {
+      return query.where("t.name", "=", name);
+    }
+    if (q) {
+      if (search_mode === "contains") {
+        return query.where(sql`t.name LIKE ${`%${q}%`}`);
+      }
+      return query.where(sql`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`);
+    }
+    return query;
+  };
 
-    // Add pagination
-    query = query.limit(limit).offset(offset).orderBy("t.created_at", "desc");
+  const getTracks = async (options: TrackOptions = {}) => {
+    const {
+      name,
+      q,
+      search_mode = "fulltext",
+      sort = "created_at",
+      order = "desc",
+      include_deleted = false,
+      limit = 20,
+      offset = 0,
+    } = options;
 
-    const data = await query.execute();
+    const sanitizedOrder: TrackSortOrder = order === "asc" ? "asc" : "desc";
+    const shouldRankByRelevance = Boolean(q && search_mode === "fulltext" && sort === "relevance");
+    const fallbackSort: TrackSortOption = shouldRankByRelevance ? "relevance" : sort === "relevance" ? "created_at" : sort;
+
+    const countQuery = applyTrackFilters(
+      db.selectFrom("tracks as t").select(({ fn }) => fn.count<number>("t.id").as("total")),
+      { name, q, search_mode, include_deleted }
+    );
+
+    const { total } = await countQuery.executeTakeFirstOrThrow();
+
+    let query = applyTrackFilters(getTrackBaseQuery(db), { name, q, search_mode, include_deleted });
+
+    if (q && search_mode === "fulltext" && fallbackSort === "relevance") {
+      const relevanceExpression = sql<number>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`;
+      query = query
+        .select(relevanceExpression.as("relevance"))
+        .orderBy("relevance", sanitizedOrder);
+    } else {
+      const sortColumn = fallbackSort === "name" ? "t.name" : "t.created_at";
+      query = query.orderBy(sortColumn as "t.created_at" | "t.name", sanitizedOrder);
+    }
+
+    const data = await query.limit(limit).offset(offset).execute();
 
     return {
       data,
@@ -86,6 +131,25 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
         hasNext: offset + limit < total,
         hasPrev: offset > 0,
       },
+    };
+  };
+
+  const suggestTracks = async ({ q, limit = 10 }: TrackSuggestOptions) => {
+    const startedAt = Date.now();
+    const boundedLimit = Math.min(Math.max(limit, 1), 10);
+
+    const suggestions = await db
+      .selectFrom("tracks as t")
+      .select(["t.id", "t.name"])
+      .where("t.deleted_at", "is", null)
+      .where(sql`t.name LIKE ${`${q}%`}`)
+      .orderBy("t.name", "asc")
+      .limit(boundedLimit)
+      .execute();
+
+    return {
+      suggestions,
+      took_ms: Date.now() - startedAt,
     };
   };
 
@@ -178,6 +242,7 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
 
   return {
     getTracks,
+    suggestTracks,
     getTrackById,
     getTrackFile,
     patchTrack,

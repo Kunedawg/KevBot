@@ -10,6 +10,7 @@ export interface ApiTrack {
   updated_at: string;
   total_play_count: number;
   raw_total_play_count: number;
+  relevance?: number;
 }
 
 export interface PaginatedResponse<T> {
@@ -21,4 +22,14 @@ export interface PaginatedResponse<T> {
     hasNext: boolean;
     hasPrev: boolean;
   };
+}
+
+export interface TrackSuggestion {
+  id: number;
+  name: string;
+}
+
+export interface TrackSuggestionResponse {
+  suggestions: TrackSuggestion[];
+  took_ms: number;
 }
