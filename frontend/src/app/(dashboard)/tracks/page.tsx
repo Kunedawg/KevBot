@@ -59,14 +59,17 @@ async function getInitialTracks(params: InitialTrackParams): Promise<PaginatedRe
 export default async function TracksPage({
   searchParams,
 }: {
-  searchParams: Record<string, string | string[] | undefined>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const queryParam = typeof searchParams.q === "string" ? searchParams.q : undefined;
-  const sortParam = typeof searchParams.sort === "string" ? searchParams.sort : undefined;
-  const orderParam = typeof searchParams.order === "string" ? searchParams.order : undefined;
-  const searchModeParam = typeof searchParams.search_mode === "string" ? searchParams.search_mode : undefined;
-  const includeDeletedParam = typeof searchParams.include_deleted === "string" ? searchParams.include_deleted : undefined;
-  const nameParam = typeof searchParams.name === "string" ? searchParams.name : undefined;
+  const resolvedSearchParams = await searchParams;
+
+  const queryParam = typeof resolvedSearchParams.q === "string" ? resolvedSearchParams.q : undefined;
+  const sortParam = typeof resolvedSearchParams.sort === "string" ? resolvedSearchParams.sort : undefined;
+  const orderParam = typeof resolvedSearchParams.order === "string" ? resolvedSearchParams.order : undefined;
+  const searchModeParam = typeof resolvedSearchParams.search_mode === "string" ? resolvedSearchParams.search_mode : undefined;
+  const includeDeletedParam =
+    typeof resolvedSearchParams.include_deleted === "string" ? resolvedSearchParams.include_deleted : undefined;
+  const nameParam = typeof resolvedSearchParams.name === "string" ? resolvedSearchParams.name : undefined;
 
   const { data: initialTracks, pagination } = await getInitialTracks({
     q: queryParam,
