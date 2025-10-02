@@ -54,7 +54,7 @@ export function InfiniteTrackList({ initialTracks, initialPagination, initialQue
           offset: 0,
           limit: pageSize,
           sort: trimmed ? "relevance" : "created_at",
-          search_mode: trimmed ? "fulltext" : undefined,
+          search_mode: trimmed ? "hybrid" : undefined,
         });
         setTracks(response.data);
         setHasMore(response.pagination.hasNext);
@@ -78,7 +78,7 @@ export function InfiniteTrackList({ initialTracks, initialPagination, initialQue
         offset: tracks.length,
         limit: pageSize,
         sort: query ? "relevance" : "created_at",
-        search_mode: query ? "fulltext" : undefined,
+        search_mode: query ? "hybrid" : undefined,
       });
       setTracks((prev) => [...prev, ...response.data]);
       setHasMore(response.pagination.hasNext);

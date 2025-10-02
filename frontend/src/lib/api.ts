@@ -5,7 +5,7 @@ type TrackFetchParams = {
   limit?: number;
   q?: string;
   name?: string;
-  search_mode?: "fulltext" | "contains";
+  search_mode?: "fulltext" | "contains" | "hybrid";
   sort?: "relevance" | "created_at" | "name";
   order?: "asc" | "desc";
   include_deleted?: boolean;

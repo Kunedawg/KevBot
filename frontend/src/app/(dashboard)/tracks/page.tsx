@@ -25,7 +25,7 @@ async function getInitialTracks(params: InitialTrackParams): Promise<PaginatedRe
   if (params.q) {
     url.searchParams.set("q", params.q);
     url.searchParams.set("sort", params.sort ?? "relevance");
-    url.searchParams.set("search_mode", params.search_mode ?? "fulltext");
+    url.searchParams.set("search_mode", params.search_mode ?? "hybrid");
   } else {
     if (params.sort) {
       url.searchParams.set("sort", params.sort);

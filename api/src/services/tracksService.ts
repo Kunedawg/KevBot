@@ -5,7 +5,7 @@ import { Database } from "../db/schema";
 import * as Boom from "@hapi/boom";
 import { Bucket } from "@google-cloud/storage";
 
-type TrackSearchMode = "fulltext" | "contains";
+type TrackSearchMode = "fulltext" | "contains" | "hybrid";
 type TrackSortOption = "relevance" | "created_at" | "name";
 type TrackSortOrder = "asc" | "desc";
 
@@ -24,6 +24,8 @@ interface TrackSuggestOptions {
   q: string;
   limit?: number;
 }
+
+const HYBRID_RELEVANCE_RATIO = 0.5;
 
 export const getTrackBaseQuery = (dbTrx: Kysely<Database> | Transaction<Database>) => {
   return dbTrx
@@ -60,6 +62,106 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     }
   };
 
+  const buildHybridSearchContext = async (
+    dbTrx: Kysely<Database> | Transaction<Database>,
+    query: string,
+    includeDeleted: boolean
+  ) => {
+    const trimmedQuery = query.trim();
+    const prefixPattern = `${trimmedQuery}%`;
+
+    let maxRelevanceQuery = dbTrx
+      .selectFrom("tracks as t")
+      .select(sql<number>`MAX(MATCH(t.name) AGAINST (${trimmedQuery} IN NATURAL LANGUAGE MODE))`.as("max_relevance"));
+
+    if (!includeDeleted) {
+      maxRelevanceQuery = maxRelevanceQuery.where("t.deleted_at", "is", null);
+    }
+
+    maxRelevanceQuery = maxRelevanceQuery.where(
+      sql<boolean>`MATCH(t.name) AGAINST (${trimmedQuery} IN NATURAL LANGUAGE MODE)`
+    );
+
+    const maxRelevanceRow = await maxRelevanceQuery.executeTakeFirst();
+    const maxRelevance = maxRelevanceRow?.max_relevance ?? 0;
+    const relevanceThreshold = maxRelevance * HYBRID_RELEVANCE_RATIO;
+    const includeNgram = maxRelevance > 0;
+
+    const filterExpression = includeNgram
+      ? () =>
+          sql<boolean>`
+            t.name LIKE ${prefixPattern}
+            OR (
+              NOT (t.name LIKE ${prefixPattern})
+              AND MATCH(t.name) AGAINST (${trimmedQuery} IN NATURAL LANGUAGE MODE) >= ${relevanceThreshold}
+            )
+          `
+      : () => sql<boolean>`t.name LIKE ${prefixPattern}`;
+
+    const prefixPriorityExpression = () => sql`CASE WHEN t.name LIKE ${prefixPattern} THEN 0 ELSE 1 END`;
+    const prefixAlphaExpression = () => sql`CASE WHEN t.name LIKE ${prefixPattern} THEN t.name ELSE NULL END`;
+    const relevanceExpression = () => sql<number>`MATCH(t.name) AGAINST (${trimmedQuery} IN NATURAL LANGUAGE MODE)`;
+
+    return {
+      filterExpression,
+      prefixPriorityExpression,
+      prefixAlphaExpression,
+      relevanceExpression,
+      includeNgram,
+    };
+  };
+
+  const getTracksWithHybridSearch = async ({
+    q,
+    include_deleted = false,
+    limit,
+    offset,
+  }: Required<Pick<TrackOptions, "q" | "include_deleted" | "limit" | "offset">>) => {
+    const searchContext = await buildHybridSearchContext(db, q, include_deleted);
+
+    let query = getTrackBaseQuery(db);
+
+    if (!include_deleted) {
+      query = query.where("t.deleted_at", "is", null);
+    }
+
+    query = query.where(searchContext.filterExpression());
+
+    query = query.orderBy(searchContext.prefixPriorityExpression(), "asc");
+    query = query.orderBy(searchContext.prefixAlphaExpression(), "asc");
+
+    if (searchContext.includeNgram) {
+      query = query.orderBy(searchContext.relevanceExpression(), "desc");
+    }
+
+    query = query.orderBy("t.created_at", "desc");
+
+    const data = await query.limit(limit).offset(offset).execute();
+
+    let countQuery = db
+      .selectFrom("tracks as t")
+      .select(({ fn }) => fn.count<number>("t.id").as("total"));
+
+    if (!include_deleted) {
+      countQuery = countQuery.where("t.deleted_at", "is", null);
+    }
+
+    countQuery = countQuery.where(searchContext.filterExpression());
+
+    const { total } = await countQuery.executeTakeFirstOrThrow();
+
+    return {
+      data,
+      pagination: {
+        total,
+        limit,
+        offset,
+        hasNext: offset + limit < total,
+        hasPrev: offset > 0,
+      },
+    };
+  };
+
   const applyTrackFilters = (
     qb: SelectQueryBuilder<Database, any, any>,
     {
@@ -78,8 +180,10 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     } else if (q) {
       if (search_mode === "contains") {
         query = query.where(sql<boolean>`t.name LIKE ${`%${q}%`}`);
-      } else {
+      } else if (search_mode === "fulltext") {
         query = query.where(sql<boolean>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`);
+      } else {
+        // Hybrid search mode filters are applied in dedicated logic.
       }
     }
     return query;
@@ -98,6 +202,15 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     } = options;
 
     const sanitizedOrder: TrackSortOrder = order === "asc" ? "asc" : "desc";
+    if (q && search_mode === "hybrid") {
+      return getTracksWithHybridSearch({
+        q,
+        include_deleted,
+        limit,
+        offset,
+      });
+    }
+
     const shouldRankByRelevance = Boolean(q && search_mode === "fulltext" && sort === "relevance");
     const fallbackSort: TrackSortOption = shouldRankByRelevance
       ? "relevance"
@@ -140,14 +253,25 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     const startedAt = Date.now();
     const boundedLimit = Math.min(Math.max(limit, 1), 10);
 
-    const suggestions = await db
+    const trimmedQuery = q.trim();
+    const searchContext = await buildHybridSearchContext(db, trimmedQuery, false);
+
+    let suggestionQuery = db
       .selectFrom("tracks as t")
       .select(["t.id", "t.name"])
       .where("t.deleted_at", "is", null)
-      .where(sql<boolean>`t.name LIKE ${`${q}%`}`)
-      .orderBy("t.name", "asc")
-      .limit(boundedLimit)
-      .execute();
+      .where(searchContext.filterExpression());
+
+    suggestionQuery = suggestionQuery.orderBy(searchContext.prefixPriorityExpression(), "asc");
+    suggestionQuery = suggestionQuery.orderBy(searchContext.prefixAlphaExpression(), "asc");
+
+    if (searchContext.includeNgram) {
+      suggestionQuery = suggestionQuery.orderBy(searchContext.relevanceExpression(), "desc");
+    }
+
+    suggestionQuery = suggestionQuery.orderBy("t.created_at", "desc").limit(boundedLimit);
+
+    const suggestions = await suggestionQuery.execute();
 
     return {
       suggestions,

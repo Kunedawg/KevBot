@@ -13,7 +13,7 @@ export function tracksSchemasFactory(config: Config) {
     .object({
       name: trackNameValidation.optional(),
       q: z.string().trim().min(1).max(MAX_SEARCH_QUERY_LENGTH).optional(),
-      search_mode: z.enum(["fulltext", "contains"]).optional().default("fulltext"),
+      search_mode: z.enum(["fulltext", "contains", "hybrid"]).optional().default("fulltext"),
       sort: z.enum(["relevance", "created_at", "name"]).optional().default("created_at"),
       order: z.enum(["asc", "desc"]).optional().default("desc"),
       include_deleted: z.coerce.boolean().optional().default(false),
