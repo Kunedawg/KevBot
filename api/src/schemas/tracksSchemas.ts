@@ -11,9 +11,8 @@ export function tracksSchemasFactory(config: Config) {
 
   const getTracksQuerySchema = z
     .object({
-      name: trackNameValidation.optional(),
       q: z.string().trim().min(1).max(MAX_SEARCH_QUERY_LENGTH).optional(),
-      search_mode: z.enum(["fulltext", "contains", "hybrid"]).optional().default("fulltext"),
+      search_mode: z.enum(["fulltext", "contains", "hybrid", "exact"]).optional().default("fulltext"),
       sort: z.enum(["relevance", "created_at", "name"]).optional().default("created_at"),
       order: z.enum(["asc", "desc"]).optional().default("desc"),
       include_deleted: z.coerce.boolean().optional().default(false),
@@ -22,13 +21,6 @@ export function tracksSchemasFactory(config: Config) {
     })
     .strict()
     .superRefine((params, ctx) => {
-      if (params.name && params.q) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Provide either 'name' or 'q', not both.",
-          path: ["name"],
-        });
-      }
       if (params.search_mode === "contains") {
         const queryLength = params.q?.length ?? 0;
         if (queryLength < MIN_CONTAINS_QUERY_LENGTH) {

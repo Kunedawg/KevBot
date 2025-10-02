@@ -5,12 +5,11 @@ import { Database } from "../db/schema";
 import * as Boom from "@hapi/boom";
 import { Bucket } from "@google-cloud/storage";
 
-type TrackSearchMode = "fulltext" | "contains" | "hybrid";
+type TrackSearchMode = "fulltext" | "contains" | "hybrid" | "exact";
 type TrackSortOption = "relevance" | "created_at" | "name";
 type TrackSortOrder = "asc" | "desc";
 
 interface TrackOptions {
-  name?: Track["name"];
   q?: string;
   search_mode?: TrackSearchMode;
   sort?: TrackSortOption;
@@ -119,34 +118,23 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
   }: Required<Pick<TrackOptions, "q" | "include_deleted" | "limit" | "offset">>) => {
     const searchContext = await buildHybridSearchContext(db, q, include_deleted);
 
-    let query = getTrackBaseQuery(db);
+    const data = await getTrackBaseQuery(db)
+      .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
+      .where(searchContext.filterExpression())
+      .orderBy(searchContext.prefixPriorityExpression(), "asc")
+      .orderBy(searchContext.prefixAlphaExpression(), "asc")
+      .$if(searchContext.includeNgram, (query) => query.orderBy(searchContext.relevanceExpression(), "desc"))
+      .orderBy("t.created_at", "desc")
+      .limit(limit)
+      .offset(offset)
+      .execute();
 
-    if (!include_deleted) {
-      query = query.where("t.deleted_at", "is", null);
-    }
-
-    query = query.where(searchContext.filterExpression());
-
-    query = query.orderBy(searchContext.prefixPriorityExpression(), "asc");
-    query = query.orderBy(searchContext.prefixAlphaExpression(), "asc");
-
-    if (searchContext.includeNgram) {
-      query = query.orderBy(searchContext.relevanceExpression(), "desc");
-    }
-
-    query = query.orderBy("t.created_at", "desc");
-
-    const data = await query.limit(limit).offset(offset).execute();
-
-    let countQuery = db.selectFrom("tracks as t").select(({ fn }) => fn.count<number>("t.id").as("total"));
-
-    if (!include_deleted) {
-      countQuery = countQuery.where("t.deleted_at", "is", null);
-    }
-
-    countQuery = countQuery.where(searchContext.filterExpression());
-
-    const { total } = await countQuery.executeTakeFirstOrThrow();
+    const { total } = await db
+      .selectFrom("tracks as t")
+      .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
+      .select(({ fn }) => fn.count<number>("t.id").as("total"))
+      .where(searchContext.filterExpression())
+      .executeTakeFirstOrThrow();
 
     return {
       data,
@@ -160,36 +148,36 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     };
   };
 
-  const applyTrackFilters = (
-    qb: SelectQueryBuilder<Database, any, any>,
+  const applyTrackQueryFilters = (
+    query: SelectQueryBuilder<Database, any, any>,
     {
       include_deleted = false,
-      name,
       q,
       search_mode = "fulltext",
-    }: Pick<TrackOptions, "include_deleted" | "name" | "q" | "search_mode">
+    }: Pick<TrackOptions, "include_deleted" | "q" | "search_mode">
   ): SelectQueryBuilder<Database, any, any> => {
-    let query = qb;
-    if (!include_deleted) {
-      query = query.where("t.deleted_at", "is", null);
-    }
-    if (name) {
-      query = query.where(sql<boolean>`t.name = ${name}`);
-    } else if (q) {
-      if (search_mode === "contains") {
-        query = query.where(sql<boolean>`t.name LIKE ${`%${q}%`}`);
-      } else if (search_mode === "fulltext") {
-        query = query.where(sql<boolean>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`);
-      } else {
-        // Hybrid search mode filters are applied in dedicated logic.
-      }
-    }
-    return query;
+    const trimmedQ = q?.trim();
+    return query
+      .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
+      .$if(!!trimmedQ, (query) => {
+        switch (search_mode) {
+          case "contains":
+            return query.where(sql<boolean>`t.name LIKE ${`%${trimmedQ}%`}`);
+          case "fulltext":
+            return query.where(sql<boolean>`MATCH(t.name) AGAINST (${trimmedQ} IN NATURAL LANGUAGE MODE)`);
+          case "hybrid":
+            return query;
+          case "exact":
+            return query.where(sql<boolean>`t.name = ${trimmedQ}`);
+          default:
+            const _never: never = search_mode as never;
+            return query;
+        }
+      });
   };
 
   const getTracks = async (options: TrackOptions = {}) => {
     const {
-      name,
       q,
       search_mode = "fulltext",
       sort = "created_at",
@@ -199,7 +187,6 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
       offset = 0,
     } = options;
 
-    const sanitizedOrder: TrackSortOrder = order === "asc" ? "asc" : "desc";
     if (q && search_mode === "hybrid") {
       return getTracksWithHybridSearch({
         q,
@@ -216,21 +203,21 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
       ? "created_at"
       : sort;
 
-    const countQuery = applyTrackFilters(
+    const countQuery = applyTrackQueryFilters(
       db.selectFrom("tracks as t").select(({ fn }) => fn.count<number>("t.id").as("total")),
-      { name, q, search_mode, include_deleted }
+      { q, search_mode, include_deleted }
     );
 
     const { total } = await countQuery.executeTakeFirstOrThrow();
 
-    let query = applyTrackFilters(getTrackBaseQuery(db), { name, q, search_mode, include_deleted });
+    let query = applyTrackQueryFilters(getTrackBaseQuery(db), { q, search_mode, include_deleted });
 
     if (q && search_mode === "fulltext" && fallbackSort === "relevance") {
       const relevanceExpression = sql<number>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`;
-      query = query.select(relevanceExpression.as("relevance")).orderBy("relevance", sanitizedOrder);
+      query = query.select(relevanceExpression.as("relevance")).orderBy("relevance", order);
     } else {
       const sortColumn = fallbackSort === "name" ? "t.name" : "t.created_at";
-      query = query.orderBy(sortColumn as "t.created_at" | "t.name", sanitizedOrder);
+      query = query.orderBy(sortColumn, order);
     }
 
     const data = await query.limit(limit).offset(offset).execute();
