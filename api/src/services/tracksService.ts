@@ -138,9 +138,7 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
 
     const data = await query.limit(limit).offset(offset).execute();
 
-    let countQuery = db
-      .selectFrom("tracks as t")
-      .select(({ fn }) => fn.count<number>("t.id").as("total"));
+    let countQuery = db.selectFrom("tracks as t").select(({ fn }) => fn.count<number>("t.id").as("total"));
 
     if (!include_deleted) {
       countQuery = countQuery.where("t.deleted_at", "is", null);
