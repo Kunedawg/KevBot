@@ -69,24 +69,18 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     const trimmedQuery = query.trim();
     const prefixPattern = `${trimmedQuery}%`;
 
-    let maxRelevanceQuery = dbTrx
+    const maxRelevanceRow = await dbTrx
       .selectFrom("tracks as t")
-      .select(sql<number>`MAX(MATCH(t.name) AGAINST (${trimmedQuery} IN NATURAL LANGUAGE MODE))`.as("max_relevance"));
+      .select(sql<number>`MAX(MATCH(t.name) AGAINST (${trimmedQuery} IN NATURAL LANGUAGE MODE))`.as("max_relevance"))
+      .$if(!includeDeleted, (query) => query.where("t.deleted_at", "is", null))
+      .where(sql<boolean>`MATCH(t.name) AGAINST (${trimmedQuery} IN NATURAL LANGUAGE MODE)`)
+      .executeTakeFirst();
 
-    if (!includeDeleted) {
-      maxRelevanceQuery = maxRelevanceQuery.where("t.deleted_at", "is", null);
-    }
-
-    maxRelevanceQuery = maxRelevanceQuery.where(
-      sql<boolean>`MATCH(t.name) AGAINST (${trimmedQuery} IN NATURAL LANGUAGE MODE)`
-    );
-
-    const maxRelevanceRow = await maxRelevanceQuery.executeTakeFirst();
     const maxRelevance = maxRelevanceRow?.max_relevance ?? 0;
     const relevanceThreshold = maxRelevance * HYBRID_RELEVANCE_RATIO;
-    const includeNgram = maxRelevance > 0;
+    const includeFullText = maxRelevance > 0;
 
-    const filterExpression = includeNgram
+    const filterExpression = includeFullText
       ? () =>
           sql<boolean>`
             t.name LIKE ${prefixPattern}
@@ -106,7 +100,7 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
       prefixPriorityExpression,
       prefixAlphaExpression,
       relevanceExpression,
-      includeNgram,
+      includeFullText,
     };
   };
 
@@ -123,7 +117,7 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
       .where(searchContext.filterExpression())
       .orderBy(searchContext.prefixPriorityExpression(), "asc")
       .orderBy(searchContext.prefixAlphaExpression(), "asc")
-      .$if(searchContext.includeNgram, (query) => query.orderBy(searchContext.relevanceExpression(), "desc"))
+      .$if(searchContext.includeFullText, (query) => query.orderBy(searchContext.relevanceExpression(), "desc"))
       .orderBy("t.created_at", "desc")
       .limit(limit)
       .offset(offset)
@@ -155,7 +149,7 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
       q,
       search_mode = "fulltext",
     }: Pick<TrackOptions, "include_deleted" | "q" | "search_mode">
-  ): SelectQueryBuilder<Database, any, any> => {
+  ) => {
     const trimmedQ = q?.trim();
     return query
       .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
@@ -196,6 +190,12 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
       });
     }
 
+    const { total } = await db
+      .selectFrom("tracks as t")
+      .select(({ fn }) => fn.count<number>("t.id").as("total"))
+      .$call((query) => applyTrackQueryFilters(query, { q, search_mode, include_deleted }))
+      .executeTakeFirstOrThrow();
+
     const shouldRankByRelevance = Boolean(q && search_mode === "fulltext" && sort === "relevance");
     const fallbackSort: TrackSortOption = shouldRankByRelevance
       ? "relevance"
@@ -203,24 +203,20 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
       ? "created_at"
       : sort;
 
-    const countQuery = applyTrackQueryFilters(
-      db.selectFrom("tracks as t").select(({ fn }) => fn.count<number>("t.id").as("total")),
-      { q, search_mode, include_deleted }
-    );
-
-    const { total } = await countQuery.executeTakeFirstOrThrow();
-
-    let query = applyTrackQueryFilters(getTrackBaseQuery(db), { q, search_mode, include_deleted });
-
-    if (q && search_mode === "fulltext" && fallbackSort === "relevance") {
-      const relevanceExpression = sql<number>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`;
-      query = query.select(relevanceExpression.as("relevance")).orderBy("relevance", order);
-    } else {
-      const sortColumn = fallbackSort === "name" ? "t.name" : "t.created_at";
-      query = query.orderBy(sortColumn, order);
-    }
-
-    const data = await query.limit(limit).offset(offset).execute();
+    const isFullTextSearch = !!q && search_mode === "fulltext" && fallbackSort === "relevance";
+    const data = await getTrackBaseQuery(db)
+      .$call((query) => applyTrackQueryFilters(query, { q, search_mode, include_deleted }))
+      .$if(isFullTextSearch, (query) => {
+        const relevanceExpression = sql<number>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`;
+        return query.select(relevanceExpression.as("relevance")).orderBy("relevance", order);
+      })
+      .$if(!isFullTextSearch, (query) => {
+        const sortColumn = fallbackSort === "name" ? "t.name" : "t.created_at";
+        return query.orderBy(sortColumn, order);
+      })
+      .limit(limit)
+      .offset(offset)
+      .execute();
 
     return {
       data,
@@ -237,26 +233,20 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
   const suggestTracks = async ({ q, limit = 10 }: TrackSuggestOptions) => {
     const startedAt = Date.now();
     const boundedLimit = Math.min(Math.max(limit, 1), 10);
-
     const trimmedQuery = q.trim();
     const searchContext = await buildHybridSearchContext(db, trimmedQuery, false);
 
-    let suggestionQuery = db
+    const suggestions = await db
       .selectFrom("tracks as t")
       .select(["t.id", "t.name"])
       .where("t.deleted_at", "is", null)
-      .where(searchContext.filterExpression());
-
-    suggestionQuery = suggestionQuery.orderBy(searchContext.prefixPriorityExpression(), "asc");
-    suggestionQuery = suggestionQuery.orderBy(searchContext.prefixAlphaExpression(), "asc");
-
-    if (searchContext.includeNgram) {
-      suggestionQuery = suggestionQuery.orderBy(searchContext.relevanceExpression(), "desc");
-    }
-
-    suggestionQuery = suggestionQuery.orderBy("t.created_at", "desc").limit(boundedLimit);
-
-    const suggestions = await suggestionQuery.execute();
+      .where(searchContext.filterExpression())
+      .orderBy(searchContext.prefixPriorityExpression(), "asc")
+      .orderBy(searchContext.prefixAlphaExpression(), "asc")
+      .$if(searchContext.includeFullText, (query) => query.orderBy(searchContext.relevanceExpression(), "desc"))
+      .orderBy("t.created_at", "desc")
+      .limit(boundedLimit)
+      .execute();
 
     return {
       suggestions,
