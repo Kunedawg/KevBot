@@ -84,61 +84,29 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
       ? () =>
           sql<boolean>`
             t.name LIKE ${prefixPattern}
-            OR (
-              NOT (t.name LIKE ${prefixPattern})
-              AND MATCH(t.name) AGAINST (${trimmedQuery} IN NATURAL LANGUAGE MODE) >= ${relevanceThreshold}
-            )
+            OR MATCH(t.name) AGAINST (${trimmedQuery} IN NATURAL LANGUAGE MODE) >= ${relevanceThreshold}
           `
       : () => sql<boolean>`t.name LIKE ${prefixPattern}`;
 
-    const prefixPriorityExpression = () => sql`CASE WHEN t.name LIKE ${prefixPattern} THEN 0 ELSE 1 END`;
-    const prefixAlphaExpression = () => sql`CASE WHEN t.name LIKE ${prefixPattern} THEN t.name ELSE NULL END`;
-    const relevanceExpression = () => sql<number>`MATCH(t.name) AGAINST (${trimmedQuery} IN NATURAL LANGUAGE MODE)`;
+    const searchQueryModifier = (
+      query: SelectQueryBuilder<Database, any, any>,
+      { limit, offset }: { limit: number | undefined; offset: number | undefined }
+    ) => {
+      return query
+        .where(filterExpression())
+        .orderBy(sql`CASE WHEN t.name LIKE ${prefixPattern} THEN 0 ELSE 1 END`, "asc")
+        .orderBy(sql`CASE WHEN t.name LIKE ${prefixPattern} THEN t.name ELSE NULL END`, "asc")
+        .$if(includeFullText, (query) =>
+          query.orderBy(sql<number>`MATCH(t.name) AGAINST (${trimmedQuery} IN NATURAL LANGUAGE MODE)`, "desc")
+        )
+        .orderBy("t.created_at", "desc")
+        .$if(limit !== undefined, (query) => query.limit(limit as number))
+        .$if(offset !== undefined, (query) => query.offset(offset as number));
+    };
 
     return {
       filterExpression,
-      prefixPriorityExpression,
-      prefixAlphaExpression,
-      relevanceExpression,
-      includeFullText,
-    };
-  };
-
-  const getTracksWithHybridSearch = async ({
-    q,
-    include_deleted = false,
-    limit,
-    offset,
-  }: Required<Pick<TrackOptions, "q" | "include_deleted" | "limit" | "offset">>) => {
-    const searchContext = await buildHybridSearchContext(db, q, include_deleted);
-
-    const data = await getTrackBaseQuery(db)
-      .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
-      .where(searchContext.filterExpression())
-      .orderBy(searchContext.prefixPriorityExpression(), "asc")
-      .orderBy(searchContext.prefixAlphaExpression(), "asc")
-      .$if(searchContext.includeFullText, (query) => query.orderBy(searchContext.relevanceExpression(), "desc"))
-      .orderBy("t.created_at", "desc")
-      .limit(limit)
-      .offset(offset)
-      .execute();
-
-    const { total } = await db
-      .selectFrom("tracks as t")
-      .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
-      .select(({ fn }) => fn.count<number>("t.id").as("total"))
-      .where(searchContext.filterExpression())
-      .executeTakeFirstOrThrow();
-
-    return {
-      data,
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasNext: offset + limit < total,
-        hasPrev: offset > 0,
-      },
+      searchQueryModifier,
     };
   };
 
@@ -182,12 +150,31 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     } = options;
 
     if (q && search_mode === "hybrid") {
-      return getTracksWithHybridSearch({
-        q,
-        include_deleted,
-        limit,
-        offset,
-      });
+      const searchContext = await buildHybridSearchContext(db, q, include_deleted);
+
+      const data = await getTrackBaseQuery(db)
+        .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
+        .$call((query) => searchContext.searchQueryModifier(query, { limit, offset }))
+        .execute();
+
+      const { total } = await db
+        .selectFrom("tracks as t")
+        .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
+        .select(({ fn }) => fn.countAll<number>().as("total"))
+        .select(({ fn }) => fn.countAll().as("total"))
+        .where(searchContext.filterExpression())
+        .executeTakeFirstOrThrow();
+
+      return {
+        data,
+        pagination: {
+          total,
+          limit,
+          offset,
+          hasNext: offset + limit < total,
+          hasPrev: offset > 0,
+        },
+      };
     }
 
     const { total } = await db
@@ -239,13 +226,7 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     const suggestions = await db
       .selectFrom("tracks as t")
       .select(["t.id", "t.name"])
-      .where("t.deleted_at", "is", null)
-      .where(searchContext.filterExpression())
-      .orderBy(searchContext.prefixPriorityExpression(), "asc")
-      .orderBy(searchContext.prefixAlphaExpression(), "asc")
-      .$if(searchContext.includeFullText, (query) => query.orderBy(searchContext.relevanceExpression(), "desc"))
-      .orderBy("t.created_at", "desc")
-      .limit(boundedLimit)
+      .$call((query) => searchContext.searchQueryModifier(query, { limit: boundedLimit, offset: 0 }))
       .execute();
 
     return {
