@@ -111,7 +111,7 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
   };
 
   const applyTrackQueryFilters = (
-    query: SelectQueryBuilder<Database, any, any>,
+    qb: SelectQueryBuilder<Database, any, any>,
     {
       include_deleted = false,
       q,
@@ -119,7 +119,7 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     }: Pick<TrackOptions, "include_deleted" | "q" | "search_mode">
   ) => {
     const trimmedQ = q?.trim();
-    return query
+    return qb
       .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
       .$if(!!trimmedQ, (query) => {
         switch (search_mode) {
@@ -152,21 +152,60 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     if (q && search_mode === "hybrid") {
       const searchContext = await buildHybridSearchContext(db, q, include_deleted);
 
-      const data = await getTrackBaseQuery(db)
-        .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
-        .$call((query) => searchContext.searchQueryModifier(query, { limit, offset }))
-        .execute();
+      // const data = await getTrackBaseQuery(db)
+      //   .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
+      //   .$call((query) => searchContext.searchQueryModifier(query, { limit, offset }))
+      //   .execute();
 
       const { total } = await db
         .selectFrom("tracks as t")
         .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
         .select(({ fn }) => fn.countAll<number>().as("total"))
-        .select(({ fn }) => fn.countAll().as("total"))
         .where(searchContext.filterExpression())
         .executeTakeFirstOrThrow();
 
+      const trimmedQuery = q.trim();
+      const prefixPattern = `${trimmedQuery}%`;
+
+      const data = await db
+        .with("scored", (db) =>
+          db
+            .selectFrom("tracks")
+            .select((eb) => ["id", "name", sql<number>`MATCH(name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`.as("rel")])
+            .where("deleted_at", "is", null)
+        )
+        .with("mx", (db) => db.selectFrom("scored").select((eb) => [sql<number>`MAX(rel)`.as("max_rel")]))
+        .selectFrom("tracks as t")
+        .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
+        .select(({ fn }) => [
+          "t.id",
+          "t.name",
+          "t.duration",
+          "t.user_id",
+          "t.deleted_at",
+          "t.created_at",
+          "t.updated_at",
+          fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
+          fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+        ])
+        .innerJoin("scored", "t.id", "scored.id")
+        .innerJoin("mx", (join) => join.onTrue())
+        .where(
+          sql<boolean>`
+            t.name LIKE ${prefixPattern}
+            OR ( scored.rel > 0 AND scored.rel >= ${HYBRID_RELEVANCE_RATIO} * mx.max_rel )
+          `
+        )
+        .orderBy(sql`CASE WHEN t.name LIKE ${prefixPattern} THEN 0 ELSE 1 END`, "asc")
+        .orderBy(sql`CASE WHEN t.name LIKE ${prefixPattern} THEN t.name ELSE NULL END`, "asc")
+        .orderBy(sql<number>`MATCH(t.name) AGAINST (${trimmedQuery} IN NATURAL LANGUAGE MODE)`, "desc")
+        .orderBy("t.created_at", "desc")
+        .limit(limit)
+        .offset(offset)
+        .execute();
+
       return {
-        data,
+        data: test,
         pagination: {
           total,
           limit,
@@ -179,7 +218,7 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
 
     const { total } = await db
       .selectFrom("tracks as t")
-      .select(({ fn }) => fn.count<number>("t.id").as("total"))
+      .select(({ fn }) => fn.countAll<number>().as("total"))
       .$call((query) => applyTrackQueryFilters(query, { q, search_mode, include_deleted }))
       .executeTakeFirstOrThrow();
 
@@ -204,6 +243,16 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
       .limit(limit)
       .offset(offset)
       .execute();
+
+    // .where(filterExpression())
+    // .orderBy(sql`CASE WHEN t.name LIKE ${prefixPattern} THEN 0 ELSE 1 END`, "asc")
+    // .orderBy(sql`CASE WHEN t.name LIKE ${prefixPattern} THEN t.name ELSE NULL END`, "asc")
+    // .$if(includeFullText, (query) =>
+    //   query.orderBy(sql<number>`MATCH(t.name) AGAINST (${trimmedQuery} IN NATURAL LANGUAGE MODE)`, "desc")
+    // )
+    // .orderBy("t.created_at", "desc")
+    // .$if(limit !== undefined, (query) => query.limit(limit as number))
+    // .$if(offset !== undefined, (query) => query.offset(offset as number));
 
     return {
       data,
