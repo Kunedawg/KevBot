@@ -152,11 +152,6 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     if (q && search_mode === "hybrid") {
       const searchContext = await buildHybridSearchContext(db, q, include_deleted);
 
-      // const data = await getTrackBaseQuery(db)
-      //   .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
-      //   .$call((query) => searchContext.searchQueryModifier(query, { limit, offset }))
-      //   .execute();
-
       const { total } = await db
         .selectFrom("tracks as t")
         .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
@@ -164,17 +159,23 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
         .where(searchContext.filterExpression())
         .executeTakeFirstOrThrow();
 
-      const trimmedQuery = q.trim();
-      const prefixPattern = `${trimmedQuery}%`;
-
       const data = await db
         .with("scored", (db) =>
           db
             .selectFrom("tracks")
-            .select((eb) => ["id", "name", sql<number>`MATCH(name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`.as("rel")])
+            .select((eb) => [
+              "id",
+              sql<number>`MATCH(name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`.as("rel"),
+              sql<boolean>`name LIKE CONCAT(${q}, '%')`.as("is_prefix"),
+            ])
             .where("deleted_at", "is", null)
         )
-        .with("mx", (db) => db.selectFrom("scored").select((eb) => [sql<number>`MAX(rel)`.as("max_rel")]))
+        .with("scored_with_max", (db) =>
+          db
+            .selectFrom("scored as s")
+            .selectAll()
+            .select((eb) => [sql<number>`MAX(s.rel) OVER ()`.as("max_rel")])
+        )
         .selectFrom("tracks as t")
         .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
         .select(({ fn }) => [
@@ -188,24 +189,23 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
           fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
           fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
         ])
-        .innerJoin("scored", "t.id", "scored.id")
-        .innerJoin("mx", (join) => join.onTrue())
+        .innerJoin("scored_with_max as s", "t.id", "s.id")
         .where(
           sql<boolean>`
-            t.name LIKE ${prefixPattern}
-            OR ( scored.rel > 0 AND scored.rel >= ${HYBRID_RELEVANCE_RATIO} * mx.max_rel )
+            s.is_prefix
+            OR ( s.rel > 0 AND s.rel >= ${HYBRID_RELEVANCE_RATIO}*s.max_rel)
           `
         )
-        .orderBy(sql`CASE WHEN t.name LIKE ${prefixPattern} THEN 0 ELSE 1 END`, "asc")
-        .orderBy(sql`CASE WHEN t.name LIKE ${prefixPattern} THEN t.name ELSE NULL END`, "asc")
-        .orderBy(sql<number>`MATCH(t.name) AGAINST (${trimmedQuery} IN NATURAL LANGUAGE MODE)`, "desc")
+        .orderBy(sql`CASE WHEN s.is_prefix THEN 0 ELSE 1 END`, "asc")
+        .orderBy(sql`CASE WHEN s.is_prefix THEN t.name ELSE NULL END`, "asc")
+        .orderBy(sql<number>`s.rel`, "desc")
         .orderBy("t.created_at", "desc")
         .limit(limit)
         .offset(offset)
         .execute();
 
       return {
-        data: test,
+        data,
         pagination: {
           total,
           limit,
