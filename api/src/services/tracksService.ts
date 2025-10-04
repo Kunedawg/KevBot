@@ -163,7 +163,7 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
         .with("scored", (db) =>
           db
             .selectFrom("tracks")
-            .select((eb) => [
+            .select([
               "id",
               sql<number>`MATCH(name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`.as("rel"),
               sql<boolean>`name LIKE CONCAT(${q}, '%')`.as("is_prefix"),
@@ -174,7 +174,7 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
           db
             .selectFrom("scored as s")
             .selectAll()
-            .select((eb) => [sql<number>`MAX(s.rel) OVER ()`.as("max_rel")])
+            .select(sql<number>`MAX(s.rel) OVER ()`.as("max_rel"))
         )
         .selectFrom("tracks as t")
         .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
@@ -192,22 +192,95 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
         .innerJoin("scored_with_max as s", "t.id", "s.id")
         .where(
           sql<boolean>`
-            s.is_prefix
+            s.is_prefix = 1
             OR ( s.rel > 0 AND s.rel >= ${HYBRID_RELEVANCE_RATIO}*s.max_rel)
           `
         )
-        .orderBy(sql`CASE WHEN s.is_prefix THEN 0 ELSE 1 END`, "asc")
-        .orderBy(sql`CASE WHEN s.is_prefix THEN t.name ELSE NULL END`, "asc")
+        .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN 0 ELSE 1 END`, "asc")
+        .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN t.name ELSE NULL END`, "asc")
         .orderBy(sql<number>`s.rel`, "desc")
-        .orderBy("t.created_at", "desc")
+        .orderBy("t.name", "asc")
         .limit(limit)
         .offset(offset)
         .execute();
 
+      const trimmed = q.trim();
+
+      const rows = await db
+        // 1) Base candidates with rel/is_prefix
+        .with("scored", (db) =>
+          db
+            .selectFrom("tracks as t")
+            .selectAll()
+            .select((eb) => [
+              // "t.id",
+              // "t.name",
+              // "t.created_at",
+              sql<number>`MATCH(t.name) AGAINST (${trimmed} IN NATURAL LANGUAGE MODE)`.as("rel"),
+              sql<boolean>`t.name LIKE CONCAT(${trimmed}, '%')`.as("is_prefix"),
+            ])
+            .$if(!include_deleted, (q) => q.where("t.deleted_at", "is", null))
+            .where((eb) =>
+              eb.or([
+                sql<boolean>`t.name LIKE CONCAT(${trimmed}, '%')`,
+                sql<boolean>`MATCH(t.name) AGAINST (${trimmed} IN NATURAL LANGUAGE MODE)`,
+              ])
+            )
+        )
+        // 2) Add max_rel over the candidate set
+        .with("aug", (db) =>
+          db
+            .selectFrom("scored as s")
+            .selectAll()
+            .select(sql<number>`MAX(s.rel) OVER ()`.as("max_rel"))
+        )
+        // 3) Apply the hybrid cutoff -> only kept rows remain
+        .with("kept", (db) =>
+          db
+            .selectFrom("aug as s")
+            .selectAll()
+            .where(sql<boolean>`s.is_prefix = 1 OR (s.rel > 0 AND s.rel >= ${HYBRID_RELEVANCE_RATIO} * s.max_rel)`)
+        )
+        // 4) Join extras and compute total AFTER the cutoff
+        .selectFrom("kept as s")
+        .leftJoin("track_play_counts as tpc", "s.id", "tpc.track_id")
+        .select(({ fn }) => [
+          "s.id",
+          "s.name",
+          "s.duration",
+          "s.user_id",
+          "s.deleted_at",
+          "s.created_at",
+          "s.updated_at",
+
+          // "s.id",
+          // "s.name",
+          // "s.created_at",
+          // "s.rel",
+          // "s.is_prefix",
+          // correct: total AFTER the filter
+          sql<number>`COUNT(*) OVER ()`.as("total_rows"),
+          fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
+          fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+        ])
+        .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN 0 ELSE 1 END`, "asc")
+        .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN s.name ELSE NULL END`, "asc")
+        .orderBy("s.rel", "desc")
+        .orderBy("s.name", "asc")
+        .limit(limit)
+        .offset(offset)
+        .execute();
+
+      const new_total = rows.length ? Number(rows[0].total_rows) : 0;
+
+      // const new_data = rows;
+
+      const new_data = rows.map(({ total_rows, ...rest }) => rest);
+
       return {
-        data,
+        data: new_data,
         pagination: {
-          total,
+          total: new_total,
           limit,
           offset,
           hasNext: offset + limit < total,
