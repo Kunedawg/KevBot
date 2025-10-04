@@ -150,72 +150,14 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     } = options;
 
     if (q && search_mode === "hybrid") {
-      const searchContext = await buildHybridSearchContext(db, q, include_deleted);
-
-      const { total } = await db
-        .selectFrom("tracks as t")
-        .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
-        .select(({ fn }) => fn.countAll<number>().as("total"))
-        .where(searchContext.filterExpression())
-        .executeTakeFirstOrThrow();
-
-      const data = await db
-        .with("scored", (db) =>
-          db
-            .selectFrom("tracks")
-            .select([
-              "id",
-              sql<number>`MATCH(name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`.as("rel"),
-              sql<boolean>`name LIKE CONCAT(${q}, '%')`.as("is_prefix"),
-            ])
-            .where("deleted_at", "is", null)
-        )
-        .with("scored_with_max", (db) =>
-          db
-            .selectFrom("scored as s")
-            .selectAll()
-            .select(sql<number>`MAX(s.rel) OVER ()`.as("max_rel"))
-        )
-        .selectFrom("tracks as t")
-        .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
-        .select(({ fn }) => [
-          "t.id",
-          "t.name",
-          "t.duration",
-          "t.user_id",
-          "t.deleted_at",
-          "t.created_at",
-          "t.updated_at",
-          fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
-          fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
-        ])
-        .innerJoin("scored_with_max as s", "t.id", "s.id")
-        .where(
-          sql<boolean>`
-            s.is_prefix = 1
-            OR ( s.rel > 0 AND s.rel >= ${HYBRID_RELEVANCE_RATIO}*s.max_rel)
-          `
-        )
-        .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN 0 ELSE 1 END`, "asc")
-        .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN t.name ELSE NULL END`, "asc")
-        .orderBy(sql<number>`s.rel`, "desc")
-        .orderBy("t.name", "asc")
-        .limit(limit)
-        .offset(offset)
-        .execute();
-
       const trimmed = q.trim();
 
       const rows = await db
-        // 1) Base candidates with rel/is_prefix
         .with("scored", (db) =>
           db
             .selectFrom("tracks as t")
             .selectAll()
             .select((eb) => [
-              // "t.id",
-              // "t.name",
-              // "t.created_at",
               sql<number>`MATCH(t.name) AGAINST (${trimmed} IN NATURAL LANGUAGE MODE)`.as("rel"),
               sql<boolean>`t.name LIKE CONCAT(${trimmed}, '%')`.as("is_prefix"),
             ])
@@ -227,22 +169,24 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
               ])
             )
         )
-        // 2) Add max_rel over the candidate set
         .with("aug", (db) =>
           db
             .selectFrom("scored as s")
             .selectAll()
             .select(sql<number>`MAX(s.rel) OVER ()`.as("max_rel"))
         )
-        // 3) Apply the hybrid cutoff -> only kept rows remain
         .with("kept", (db) =>
           db
             .selectFrom("aug as s")
             .selectAll()
-            .where(sql<boolean>`s.is_prefix = 1 OR (s.rel > 0 AND s.rel >= ${HYBRID_RELEVANCE_RATIO} * s.max_rel)`)
+            .where((eb) =>
+              eb.or([
+                sql<boolean>`s.is_prefix = 1`,
+                eb.and([sql<boolean>`s.rel > 0`, sql<boolean>`s.rel >= ${HYBRID_RELEVANCE_RATIO} * s.max_rel`]),
+              ])
+            )
         )
-        // 4) Join extras and compute total AFTER the cutoff
-        .selectFrom("kept as s")
+        .selectFrom("aug as s")
         .leftJoin("track_play_counts as tpc", "s.id", "tpc.track_id")
         .select(({ fn }) => [
           "s.id",
@@ -252,13 +196,6 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
           "s.deleted_at",
           "s.created_at",
           "s.updated_at",
-
-          // "s.id",
-          // "s.name",
-          // "s.created_at",
-          // "s.rel",
-          // "s.is_prefix",
-          // correct: total AFTER the filter
           sql<number>`COUNT(*) OVER ()`.as("total_rows"),
           fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
           fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
@@ -271,16 +208,14 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
         .offset(offset)
         .execute();
 
-      const new_total = rows.length ? Number(rows[0].total_rows) : 0;
+      const total = rows.length ? Number(rows[0].total_rows) : 0;
 
-      // const new_data = rows;
-
-      const new_data = rows.map(({ total_rows, ...rest }) => rest);
+      const data = rows.map(({ total_rows, ...rest }) => rest);
 
       return {
-        data: new_data,
+        data,
         pagination: {
-          total: new_total,
+          total,
           limit,
           offset,
           hasNext: offset + limit < total,
@@ -316,16 +251,6 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
       .limit(limit)
       .offset(offset)
       .execute();
-
-    // .where(filterExpression())
-    // .orderBy(sql`CASE WHEN t.name LIKE ${prefixPattern} THEN 0 ELSE 1 END`, "asc")
-    // .orderBy(sql`CASE WHEN t.name LIKE ${prefixPattern} THEN t.name ELSE NULL END`, "asc")
-    // .$if(includeFullText, (query) =>
-    //   query.orderBy(sql<number>`MATCH(t.name) AGAINST (${trimmedQuery} IN NATURAL LANGUAGE MODE)`, "desc")
-    // )
-    // .orderBy("t.created_at", "desc")
-    // .$if(limit !== undefined, (query) => query.limit(limit as number))
-    // .$if(offset !== undefined, (query) => query.offset(offset as number));
 
     return {
       data,
