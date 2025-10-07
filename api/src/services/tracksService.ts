@@ -224,10 +224,28 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
       };
     }
 
+    const trimmedQ = q?.trim();
+
     const { total } = await db
       .selectFrom("tracks as t")
       .select(({ fn }) => fn.countAll<number>().as("total"))
-      .$call((query) => applyTrackQueryFilters(query, { q, search_mode, include_deleted }))
+      // .$call((query) => applyTrackQueryFilters(query, { q, search_mode, include_deleted }))
+      .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
+      .$if(!!trimmedQ, (query) => {
+        switch (search_mode) {
+          case "contains":
+            return query.where(sql<boolean>`t.name LIKE ${`%${trimmedQ}%`}`);
+          case "fulltext":
+            return query.where(sql<boolean>`MATCH(t.name) AGAINST (${trimmedQ} IN NATURAL LANGUAGE MODE)`);
+          case "hybrid":
+            return query;
+          case "exact":
+            return query.where(sql<boolean>`t.name = ${trimmedQ}`);
+          default:
+            const _never: never = search_mode as never;
+            return query;
+        }
+      })
       .executeTakeFirstOrThrow();
 
     const shouldRankByRelevance = Boolean(q && search_mode === "fulltext" && sort === "relevance");
@@ -239,7 +257,22 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
 
     const isFullTextSearch = !!q && search_mode === "fulltext" && fallbackSort === "relevance";
     const data = await getTrackBaseQuery(db)
-      .$call((query) => applyTrackQueryFilters(query, { q, search_mode, include_deleted }))
+      .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
+      .$if(!!trimmedQ, (query) => {
+        switch (search_mode) {
+          case "contains":
+            return query.where(sql<boolean>`t.name LIKE ${`%${trimmedQ}%`}`);
+          case "fulltext":
+            return query.where(sql<boolean>`MATCH(t.name) AGAINST (${trimmedQ} IN NATURAL LANGUAGE MODE)`);
+          case "hybrid":
+            return query;
+          case "exact":
+            return query.where(sql<boolean>`t.name = ${trimmedQ}`);
+          default:
+            const _never: never = search_mode as never;
+            return query;
+        }
+      })
       .$if(isFullTextSearch, (query) => {
         const relevanceExpression = sql<number>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`;
         return query.select(relevanceExpression.as("relevance")).orderBy("relevance", order);
