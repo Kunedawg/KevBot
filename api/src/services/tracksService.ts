@@ -24,6 +24,44 @@ export const getTrackBaseQuery = (dbTrx: Kysely<Database> | Transaction<Database
     ]);
 };
 
+const hybridQueryBase = (db: Kysely<Database>, q: string, include_deleted: boolean, config: Config) => {
+  return db
+    .with("scored", (db) =>
+      db
+        .selectFrom("tracks as t")
+        .selectAll()
+        .select((eb) => [
+          sql<number>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`.as("rel"),
+          sql<boolean>`t.name LIKE CONCAT(${q}, '%')`.as("is_prefix"),
+        ])
+        .$if(!include_deleted, (q) => q.where("t.deleted_at", "is", null))
+        .where((eb) =>
+          eb.or([
+            sql<boolean>`t.name LIKE CONCAT(${q}, '%')`,
+            sql<boolean>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`,
+          ])
+        )
+    )
+    .with("aug", (db) =>
+      db
+        .selectFrom("scored as s")
+        .selectAll()
+        .select(sql<number>`MAX(s.rel) OVER ()`.as("max_rel"))
+    )
+    .with("kept", (db) =>
+      db
+        .selectFrom("aug as s")
+        .selectAll()
+        .where((eb) =>
+          eb.or([
+            sql<boolean>`s.is_prefix = 1`,
+            eb.and([sql<boolean>`s.rel > 0`, sql<boolean>`s.rel >= ${config.hybridRelevanceRatio} * s.max_rel`]),
+          ])
+        )
+    )
+    .selectFrom("aug as s");
+};
+
 export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config: Config) {
   const validateTrackNameIsUnique = async (name: string, excludeId?: number) => {
     let query = db.selectFrom("tracks").selectAll().where("name", "=", name).where("deleted_at", "is", null);
@@ -48,41 +86,7 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
     limit,
     offset,
   }: GetTracksQuerySchemaForKind<"hybrid">) => {
-    const rows = await db
-      .with("scored", (db) =>
-        db
-          .selectFrom("tracks as t")
-          .selectAll()
-          .select((eb) => [
-            sql<number>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`.as("rel"),
-            sql<boolean>`t.name LIKE CONCAT(${q}, '%')`.as("is_prefix"),
-          ])
-          .$if(!include_deleted, (q) => q.where("t.deleted_at", "is", null))
-          .where((eb) =>
-            eb.or([
-              sql<boolean>`t.name LIKE CONCAT(${q}, '%')`,
-              sql<boolean>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`,
-            ])
-          )
-      )
-      .with("aug", (db) =>
-        db
-          .selectFrom("scored as s")
-          .selectAll()
-          .select(sql<number>`MAX(s.rel) OVER ()`.as("max_rel"))
-      )
-      .with("kept", (db) =>
-        db
-          .selectFrom("aug as s")
-          .selectAll()
-          .where((eb) =>
-            eb.or([
-              sql<boolean>`s.is_prefix = 1`,
-              eb.and([sql<boolean>`s.rel > 0`, sql<boolean>`s.rel >= ${config.hybridRelevanceRatio} * s.max_rel`]),
-            ])
-          )
-      )
-      .selectFrom("aug as s")
+    const rows = await hybridQueryBase(db, q, include_deleted, config)
       .leftJoin("track_play_counts as tpc", "s.id", "tpc.track_id")
       .select(({ fn }) => [
         "s.id",
@@ -106,10 +110,8 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
 
     const total = rows.length ? Number(rows[0].total_rows) : 0;
 
-    const data = rows.map(({ total_rows, ...rest }) => rest);
-
     return {
-      data,
+      data: rows.map(({ total_rows, ...rest }) => rest),
       pagination: {
         total,
         limit,
@@ -273,42 +275,8 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
   const suggestTracks = async ({ q, limit }: { q: string; limit: number }) => {
     const startedAt = Date.now();
 
-    const rows = await db
-      .with("scored", (db) =>
-        db
-          .selectFrom("tracks as t")
-          .selectAll()
-          .select((eb) => [
-            sql<number>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`.as("rel"),
-            sql<boolean>`t.name LIKE CONCAT(${q}, '%')`.as("is_prefix"),
-          ])
-          .where((eb) =>
-            eb.or([
-              sql<boolean>`t.name LIKE CONCAT(${q}, '%')`,
-              sql<boolean>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`,
-            ])
-          )
-      )
-      .with("aug", (db) =>
-        db
-          .selectFrom("scored as s")
-          .selectAll()
-          .select(sql<number>`MAX(s.rel) OVER ()`.as("max_rel"))
-      )
-      .with("kept", (db) =>
-        db
-          .selectFrom("aug as s")
-          .selectAll()
-          .where((eb) =>
-            eb.or([
-              sql<boolean>`s.is_prefix = 1`,
-              eb.and([sql<boolean>`s.rel > 0`, sql<boolean>`s.rel >= ${config.hybridRelevanceRatio} * s.max_rel`]),
-            ])
-          )
-      )
-      .selectFrom("aug as s")
-      .leftJoin("track_play_counts as tpc", "s.id", "tpc.track_id")
-      .select(({ fn }) => ["s.id", "s.name"])
+    const rows = await hybridQueryBase(db, q, false, config)
+      .select(["s.id", "s.name"])
       .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN 0 ELSE 1 END`, "asc")
       .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN s.name ELSE NULL END`, "asc")
       .orderBy("s.rel", "desc")
