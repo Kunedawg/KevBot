@@ -2,6 +2,24 @@ import { z } from "zod";
 import { trackNameValidationFactory } from "./sharedSchemas";
 import { Config } from "../config/config";
 
+export type SearchQuerySchema =
+  | { kind: "fulltext"; q: string }
+  | { kind: "contains"; q: string; sort: "name" | "created_at"; order: "asc" | "desc" }
+  | { kind: "hybrid"; q: string }
+  | { kind: "exact"; q: string }
+  | { kind: "browse"; sort: "name" | "created_at"; order: "asc" | "desc" };
+
+export type GetTracksQuerySchema = {
+  search: SearchQuerySchema;
+  include_deleted: boolean;
+  limit: number;
+  offset: number;
+};
+
+export type GetTracksQuerySchemaForKind<K extends SearchQuerySchema["kind"]> = Omit<GetTracksQuerySchema, "search"> & {
+  search: Extract<SearchQuerySchema, { kind: K }>;
+};
+
 const MAX_SEARCH_QUERY_LENGTH = 200;
 const MIN_CONTAINS_QUERY_LENGTH = 2;
 const MAX_SUGGEST_LIMIT = 10;
@@ -9,94 +27,150 @@ const MAX_SUGGEST_LIMIT = 10;
 export function tracksSchemasFactory(config: Config) {
   const trackNameValidation = trackNameValidationFactory(config);
 
-  const getTracksQuerySchema = z
+  const RawGetRacksQuerySchema = z
     .object({
       q: z.string().trim().min(1).max(MAX_SEARCH_QUERY_LENGTH).optional(),
       search_mode: z.enum(["fulltext", "contains", "hybrid", "exact"]).optional(),
-      sort: z.enum(["relevance", "created_at", "name"]).optional().default("created_at"),
-      order: z.enum(["asc", "desc"]).optional().default("desc"),
-      include_deleted: z.coerce.boolean().optional().default(false),
-      limit: z.coerce.number().int().min(1).max(config.maxTracksPerPage).optional().default(20),
-      offset: z.coerce.number().int().min(0).optional().default(0),
+      sort: z.enum(["relevance", "created_at", "name"]).optional(),
+      order: z.enum(["asc", "desc"]).optional(),
+      include_deleted: z.coerce.boolean().default(false),
+      limit: z.coerce.number().int().min(1).max(config.maxTracksPerPage).default(20),
+      offset: z.coerce.number().int().min(0).default(0),
     })
-    .strict()
-    .superRefine((params, ctx) => {
-      const q = params.q;
+    .strict();
 
-      if ((params.search_mode && !q) || (!params.search_mode && q)) {
+  const getTracksQuerySchema: z.ZodType<
+    GetTracksQuerySchema,
+    any,
+    z.input<typeof RawGetRacksQuerySchema>
+  > = RawGetRacksQuerySchema.transform((raw, ctx) => {
+    const base = {
+      include_deleted: raw.include_deleted,
+      limit: raw.limit,
+      offset: raw.offset,
+    };
+
+    // No q => browse mode (list view)
+    if (!raw.q) {
+      if (!raw.sort) {
+        raw.sort = "created_at";
+      }
+      if (raw.sort === "relevance") {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Query 'q' is required for ${params.search_mode} search.`,
-          path: ["q"],
+          path: ["sort"],
+          message: `Sort must be 'name' or 'created_at' for browse mode.`,
         });
+        return z.NEVER;
       }
+      if (raw.search_mode) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["search_mode"],
+          message: `Search mode must be omitted for browse mode.`,
+        });
+        return z.NEVER;
+      }
+      return {
+        ...base,
+        search: { kind: "browse", sort: raw.sort, order: raw.order ?? "desc" },
+      };
+    }
 
-      if (params.search_mode === "contains") {
-        const queryLength = q?.length ?? 0;
-        if (queryLength < MIN_CONTAINS_QUERY_LENGTH) {
+    if (!raw.search_mode) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["search_mode"],
+        message: `Search mode is required when q is provided.`,
+      });
+      return z.NEVER;
+    }
+
+    // With q => branch by search_mode
+    switch (raw.search_mode) {
+      case "contains": {
+        if (!raw.sort) {
+          raw.sort = "created_at";
+        }
+        if (raw.q.length < MIN_CONTAINS_QUERY_LENGTH) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `Query must be at least ${MIN_CONTAINS_QUERY_LENGTH} characters when using contains search.`,
             path: ["q"],
+            message: `Query must be at least ${MIN_CONTAINS_QUERY_LENGTH} characters for contains search.`,
           });
+          return z.NEVER;
         }
-
-        if (!["name", "created_at"].includes(params.sort)) {
+        if (raw.sort === "relevance") {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `For 'contains', sort must be 'name' or 'created_at'.`,
             path: ["sort"],
+            message: `Sort must be 'name' or 'created_at' for contains search.`,
           });
+          return z.NEVER;
         }
+        return { ...base, search: { kind: "contains", q: raw.q, sort: raw.sort, order: raw.order ?? "desc" } };
       }
 
-      if (params.search_mode === "fulltext") {
-        if (!["relevance", "created_at", "name"].includes(params.sort)) {
+      case "fulltext": {
+        if (raw.sort) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `For 'fulltext', sort must be 'relevance', 'created_at', or 'name'.`,
             path: ["sort"],
+            message: `Sort must be omitted for fulltext search.`,
           });
+          return z.NEVER;
         }
-        if (params.sort === "relevance" && params.order !== "desc") {
+        if (raw.order) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `When sorting by 'relevance', order must be 'desc'.`,
             path: ["order"],
+            message: `Order must be omitted for fulltext search. (Always 'desc')`,
           });
+          return z.NEVER;
         }
+        return { ...base, search: { kind: "fulltext", q: raw.q } };
       }
 
-      // 4) hybrid: sort is implied; reject any explicit sort/order
-      if (params.search_mode === "hybrid") {
-        if (params.sort !== "relevance") {
+      case "hybrid":
+        if (raw.sort) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `For 'hybrid', sorting is implied by the hybrid ranking. Use 'relevance' or omit 'sort'.`,
             path: ["sort"],
+            message: `Sort must be omitted for hybrid search.`,
           });
+          return z.NEVER;
         }
-        if (params.order !== "desc") {
+        if (raw.order) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `For 'hybrid', order is implied (descending relevance). Use 'desc' or omit 'order'.`,
             path: ["order"],
+            message: `Order must be omitted for hybrid search. (Always 'desc')`,
           });
+          return z.NEVER;
         }
-      }
+        return { ...base, search: { kind: "hybrid", q: raw.q } };
 
-      // 5) exact: ignore sort; if you want to be strict, forbid it
-      if (params.search_mode === "exact") {
-        if (params.sort !== "created_at" || params.order !== "desc") {
-          // You could also just accept anything and ignore it in the query layer.
+      case "exact":
+        if (raw.sort) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `For 'exact', results are unique; sorting is not applicable. Use 'created_at' + 'desc' as a tie-breaker only.`,
             path: ["sort"],
+            message: `Sort must be omitted for exact search.`,
           });
+          return z.NEVER;
         }
-      }
-    });
+        if (raw.order) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["order"],
+            message: `Order must be omitted for exact search.`,
+          });
+          return z.NEVER;
+        }
+        return { ...base, search: { kind: "exact", q: raw.q } };
+    }
+  });
+
   const suggestTracksQuerySchema = z
     .object({
       q: z.string().trim().min(1).max(MAX_SEARCH_QUERY_LENGTH),
