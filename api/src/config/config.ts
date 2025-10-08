@@ -45,6 +45,10 @@ const configSchema = z.object({
       "expectedDbVersion must be a valid semantic version (e.g., 2.10.0, 1.0.0-beta, etc.)"
     ),
   maxTracksPerPage: z.number().int().positive(),
+  maxSearchQueryLength: z.number().int().positive(),
+  minContainsQueryLength: z.number().int().positive(),
+  maxSuggestLimit: z.number().int().positive(),
+  hybridRelevanceRatio: z.number().positive(),
 });
 
 export type Secrets = z.infer<typeof secretsSchema>;
@@ -75,6 +79,10 @@ export function configFactory(): AppConfig {
       acceptableIntegratedLoudnessBand: 2.5,
       acceptableDurationChangeInSeconds: 0.01,
       maxTracksPerPage: 100,
+      maxSearchQueryLength: 200,
+      minContainsQueryLength: 2,
+      maxSuggestLimit: 10,
+      hybridRelevanceRatio: 0.5,
     };
     const validatedSecrets = secretsSchema.parse(secrets);
     const validatedConfig = configSchema.parse(config);

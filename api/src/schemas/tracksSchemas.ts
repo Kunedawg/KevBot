@@ -20,16 +20,12 @@ export type GetTracksQuerySchemaForKind<K extends SearchQuerySchema["kind"]> = O
   search: Extract<SearchQuerySchema, { kind: K }>;
 };
 
-const MAX_SEARCH_QUERY_LENGTH = 200;
-const MIN_CONTAINS_QUERY_LENGTH = 2;
-const MAX_SUGGEST_LIMIT = 10;
-
 export function tracksSchemasFactory(config: Config) {
   const trackNameValidation = trackNameValidationFactory(config);
 
   const RawGetRacksQuerySchema = z
     .object({
-      q: z.string().trim().min(1).max(MAX_SEARCH_QUERY_LENGTH).optional(),
+      q: z.string().trim().min(1).max(config.maxSearchQueryLength).optional(),
       search_mode: z.enum(["fulltext", "contains", "hybrid", "exact"]).optional(),
       sort: z.enum(["relevance", "created_at", "name"]).optional(),
       order: z.enum(["asc", "desc"]).optional(),
@@ -92,11 +88,11 @@ export function tracksSchemasFactory(config: Config) {
         if (!raw.sort) {
           raw.sort = "created_at";
         }
-        if (raw.q.length < MIN_CONTAINS_QUERY_LENGTH) {
+        if (raw.q.length < config.minContainsQueryLength) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ["q"],
-            message: `Query must be at least ${MIN_CONTAINS_QUERY_LENGTH} characters for contains search.`,
+            message: `Query must be at least ${config.minContainsQueryLength} characters for contains search.`,
           });
           return z.NEVER;
         }
@@ -173,8 +169,8 @@ export function tracksSchemasFactory(config: Config) {
 
   const suggestTracksQuerySchema = z
     .object({
-      q: z.string().trim().min(1).max(MAX_SEARCH_QUERY_LENGTH),
-      limit: z.coerce.number().int().min(1).max(MAX_SUGGEST_LIMIT).optional().default(10),
+      q: z.string().trim().min(1).max(config.maxSearchQueryLength),
+      limit: z.coerce.number().int().min(1).max(config.maxSuggestLimit).optional().default(config.maxSuggestLimit),
     })
     .strict();
 
@@ -202,3 +198,6 @@ export function tracksSchemasFactory(config: Config) {
     restoreTrackBodySchema,
   };
 }
+
+// NOTE: how you could export the schema without having to export the whole factory
+// export type SuggestTracksQuerySchema = z.infer<ReturnType<typeof tracksSchemasFactory>["suggestTracksQuerySchema"]>;

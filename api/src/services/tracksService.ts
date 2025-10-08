@@ -1,17 +1,11 @@
 import { KevbotDb } from "../db/connection";
 import { Track } from "../db/schema";
-import { Kysely, SelectQueryBuilder, Transaction, sql } from "kysely";
+import { Kysely, Transaction, sql } from "kysely";
 import { Database } from "../db/schema";
 import * as Boom from "@hapi/boom";
 import { Bucket } from "@google-cloud/storage";
-import { GetTracksQuerySchema, GetTracksQuerySchemaForKind, SearchQuerySchema } from "../schemas/tracksSchemas";
-
-interface TrackSuggestOptions {
-  q: string;
-  limit?: number;
-}
-
-const HYBRID_RELEVANCE_RATIO = 0.5;
+import { GetTracksQuerySchema, GetTracksQuerySchemaForKind } from "../schemas/tracksSchemas";
+import { Config } from "../config/config";
 
 export const getTrackBaseQuery = (dbTrx: Kysely<Database> | Transaction<Database>) => {
   return dbTrx
@@ -30,7 +24,7 @@ export const getTrackBaseQuery = (dbTrx: Kysely<Database> | Transaction<Database
     ]);
 };
 
-export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
+export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config: Config) {
   const validateTrackNameIsUnique = async (name: string, excludeId?: number) => {
     let query = db.selectFrom("tracks").selectAll().where("name", "=", name).where("deleted_at", "is", null);
     if (excludeId) {
@@ -48,77 +42,26 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     }
   };
 
-  const buildHybridSearchContext = async (
-    dbTrx: Kysely<Database> | Transaction<Database>,
-    query: string,
-    includeDeleted: boolean
-  ) => {
-    const trimmedQuery = query.trim();
-    const prefixPattern = `${trimmedQuery}%`;
-
-    const maxRelevanceRow = await dbTrx
-      .selectFrom("tracks as t")
-      .select(sql<number>`MAX(MATCH(t.name) AGAINST (${trimmedQuery} IN NATURAL LANGUAGE MODE))`.as("max_relevance"))
-      .$if(!includeDeleted, (query) => query.where("t.deleted_at", "is", null))
-      .where(sql<boolean>`MATCH(t.name) AGAINST (${trimmedQuery} IN NATURAL LANGUAGE MODE)`)
-      .executeTakeFirst();
-
-    const maxRelevance = maxRelevanceRow?.max_relevance ?? 0;
-    const relevanceThreshold = maxRelevance * HYBRID_RELEVANCE_RATIO;
-    const includeFullText = maxRelevance > 0;
-
-    const filterExpression = includeFullText
-      ? () =>
-          sql<boolean>`
-            t.name LIKE ${prefixPattern}
-            OR MATCH(t.name) AGAINST (${trimmedQuery} IN NATURAL LANGUAGE MODE) >= ${relevanceThreshold}
-          `
-      : () => sql<boolean>`t.name LIKE ${prefixPattern}`;
-
-    const searchQueryModifier = (
-      query: SelectQueryBuilder<Database, any, any>,
-      { limit, offset }: { limit: number | undefined; offset: number | undefined }
-    ) => {
-      return query
-        .where(filterExpression())
-        .orderBy(sql`CASE WHEN t.name LIKE ${prefixPattern} THEN 0 ELSE 1 END`, "asc")
-        .orderBy(sql`CASE WHEN t.name LIKE ${prefixPattern} THEN t.name ELSE NULL END`, "asc")
-        .$if(includeFullText, (query) =>
-          query.orderBy(sql<number>`MATCH(t.name) AGAINST (${trimmedQuery} IN NATURAL LANGUAGE MODE)`, "desc")
-        )
-        .orderBy("t.created_at", "desc")
-        .$if(limit !== undefined, (query) => query.limit(limit as number))
-        .$if(offset !== undefined, (query) => query.offset(offset as number));
-    };
-
-    return {
-      filterExpression,
-      searchQueryModifier,
-    };
-  };
-
   const getTracksHybrid = async ({
     search: { kind, q },
     include_deleted,
     limit,
     offset,
   }: GetTracksQuerySchemaForKind<"hybrid">) => {
-    const trimmed = q.trim();
-
     const rows = await db
       .with("scored", (db) =>
         db
           .selectFrom("tracks as t")
           .selectAll()
           .select((eb) => [
-            sql<number>`MATCH(t.name) AGAINST (${trimmed} IN NATURAL LANGUAGE MODE)`.as("rel"),
-            sql<boolean>`t.name LIKE CONCAT(${trimmed}, '%')`.as("is_prefix"),
+            sql<number>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`.as("rel"),
+            sql<boolean>`t.name LIKE CONCAT(${q}, '%')`.as("is_prefix"),
           ])
           .$if(!include_deleted, (q) => q.where("t.deleted_at", "is", null))
           .where((eb) =>
             eb.or([
-              sql<boolean>`t.name LIKE CONCAT(${trimmed}, '%')`,
-              sql<boolean>`MATCH(t.name) AGAINST (${trimmed} IN NATURAL LANGUAGE MODE)`,
+              sql<boolean>`t.name LIKE CONCAT(${q}, '%')`,
+              sql<boolean>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`,
             ])
           )
       )
@@ -135,7 +78,7 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
           .where((eb) =>
             eb.or([
               sql<boolean>`s.is_prefix = 1`,
-              eb.and([sql<boolean>`s.rel > 0`, sql<boolean>`s.rel >= ${HYBRID_RELEVANCE_RATIO} * s.max_rel`]),
+              eb.and([sql<boolean>`s.rel > 0`, sql<boolean>`s.rel >= ${config.hybridRelevanceRatio} * s.max_rel`]),
             ])
           )
       )
@@ -183,18 +126,16 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     limit,
     offset,
   }: GetTracksQuerySchemaForKind<"fulltext">) => {
-    const trimmedQ = q?.trim();
-
     const { total } = await db
       .selectFrom("tracks as t")
       .select(({ fn }) => fn.countAll<number>().as("total"))
       .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
-      .where(sql<boolean>`MATCH(t.name) AGAINST (${trimmedQ} IN NATURAL LANGUAGE MODE)`)
+      .where(sql<boolean>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`)
       .executeTakeFirstOrThrow();
 
     const data = await getTrackBaseQuery(db)
       .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
-      .where(sql<boolean>`MATCH(t.name) AGAINST (${trimmedQ} IN NATURAL LANGUAGE MODE)`)
+      .where(sql<boolean>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`)
       .select(sql<number>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`.as("relevance"))
       .orderBy("relevance", "desc")
       .limit(limit)
@@ -219,18 +160,16 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     limit,
     offset,
   }: GetTracksQuerySchemaForKind<"contains">) => {
-    const trimmedQ = q?.trim();
-
     const { total } = await db
       .selectFrom("tracks as t")
       .select(({ fn }) => fn.countAll<number>().as("total"))
       .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
-      .where(sql<boolean>`t.name LIKE ${`%${trimmedQ}%`}`)
+      .where(sql<boolean>`t.name LIKE ${`%${q}%`}`)
       .executeTakeFirstOrThrow();
 
     const data = await getTrackBaseQuery(db)
       .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
-      .where(sql<boolean>`t.name LIKE ${`%${trimmedQ}%`}`)
+      .where(sql<boolean>`t.name LIKE ${`%${q}%`}`)
       .orderBy(sort, order)
       .limit(limit)
       .offset(offset)
@@ -254,18 +193,16 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     limit,
     offset,
   }: GetTracksQuerySchemaForKind<"exact">) => {
-    const trimmedQ = q?.trim();
-
     const { total } = await db
       .selectFrom("tracks as t")
       .select(({ fn }) => fn.countAll<number>().as("total"))
       .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
-      .where(sql<boolean>`t.name = ${trimmedQ}`)
+      .where(sql<boolean>`t.name = ${q}`)
       .executeTakeFirstOrThrow();
 
     const data = await getTrackBaseQuery(db)
       .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
-      .where(sql<boolean>`t.name = ${trimmedQ}`)
+      .where(sql<boolean>`t.name = ${q}`)
       .limit(limit)
       .offset(offset)
       .execute();
@@ -333,20 +270,55 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     }
   };
 
-  const suggestTracks = async ({ q, limit = 10 }: TrackSuggestOptions) => {
+  const suggestTracks = async ({ q, limit }: { q: string; limit: number }) => {
     const startedAt = Date.now();
-    const boundedLimit = Math.min(Math.max(limit, 1), 10);
-    const trimmedQuery = q.trim();
-    const searchContext = await buildHybridSearchContext(db, trimmedQuery, false);
 
-    const suggestions = await db
-      .selectFrom("tracks as t")
-      .select(["t.id", "t.name"])
-      .$call((query) => searchContext.searchQueryModifier(query, { limit: boundedLimit, offset: 0 }))
+    const rows = await db
+      .with("scored", (db) =>
+        db
+          .selectFrom("tracks as t")
+          .selectAll()
+          .select((eb) => [
+            sql<number>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`.as("rel"),
+            sql<boolean>`t.name LIKE CONCAT(${q}, '%')`.as("is_prefix"),
+          ])
+          .where((eb) =>
+            eb.or([
+              sql<boolean>`t.name LIKE CONCAT(${q}, '%')`,
+              sql<boolean>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`,
+            ])
+          )
+      )
+      .with("aug", (db) =>
+        db
+          .selectFrom("scored as s")
+          .selectAll()
+          .select(sql<number>`MAX(s.rel) OVER ()`.as("max_rel"))
+      )
+      .with("kept", (db) =>
+        db
+          .selectFrom("aug as s")
+          .selectAll()
+          .where((eb) =>
+            eb.or([
+              sql<boolean>`s.is_prefix = 1`,
+              eb.and([sql<boolean>`s.rel > 0`, sql<boolean>`s.rel >= ${config.hybridRelevanceRatio} * s.max_rel`]),
+            ])
+          )
+      )
+      .selectFrom("aug as s")
+      .leftJoin("track_play_counts as tpc", "s.id", "tpc.track_id")
+      .select(({ fn }) => ["s.id", "s.name"])
+      .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN 0 ELSE 1 END`, "asc")
+      .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN s.name ELSE NULL END`, "asc")
+      .orderBy("s.rel", "desc")
+      .orderBy("s.name", "asc")
+      .limit(limit)
+      .offset(0)
       .execute();
 
     return {
-      suggestions,
+      suggestions: rows,
       took_ms: Date.now() - startedAt,
     };
   };
