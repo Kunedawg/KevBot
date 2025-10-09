@@ -1,0 +1,44 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    "api": {
+      "release-type": "node",
+      "package-name": "api",
+      "component": "api",
+      "changelog-path": "CHANGELOG.md",
+      "include-component-in-tag": true
+    },
+    "db": {
+      "release-type": "simple",
+      "package-name": "db",
+      "component": "db",
+      "changelog-path": "CHANGELOG.md",
+      "include-component-in-tag": true,
+      "version-file": "VERSION.txt"
+    },
+    "frontend": {
+      "release-type": "node",
+      "package-name": "frontend",
+      "component": "frontend",
+      "changelog-path": "CHANGELOG.md",
+      "include-component-in-tag": true
+    },
+    "tools": {
+      "release-type": "simple",
+      "package-name": "tools",
+      "component": "tools",
+      "changelog-path": "CHANGELOG.md",
+      "include-component-in-tag": true,
+      "version-file": "VERSION.txt"
+    },
+    "gcloud": {
+      "release-type": "simple",
+      "package-name": "gcloud",
+      "component": "gcloud",
+      "changelog-path": "CHANGELOG.md",
+      "include-component-in-tag": true,
+      "version-file": "VERSION.txt"
+    }
+  },
+  "bootstrap-sha": "main"
+}

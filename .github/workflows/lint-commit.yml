@@ -1,10 +1,12 @@
 name: Lint Commit
 
 on:
-  pull_request:
   push:
     branches:
       - main
+  # Note: pull_request trigger removed - with squash merge strategy,
+  # individual branch commits are discarded. Only PR titles matter,
+  # which are enforced by lint-pr-title.yml
 
 jobs:
   commit-lint:
