@@ -1,6 +1,6 @@
 import { KevbotDb } from "../db/connection";
 import { Track } from "../db/schema";
-import { Kysely, Transaction, sql } from "kysely";
+import { ExpressionBuilder, Kysely, Transaction, sql } from "kysely";
 import { Database } from "../db/schema";
 import * as Boom from "@hapi/boom";
 import { Bucket } from "@google-cloud/storage";
@@ -62,6 +62,17 @@ const hybridQueryBase = (db: Kysely<Database>, q: string, include_deleted: boole
     .selectFrom("aug as s");
 };
 
+const trackBaseSelect = [
+  "t.id",
+  "t.name",
+  "t.duration",
+  "t.user_id",
+  "t.deleted_at",
+  "t.created_at",
+  "t.updated_at",
+  sql<number>`COUNT(*) OVER ()`.as("total_rows"),
+] as const;
+
 export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config: Config) {
   const validateTrackNameIsUnique = async (name: string, excludeId?: number) => {
     let query = db.selectFrom("tracks").selectAll().where("name", "=", name).where("deleted_at", "is", null);
@@ -108,7 +119,7 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
       .offset(offset)
       .execute();
 
-    const total = rows.length ? Number(rows[0].total_rows) : 0;
+    const total = rows.length ? rows[0].total_rows : 0;
 
     return {
       data: rows.map(({ total_rows, ...rest }) => rest),
@@ -162,23 +173,31 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
     limit,
     offset,
   }: GetTracksQuerySchemaForKind<"contains">) => {
-    const { total } = await db
-      .selectFrom("tracks as t")
-      .select(({ fn }) => fn.countAll<number>().as("total"))
-      .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
-      .where(sql<boolean>`t.name LIKE ${`%${q}%`}`)
-      .executeTakeFirstOrThrow();
-
-    const data = await getTrackBaseQuery(db)
-      .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
-      .where(sql<boolean>`t.name LIKE ${`%${q}%`}`)
+    const rows = await db
+      .with("filtered", (db) =>
+        db
+          .selectFrom("tracks as t")
+          .select(["t.id"])
+          .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
+          .where(sql<boolean>`t.name LIKE ${`%${q}%`}`)
+      )
+      .selectFrom("filtered as f")
+      .leftJoin("tracks as t", "t.id", "f.id")
+      .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
+      .select(({ fn }) => [
+        ...trackBaseSelect,
+        fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
+        fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+      ])
       .orderBy(sort, order)
       .limit(limit)
       .offset(offset)
       .execute();
 
+    const total = rows.length ? rows[0].total_rows : 0;
+
     return {
-      data,
+      data: rows.map(({ total_rows, ...rest }) => rest),
       pagination: {
         total,
         limit,
