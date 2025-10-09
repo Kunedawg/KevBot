@@ -1,22 +1,11 @@
 import { KevbotDb } from "../db/connection";
 import { Track } from "../db/schema";
-import { ExpressionBuilder, Kysely, Transaction, sql } from "kysely";
+import { ExpressionBuilder, Kysely, Transaction, sql, QueryCreator } from "kysely";
 import { Database } from "../db/schema";
 import * as Boom from "@hapi/boom";
 import { Bucket } from "@google-cloud/storage";
 import { GetTracksQuerySchema, GetTracksQuerySchemaForKind } from "../schemas/tracksSchemas";
 import { Config } from "../config/config";
-
-const trackBaseSelect = [
-  "t.id",
-  "t.name",
-  "t.duration",
-  "t.user_id",
-  "t.deleted_at",
-  "t.created_at",
-  "t.updated_at",
-  sql<number>`COUNT(*) OVER ()`.as("total_rows"),
-] as const;
 
 export const getTrackBaseQuery = (dbTrx: Kysely<Database> | Transaction<Database>) => {
   return dbTrx
@@ -92,6 +81,29 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
   };
 
   const getTracks = async ({ search, include_deleted, limit, offset }: GetTracksQuerySchema) => {
+    // Helper to build common query structure from a "filtered" CTE
+    // Note: Type assertions are used because Kysely's type system can't infer
+    // the exact schema of dynamic CTEs, but the runtime behavior is correct.
+    const buildQueryFromFiltered = (filteredCteBuilder: (dbQc: QueryCreator<Database>) => any) => {
+      return db
+        .with("filtered", filteredCteBuilder)
+        .selectFrom("filtered as f")
+        .leftJoin("tracks as t", "t.id", "f.id" as any)
+        .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
+        .select(({ fn }) => [
+          "t.id",
+          "t.name",
+          "t.duration",
+          "t.user_id",
+          "t.deleted_at",
+          "t.created_at",
+          "t.updated_at",
+          sql<number>`COUNT(*) OVER ()`.as("total_rows"),
+          fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
+          fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+        ]);
+    };
+
     const getRows = async () => {
       switch (search.kind) {
         case "hybrid":
@@ -118,87 +130,51 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
             .execute();
 
         case "fulltext":
-          return await db
-            .with("filtered", (db) =>
-              db
-                .selectFrom("tracks as t")
-                .select(["t.id", sql<number>`MATCH(t.name) AGAINST (${search.q} IN NATURAL LANGUAGE MODE)`.as("rel")])
-                .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
-                .where(sql<boolean>`MATCH(t.name) AGAINST (${search.q} IN NATURAL LANGUAGE MODE)`)
-            )
-            .selectFrom("filtered as f")
-            .leftJoin("tracks as t", "t.id", "f.id")
-            .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
-            .select(({ fn }) => [
-              ...trackBaseSelect,
-              fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
-              fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
-            ])
-            .orderBy("f.rel", "desc")
+          return await buildQueryFromFiltered((dbQc) =>
+            dbQc
+              .selectFrom("tracks as t")
+              .select(["t.id", sql<number>`MATCH(t.name) AGAINST (${search.q} IN NATURAL LANGUAGE MODE)`.as("rel")])
+              .$if(!include_deleted, (qb: any) => qb.where("t.deleted_at", "is", null))
+              .where(sql<boolean>`MATCH(t.name) AGAINST (${search.q} IN NATURAL LANGUAGE MODE)`)
+          )
+            .orderBy("f.rel" as any, "desc")
             .limit(limit)
             .offset(offset)
             .execute();
 
         case "contains":
-          return await db
-            .with("filtered", (db) =>
-              db
-                .selectFrom("tracks as t")
-                .select(["t.id"])
-                .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
-                .where(sql<boolean>`t.name LIKE ${`%${search.q}%`}`)
-            )
-            .selectFrom("filtered as f")
-            .leftJoin("tracks as t", "t.id", "f.id")
-            .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
-            .select(({ fn }) => [
-              ...trackBaseSelect,
-              fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
-              fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
-            ])
+          return await buildQueryFromFiltered((dbQc) =>
+            dbQc
+              .selectFrom("tracks as t")
+              .select(["t.id"])
+              .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
+              .where(sql<boolean>`t.name LIKE ${`%${search.q}%`}`)
+          )
             .orderBy(search.sort, search.order)
             .limit(limit)
             .offset(offset)
             .execute();
 
         case "exact":
-          return await db
-            .with("filtered", (db) =>
-              db
-                .selectFrom("tracks as t")
-                .select(["t.id"])
-                .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
-                .where(sql<boolean>`t.name = ${search.q}`)
-            )
-            .selectFrom("filtered as f")
-            .leftJoin("tracks as t", "t.id", "f.id")
-            .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
-            .select(({ fn }) => [
-              ...trackBaseSelect,
-              fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
-              fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
-            ])
+          return await buildQueryFromFiltered((dbQc) =>
+            dbQc
+              .selectFrom("tracks as t")
+              .select(["t.id"])
+              .$if(!include_deleted, (qb: any) => qb.where("t.deleted_at", "is", null))
+              .where(sql<boolean>`t.name = ${search.q}`)
+          )
             .orderBy("t.created_at", "desc")
             .limit(limit)
             .offset(offset)
             .execute();
 
         case "browse":
-          return await db
-            .with("filtered", (db) =>
-              db
-                .selectFrom("tracks as t")
-                .select(["t.id"])
-                .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
-            )
-            .selectFrom("filtered as f")
-            .leftJoin("tracks as t", "t.id", "f.id")
-            .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
-            .select(({ fn }) => [
-              ...trackBaseSelect,
-              fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
-              fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
-            ])
+          return await buildQueryFromFiltered((dbQc) =>
+            dbQc
+              .selectFrom("tracks as t")
+              .select(["t.id"])
+              .$if(!include_deleted, (qb: any) => qb.where("t.deleted_at", "is", null))
+          )
             .orderBy(search.sort, search.order)
             .limit(limit)
             .offset(offset)
