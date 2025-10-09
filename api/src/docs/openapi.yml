@@ -437,18 +437,59 @@ paths:
 
   /tracks:
     get:
-      summary: Retrieve a paginated list of tracks.
+      summary: Retrieve a paginated list of tracks with advanced search capabilities.
+      description: |
+        Supports multiple search modes:
+        - **Browse mode** (no `q` parameter): List all tracks with optional sorting
+        - **Exact mode**: Find tracks with exact name match
+        - **Contains mode**: Find tracks where name contains the query string (supports sorting)
+        - **Fulltext mode**: MySQL full-text search (relevance-based)
+        - **Hybrid mode**: Combines prefix matching with full-text search (relevance-based)
       parameters:
         - in: query
-          name: name
+          name: q
           schema:
             type: string
-          description: Filter tracks by name.
+            minLength: 1
+          description: |
+            Search query string. When provided, `search_mode` is required.
+            Omit this parameter to browse all tracks.
+        - in: query
+          name: search_mode
+          schema:
+            type: string
+            enum: [exact, contains, fulltext, hybrid]
+          description: |
+            Search mode (required when `q` is provided, must be omitted in browse mode):
+            - `exact`: Exact name match
+            - `contains`: Partial name match (supports `sort` and `order`)
+            - `fulltext`: MySQL full-text search (no `sort`/`order` allowed)
+            - `hybrid`: Prefix + full-text hybrid search (no `sort`/`order` allowed)
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [name, created_at, relevance]
+          description: |
+            Sort field. Allowed values depend on mode:
+            - **Browse mode** (no `q`): `name` or `created_at` (default: `created_at`)
+            - **Contains mode**: `name` or `created_at` (default: `created_at`)
+            - **Exact/Fulltext/Hybrid modes**: Not allowed (omit this parameter)
+        - in: query
+          name: order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: |
+            Sort order (ascending or descending). 
+            Only applicable when `sort` is allowed.
         - in: query
           name: include_deleted
           schema:
             type: boolean
-          description: Whether to include deleted tracks.
+            default: false
+          description: Whether to include soft-deleted tracks in results.
         - in: query
           name: limit
           schema:
