@@ -7,6 +7,17 @@ import { Bucket } from "@google-cloud/storage";
 import { GetTracksQuerySchema, GetTracksQuerySchemaForKind } from "../schemas/tracksSchemas";
 import { Config } from "../config/config";
 
+const trackBaseSelect = [
+  "t.id",
+  "t.name",
+  "t.duration",
+  "t.user_id",
+  "t.deleted_at",
+  "t.created_at",
+  "t.updated_at",
+  sql<number>`COUNT(*) OVER ()`.as("total_rows"),
+] as const;
+
 export const getTrackBaseQuery = (dbTrx: Kysely<Database> | Transaction<Database>) => {
   return dbTrx
     .selectFrom("tracks as t")
@@ -30,7 +41,7 @@ const hybridQueryBase = (db: Kysely<Database>, q: string, include_deleted: boole
       db
         .selectFrom("tracks as t")
         .selectAll()
-        .select((eb) => [
+        .select([
           sql<number>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`.as("rel"),
           sql<boolean>`t.name LIKE CONCAT(${q}, '%')`.as("is_prefix"),
         ])
@@ -61,17 +72,6 @@ const hybridQueryBase = (db: Kysely<Database>, q: string, include_deleted: boole
     )
     .selectFrom("aug as s");
 };
-
-const trackBaseSelect = [
-  "t.id",
-  "t.name",
-  "t.duration",
-  "t.user_id",
-  "t.deleted_at",
-  "t.created_at",
-  "t.updated_at",
-  sql<number>`COUNT(*) OVER ()`.as("total_rows"),
-] as const;
 
 export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config: Config) {
   const validateTrackNameIsUnique = async (name: string, excludeId?: number) => {
@@ -139,24 +139,31 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
     limit,
     offset,
   }: GetTracksQuerySchemaForKind<"fulltext">) => {
-    const { total } = await db
-      .selectFrom("tracks as t")
-      .select(({ fn }) => fn.countAll<number>().as("total"))
-      .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
-      .where(sql<boolean>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`)
-      .executeTakeFirstOrThrow();
-
-    const data = await getTrackBaseQuery(db)
-      .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
-      .where(sql<boolean>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`)
-      .select(sql<number>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`.as("relevance"))
-      .orderBy("relevance", "desc")
+    const rows = await db
+      .with("filtered", (db) =>
+        db
+          .selectFrom("tracks as t")
+          .select(["t.id", sql<number>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`.as("rel")])
+          .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
+          .where(sql<boolean>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`)
+      )
+      .selectFrom("filtered as f")
+      .leftJoin("tracks as t", "t.id", "f.id")
+      .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
+      .select(({ fn }) => [
+        ...trackBaseSelect,
+        fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
+        fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+      ])
+      .orderBy("f.rel", "desc")
       .limit(limit)
       .offset(offset)
       .execute();
 
+    const total = rows.length ? rows[0].total_rows : 0;
+
     return {
-      data,
+      data: rows.map(({ total_rows, ...rest }) => rest),
       pagination: {
         total,
         limit,
@@ -214,22 +221,31 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
     limit,
     offset,
   }: GetTracksQuerySchemaForKind<"exact">) => {
-    const { total } = await db
-      .selectFrom("tracks as t")
-      .select(({ fn }) => fn.countAll<number>().as("total"))
-      .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
-      .where(sql<boolean>`t.name = ${q}`)
-      .executeTakeFirstOrThrow();
-
-    const data = await getTrackBaseQuery(db)
-      .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
-      .where(sql<boolean>`t.name = ${q}`)
+    const rows = await db
+      .with("filtered", (db) =>
+        db
+          .selectFrom("tracks as t")
+          .select(["t.id"])
+          .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
+          .where(sql<boolean>`t.name = ${q}`)
+      )
+      .selectFrom("filtered as f")
+      .leftJoin("tracks as t", "t.id", "f.id")
+      .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
+      .select(({ fn }) => [
+        ...trackBaseSelect,
+        fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
+        fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+      ])
+      .orderBy("t.created_at", "desc")
       .limit(limit)
       .offset(offset)
       .execute();
 
+    const total = rows.length ? rows[0].total_rows : 0;
+
     return {
-      data,
+      data: rows.map(({ total_rows, ...rest }) => rest),
       pagination: {
         total,
         limit,
@@ -246,21 +262,30 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
     limit,
     offset,
   }: GetTracksQuerySchemaForKind<"browse">) => {
-    const { total } = await db
-      .selectFrom("tracks as t")
-      .select(({ fn }) => fn.countAll<number>().as("total"))
-      .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
-      .executeTakeFirstOrThrow();
-
-    const data = await getTrackBaseQuery(db)
-      .$if(!include_deleted, (query) => query.where("t.deleted_at", "is", null))
+    const rows = await db
+      .with("filtered", (db) =>
+        db
+          .selectFrom("tracks as t")
+          .select(["t.id"])
+          .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
+      )
+      .selectFrom("filtered as f")
+      .leftJoin("tracks as t", "t.id", "f.id")
+      .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
+      .select(({ fn }) => [
+        ...trackBaseSelect,
+        fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
+        fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+      ])
       .orderBy(sort, order)
       .limit(limit)
       .offset(offset)
       .execute();
 
+    const total = rows.length ? rows[0].total_rows : 0;
+
     return {
-      data,
+      data: rows.map(({ total_rows, ...rest }) => rest),
       pagination: {
         total,
         limit,
