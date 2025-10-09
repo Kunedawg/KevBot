@@ -26,7 +26,7 @@ class MigrationManagerError(Exception):
 @dataclass
 class EnvVars:
     env_file: str = field(default=".env")
-    db_connection_string: str = field(default=None, init=False)
+    db_connection_string: str = field(default="", init=False)
     # mysql_host: str = field(default=None, init=False)
     # mysql_database: str = field(default=None, init=False)
     # mysql_root_user: str = field(default=None, init=False)
@@ -62,7 +62,7 @@ class SchemaState(Enum):
 @dataclass
 class SchemaStatus:
     state: SchemaState
-    version: Optional[str] = field(default=None)
+    version: Optional[Version] = field(default=None)
 
     def describe(self) -> str:
         if self.state == SchemaState.VERSIONED and self.version:
@@ -201,11 +201,14 @@ def passes_schema_state_and_version_filter(
 ):
     filter_conditions = {
         SchemaState.EMPTY: lambda s: s.version <= target_version,
-        SchemaState.NOT_EMPTY: lambda s: s.version <= target_version
-        and s.type != ScriptType.BASELINE,
-        SchemaState.VERSIONED: lambda s: s.version <= target_version
-        and s.type != ScriptType.BASELINE
-        and schema_status.version < s.version,
+        SchemaState.NOT_EMPTY: (
+            lambda s: s.version <= target_version and s.type != ScriptType.BASELINE
+        ),
+        SchemaState.VERSIONED: (
+            lambda s: s.version <= target_version
+            and s.type != ScriptType.BASELINE
+            and schema_status.version < s.version
+        ),
     }
     return filter_conditions[schema_status.state](script)
 
@@ -292,10 +295,13 @@ def perform_action(env_vars: EnvVars, args):
             if target_version < schema_status.version:
                 raise MigrationManagerError("Target version < current version!")
         if target_version not in [
-            s.version for s in all_scripts if s.type == ScriptType.MIGRATION
+            s.version
+            for s in all_scripts
+            if s.type in {ScriptType.MIGRATION, ScriptType.BASELINE}
         ]:
             raise MigrationManagerError(
-                "Migration script with desired target version does not exist!"
+                "Migration or baseline script with desired target version does not"
+                " exist!"
             )
         scripts = get_scripts_to_apply(all_scripts, schema_status, target_version)
         apply_scripts(client, scripts, args.dry_run, schema_status)
