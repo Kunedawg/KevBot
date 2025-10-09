@@ -16,7 +16,7 @@ export interface AllServices {
 }
 
 export function serviceFactory(config: Config, secrets: Secrets, db: KevbotDb, tracksBucket: Bucket): AllServices {
-  const tracksService = tracksServiceFactory(db, tracksBucket);
+  const tracksService = tracksServiceFactory(db, tracksBucket, config);
   const playlistsService = playlistsServiceFactory(db);
   const usersService = usersServiceFactory(db, tracksService, playlistsService);
   const playsService = playsServiceFactory(db, tracksService, playlistsService);

@@ -1,14 +1,22 @@
 import { KevbotDb } from "../db/connection";
 import { Track } from "../db/schema";
-import { Kysely, sql, Transaction } from "kysely";
+import { Kysely, Transaction, sql } from "kysely";
 import { Database } from "../db/schema";
 import * as Boom from "@hapi/boom";
 import { Bucket } from "@google-cloud/storage";
+import { GetTracksQuerySchema } from "../schemas/tracksSchemas";
+import { Config } from "../config/config";
 
-interface TrackOptions {
-  name?: string;
-  include_deleted?: boolean;
-}
+const trackBaseSelect = [
+  "t.id",
+  "t.name",
+  "t.duration",
+  "t.user_id",
+  "t.deleted_at",
+  "t.created_at",
+  "t.updated_at",
+  sql<number>`COUNT(*) OVER ()`.as("total_rows"),
+] as const;
 
 export const getTrackBaseQuery = (dbTrx: Kysely<Database> | Transaction<Database>) => {
   return dbTrx
@@ -27,7 +35,45 @@ export const getTrackBaseQuery = (dbTrx: Kysely<Database> | Transaction<Database
     ]);
 };
 
-export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
+const hybridQueryBase = (db: Kysely<Database>, q: string, include_deleted: boolean, config: Config) => {
+  return db
+    .with("scored", (db) =>
+      db
+        .selectFrom("tracks as t")
+        .selectAll()
+        .select([
+          sql<number>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`.as("rel"),
+          sql<boolean>`t.name LIKE CONCAT(${q}, '%')`.as("is_prefix"),
+        ])
+        .$if(!include_deleted, (q) => q.where("t.deleted_at", "is", null))
+        .where((eb) =>
+          eb.or([
+            sql<boolean>`t.name LIKE CONCAT(${q}, '%')`,
+            sql<boolean>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`,
+          ])
+        )
+    )
+    .with("aug", (db) =>
+      db
+        .selectFrom("scored as s")
+        .selectAll()
+        .select(sql<number>`MAX(s.rel) OVER ()`.as("max_rel"))
+    )
+    .with("kept", (db) =>
+      db
+        .selectFrom("aug as s")
+        .selectAll()
+        .where((eb) =>
+          eb.or([
+            sql<boolean>`s.is_prefix = 1`,
+            eb.and([sql<boolean>`s.rel > 0`, sql<boolean>`s.rel >= ${config.hybridRelevanceRatio} * s.max_rel`]),
+          ])
+        )
+    )
+    .selectFrom("kept as s");
+};
+
+export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config: Config) {
   const validateTrackNameIsUnique = async (name: string, excludeId?: number) => {
     let query = db.selectFrom("tracks").selectAll().where("name", "=", name).where("deleted_at", "is", null);
     if (excludeId) {
@@ -45,16 +91,157 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
     }
   };
 
-  const getTracks = async (options: TrackOptions = {}) => {
-    const { name, include_deleted = false } = options;
-    let query = getTrackBaseQuery(db);
-    if (name) {
-      query = query.where("t.name", "=", name);
-    }
-    if (!include_deleted) {
-      query = query.where("t.deleted_at", "is", null);
-    }
-    return await query.execute();
+  const getTracks = async ({ search, include_deleted, limit, offset }: GetTracksQuerySchema) => {
+    const getRows = async () => {
+      switch (search.kind) {
+        case "hybrid":
+          return await hybridQueryBase(db, search.q, include_deleted, config)
+            .leftJoin("track_play_counts as tpc", "s.id", "tpc.track_id")
+            .select(({ fn }) => [
+              "s.id",
+              "s.name",
+              "s.duration",
+              "s.user_id",
+              "s.deleted_at",
+              "s.created_at",
+              "s.updated_at",
+              sql<number>`COUNT(*) OVER ()`.as("total_rows"),
+              fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
+              fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+            ])
+            .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN 0 ELSE 1 END`, "asc")
+            .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN s.name ELSE NULL END`, "asc")
+            .orderBy("s.rel", "desc")
+            .orderBy("s.name", "asc")
+            .limit(limit)
+            .offset(offset)
+            .execute();
+
+        case "fulltext":
+          return await db
+            .with("filtered", (db) =>
+              db
+                .selectFrom("tracks as t")
+                .select(["t.id", sql<number>`MATCH(t.name) AGAINST (${search.q} IN NATURAL LANGUAGE MODE)`.as("rel")])
+                .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
+                .where(sql<boolean>`MATCH(t.name) AGAINST (${search.q} IN NATURAL LANGUAGE MODE)`)
+            )
+            .selectFrom("filtered as f")
+            .leftJoin("tracks as t", "t.id", "f.id")
+            .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
+            .select(({ fn }) => [
+              ...trackBaseSelect,
+              fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
+              fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+            ])
+            .orderBy("f.rel", "desc")
+            .limit(limit)
+            .offset(offset)
+            .execute();
+
+        case "contains":
+          return await db
+            .with("filtered", (db) =>
+              db
+                .selectFrom("tracks as t")
+                .select(["t.id"])
+                .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
+                .where(sql<boolean>`t.name LIKE ${`%${search.q}%`}`)
+            )
+            .selectFrom("filtered as f")
+            .leftJoin("tracks as t", "t.id", "f.id")
+            .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
+            .select(({ fn }) => [
+              ...trackBaseSelect,
+              fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
+              fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+            ])
+            .orderBy(search.sort, search.order)
+            .limit(limit)
+            .offset(offset)
+            .execute();
+
+        case "exact":
+          return await db
+            .with("filtered", (db) =>
+              db
+                .selectFrom("tracks as t")
+                .select(["t.id"])
+                .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
+                .where(sql<boolean>`t.name = ${search.q}`)
+            )
+            .selectFrom("filtered as f")
+            .leftJoin("tracks as t", "t.id", "f.id")
+            .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
+            .select(({ fn }) => [
+              ...trackBaseSelect,
+              fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
+              fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+            ])
+            .orderBy("t.created_at", "desc")
+            .limit(limit)
+            .offset(offset)
+            .execute();
+
+        case "browse":
+          return await db
+            .with("filtered", (db) =>
+              db
+                .selectFrom("tracks as t")
+                .select(["t.id"])
+                .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
+            )
+            .selectFrom("filtered as f")
+            .leftJoin("tracks as t", "t.id", "f.id")
+            .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
+            .select(({ fn }) => [
+              ...trackBaseSelect,
+              fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
+              fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+            ])
+            .orderBy(search.sort, search.order)
+            .limit(limit)
+            .offset(offset)
+            .execute();
+
+        default:
+          const _exhaustive: never = search;
+          return _exhaustive;
+      }
+    };
+
+    const rows = await getRows();
+    const total = rows.length ? rows[0].total_rows : 0;
+
+    return {
+      data: rows.map(({ total_rows, ...rest }) => rest),
+      pagination: {
+        total,
+        limit,
+        offset,
+        hasNext: offset + limit < total,
+        hasPrev: offset > 0,
+      },
+    };
+  };
+
+  const suggestTracks = async ({ q, limit }: { q: string; limit: number }) => {
+    const startedAt = Date.now();
+
+    const rows = await hybridQueryBase(db, q, false, config)
+      .select(["s.id", "s.name"])
+      .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN 0 ELSE 1 END`, "asc")
+      .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN s.name ELSE NULL END`, "asc")
+      .orderBy("s.rel", "desc")
+      .orderBy("s.name", "asc")
+      .limit(limit)
+      .offset(0)
+      .execute();
+
+    return {
+      suggestions: rows,
+      took_ms: Date.now() - startedAt,
+    };
   };
 
   const getTrackById = async (id: number, trx?: Transaction<Database>) => {
@@ -146,6 +333,7 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket) {
 
   return {
     getTracks,
+    suggestTracks,
     getTrackById,
     getTrackFile,
     patchTrack,
