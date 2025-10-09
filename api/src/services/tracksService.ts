@@ -1,10 +1,10 @@
 import { KevbotDb } from "../db/connection";
 import { Track } from "../db/schema";
-import { ExpressionBuilder, Kysely, Transaction, sql } from "kysely";
+import { Kysely, Transaction, sql } from "kysely";
 import { Database } from "../db/schema";
 import * as Boom from "@hapi/boom";
 import { Bucket } from "@google-cloud/storage";
-import { GetTracksQuerySchema, GetTracksQuerySchemaForKind } from "../schemas/tracksSchemas";
+import { GetTracksQuerySchema } from "../schemas/tracksSchemas";
 import { Config } from "../config/config";
 
 const trackBaseSelect = [

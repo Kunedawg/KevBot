@@ -16,9 +16,10 @@ export type GetTracksQuerySchema = {
   offset: number;
 };
 
-export type GetTracksQuerySchemaForKind<K extends SearchQuerySchema["kind"]> = Omit<GetTracksQuerySchema, "search"> & {
-  search: Extract<SearchQuerySchema, { kind: K }>;
-};
+// TODO: delete eventually, probably not needed
+// export type GetTracksQuerySchemaForKind<K extends SearchQuerySchema["kind"]> = Omit<GetTracksQuerySchema, "search"> & {
+//   search: Extract<SearchQuerySchema, { kind: K }>;
+// };
 
 export function tracksSchemasFactory(config: Config) {
   const trackNameValidation = trackNameValidationFactory(config);
