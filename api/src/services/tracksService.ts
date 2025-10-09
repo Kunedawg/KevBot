@@ -91,229 +91,138 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
     }
   };
 
-  const getTracksHybrid = async ({
-    search: { kind, q },
-    include_deleted,
-    limit,
-    offset,
-  }: GetTracksQuerySchemaForKind<"hybrid">) => {
-    const rows = await hybridQueryBase(db, q, include_deleted, config)
-      .leftJoin("track_play_counts as tpc", "s.id", "tpc.track_id")
-      .select(({ fn }) => [
-        "s.id",
-        "s.name",
-        "s.duration",
-        "s.user_id",
-        "s.deleted_at",
-        "s.created_at",
-        "s.updated_at",
-        sql<number>`COUNT(*) OVER ()`.as("total_rows"),
-        fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
-        fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
-      ])
-      .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN 0 ELSE 1 END`, "asc")
-      .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN s.name ELSE NULL END`, "asc")
-      .orderBy("s.rel", "desc")
-      .orderBy("s.name", "asc")
-      .limit(limit)
-      .offset(offset)
-      .execute();
-
-    const total = rows.length ? rows[0].total_rows : 0;
-
-    return {
-      data: rows.map(({ total_rows, ...rest }) => rest),
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasNext: offset + limit < total,
-        hasPrev: offset > 0,
-      },
-    };
-  };
-
-  const getTracksFulltext = async ({
-    search: { kind, q },
-    include_deleted,
-    limit,
-    offset,
-  }: GetTracksQuerySchemaForKind<"fulltext">) => {
-    const rows = await db
-      .with("filtered", (db) =>
-        db
-          .selectFrom("tracks as t")
-          .select(["t.id", sql<number>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`.as("rel")])
-          .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
-          .where(sql<boolean>`MATCH(t.name) AGAINST (${q} IN NATURAL LANGUAGE MODE)`)
-      )
-      .selectFrom("filtered as f")
-      .leftJoin("tracks as t", "t.id", "f.id")
-      .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
-      .select(({ fn }) => [
-        ...trackBaseSelect,
-        fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
-        fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
-      ])
-      .orderBy("f.rel", "desc")
-      .limit(limit)
-      .offset(offset)
-      .execute();
-
-    const total = rows.length ? rows[0].total_rows : 0;
-
-    return {
-      data: rows.map(({ total_rows, ...rest }) => rest),
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasNext: offset + limit < total,
-        hasPrev: offset > 0,
-      },
-    };
-  };
-
-  const getTracksContains = async ({
-    search: { kind, q, sort, order },
-    include_deleted,
-    limit,
-    offset,
-  }: GetTracksQuerySchemaForKind<"contains">) => {
-    const rows = await db
-      .with("filtered", (db) =>
-        db
-          .selectFrom("tracks as t")
-          .select(["t.id"])
-          .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
-          .where(sql<boolean>`t.name LIKE ${`%${q}%`}`)
-      )
-      .selectFrom("filtered as f")
-      .leftJoin("tracks as t", "t.id", "f.id")
-      .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
-      .select(({ fn }) => [
-        ...trackBaseSelect,
-        fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
-        fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
-      ])
-      .orderBy(sort, order)
-      .limit(limit)
-      .offset(offset)
-      .execute();
-
-    const total = rows.length ? rows[0].total_rows : 0;
-
-    return {
-      data: rows.map(({ total_rows, ...rest }) => rest),
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasNext: offset + limit < total,
-        hasPrev: offset > 0,
-      },
-    };
-  };
-
-  const getTracksExact = async ({
-    search: { kind, q },
-    include_deleted,
-    limit,
-    offset,
-  }: GetTracksQuerySchemaForKind<"exact">) => {
-    const rows = await db
-      .with("filtered", (db) =>
-        db
-          .selectFrom("tracks as t")
-          .select(["t.id"])
-          .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
-          .where(sql<boolean>`t.name = ${q}`)
-      )
-      .selectFrom("filtered as f")
-      .leftJoin("tracks as t", "t.id", "f.id")
-      .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
-      .select(({ fn }) => [
-        ...trackBaseSelect,
-        fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
-        fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
-      ])
-      .orderBy("t.created_at", "desc")
-      .limit(limit)
-      .offset(offset)
-      .execute();
-
-    const total = rows.length ? rows[0].total_rows : 0;
-
-    return {
-      data: rows.map(({ total_rows, ...rest }) => rest),
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasNext: offset + limit < total,
-        hasPrev: offset > 0,
-      },
-    };
-  };
-
-  const getTracksBrowse = async ({
-    search: { kind, sort, order },
-    include_deleted,
-    limit,
-    offset,
-  }: GetTracksQuerySchemaForKind<"browse">) => {
-    const rows = await db
-      .with("filtered", (db) =>
-        db
-          .selectFrom("tracks as t")
-          .select(["t.id"])
-          .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
-      )
-      .selectFrom("filtered as f")
-      .leftJoin("tracks as t", "t.id", "f.id")
-      .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
-      .select(({ fn }) => [
-        ...trackBaseSelect,
-        fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
-        fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
-      ])
-      .orderBy(sort, order)
-      .limit(limit)
-      .offset(offset)
-      .execute();
-
-    const total = rows.length ? rows[0].total_rows : 0;
-
-    return {
-      data: rows.map(({ total_rows, ...rest }) => rest),
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasNext: offset + limit < total,
-        hasPrev: offset > 0,
-      },
-    };
-  };
-
   const getTracks = async ({ search, include_deleted, limit, offset }: GetTracksQuerySchema) => {
-    const base = { include_deleted, limit, offset };
+    const getRows = async () => {
+      switch (search.kind) {
+        case "hybrid":
+          return await hybridQueryBase(db, search.q, include_deleted, config)
+            .leftJoin("track_play_counts as tpc", "s.id", "tpc.track_id")
+            .select(({ fn }) => [
+              "s.id",
+              "s.name",
+              "s.duration",
+              "s.user_id",
+              "s.deleted_at",
+              "s.created_at",
+              "s.updated_at",
+              sql<number>`COUNT(*) OVER ()`.as("total_rows"),
+              fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
+              fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+            ])
+            .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN 0 ELSE 1 END`, "asc")
+            .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN s.name ELSE NULL END`, "asc")
+            .orderBy("s.rel", "desc")
+            .orderBy("s.name", "asc")
+            .limit(limit)
+            .offset(offset)
+            .execute();
 
-    switch (search.kind) {
-      case "hybrid":
-        return await getTracksHybrid({ search, ...base });
-      case "fulltext":
-        return await getTracksFulltext({ search, ...base });
-      case "contains":
-        return await getTracksContains({ search, ...base });
-      case "exact":
-        return await getTracksExact({ search, ...base });
-      case "browse":
-        return await getTracksBrowse({ search, ...base });
-      default:
-        const _exhaustive: never = search;
-        return _exhaustive;
-    }
+        case "fulltext":
+          return await db
+            .with("filtered", (db) =>
+              db
+                .selectFrom("tracks as t")
+                .select(["t.id", sql<number>`MATCH(t.name) AGAINST (${search.q} IN NATURAL LANGUAGE MODE)`.as("rel")])
+                .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
+                .where(sql<boolean>`MATCH(t.name) AGAINST (${search.q} IN NATURAL LANGUAGE MODE)`)
+            )
+            .selectFrom("filtered as f")
+            .leftJoin("tracks as t", "t.id", "f.id")
+            .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
+            .select(({ fn }) => [
+              ...trackBaseSelect,
+              fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
+              fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+            ])
+            .orderBy("f.rel", "desc")
+            .limit(limit)
+            .offset(offset)
+            .execute();
+
+        case "contains":
+          return await db
+            .with("filtered", (db) =>
+              db
+                .selectFrom("tracks as t")
+                .select(["t.id"])
+                .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
+                .where(sql<boolean>`t.name LIKE ${`%${search.q}%`}`)
+            )
+            .selectFrom("filtered as f")
+            .leftJoin("tracks as t", "t.id", "f.id")
+            .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
+            .select(({ fn }) => [
+              ...trackBaseSelect,
+              fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
+              fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+            ])
+            .orderBy(search.sort, search.order)
+            .limit(limit)
+            .offset(offset)
+            .execute();
+
+        case "exact":
+          return await db
+            .with("filtered", (db) =>
+              db
+                .selectFrom("tracks as t")
+                .select(["t.id"])
+                .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
+                .where(sql<boolean>`t.name = ${search.q}`)
+            )
+            .selectFrom("filtered as f")
+            .leftJoin("tracks as t", "t.id", "f.id")
+            .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
+            .select(({ fn }) => [
+              ...trackBaseSelect,
+              fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
+              fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+            ])
+            .orderBy("t.created_at", "desc")
+            .limit(limit)
+            .offset(offset)
+            .execute();
+
+        case "browse":
+          return await db
+            .with("filtered", (db) =>
+              db
+                .selectFrom("tracks as t")
+                .select(["t.id"])
+                .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
+            )
+            .selectFrom("filtered as f")
+            .leftJoin("tracks as t", "t.id", "f.id")
+            .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
+            .select(({ fn }) => [
+              ...trackBaseSelect,
+              fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
+              fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+            ])
+            .orderBy(search.sort, search.order)
+            .limit(limit)
+            .offset(offset)
+            .execute();
+
+        default:
+          const _exhaustive: never = search;
+          return _exhaustive;
+      }
+    };
+
+    const rows = await getRows();
+    const total = rows.length ? rows[0].total_rows : 0;
+
+    return {
+      data: rows.map(({ total_rows, ...rest }) => rest),
+      pagination: {
+        total,
+        limit,
+        offset,
+        hasNext: offset + limit < total,
+        hasPrev: offset > 0,
+      },
+    };
   };
 
   const suggestTracks = async ({ q, limit }: { q: string; limit: number }) => {
