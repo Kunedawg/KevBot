@@ -24,7 +24,7 @@ export type GetTracksQuerySchema = {
 export function tracksSchemasFactory(config: Config) {
   const trackNameValidation = trackNameValidationFactory(config);
 
-  const RawGetRacksQuerySchema = z
+  const RawGetTracksQuerySchema = z
     .object({
       q: z.string().trim().min(1).max(config.maxSearchQueryLength).optional(),
       search_mode: z.enum(["fulltext", "contains", "hybrid", "exact"]).optional(),
@@ -39,8 +39,8 @@ export function tracksSchemasFactory(config: Config) {
   const getTracksQuerySchema: z.ZodType<
     GetTracksQuerySchema,
     any,
-    z.input<typeof RawGetRacksQuerySchema>
-  > = RawGetRacksQuerySchema.transform((raw, ctx) => {
+    z.input<typeof RawGetTracksQuerySchema>
+  > = RawGetTracksQuerySchema.transform((raw, ctx) => {
     const base = {
       include_deleted: raw.include_deleted,
       limit: raw.limit,

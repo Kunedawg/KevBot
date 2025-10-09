@@ -70,7 +70,7 @@ const hybridQueryBase = (db: Kysely<Database>, q: string, include_deleted: boole
           ])
         )
     )
-    .selectFrom("aug as s");
+    .selectFrom("kept as s");
 };
 
 export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config: Config) {
