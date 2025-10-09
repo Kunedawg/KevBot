@@ -1,23 +1,103 @@
-# Release Notes
+# KevBot Release Notes
 
-## [v1.2.0] - 2024-05-05
+Welcome to KevBot! This document highlights major features and changes for coordinated project releases. For technical details and component-specific changes, see the individual CHANGELOG files in each component directory.
 
-- Upgraded to discord.js v14.
-- Support for SQL CA SSL.
-- Refactored code.
+---
 
-## [v1.1.1] - 2021-12-21
+## About This Document
 
-- Bug fix to greetings of `type` file not playing.
-- Updated the README to include updates to greeting functionality
+**Purpose**: User-facing highlights for major KevBot releases
 
-## [v1.1.0] - 2021-12-20
+**Audience**: End users, stakeholders, and anyone interested in what's new
 
-- Greeting command now supports categories. Now you can set your greeting to a category and a random file from that category will be played upon entering a discord channel.
+**Technical Details**: For detailed, technical changelogs, see:
 
-## [v1.0.0] - 2021-04-18
+- [API Changelog](api/CHANGELOG.md)
+- [Database Changelog](db/CHANGELOG.md)
+- [Frontend Changelog](frontend/CHANGELOG.md)
+- [Tools Changelog](tools/CHANGELOG.md)
+- [GCloud Changelog](gcloud/CHANGELOG.md)
 
-- GitHub is now public and a README has been written. Arbitrarily calling this release v1.0.0, now that everything is setup.
-- Added farewells. Farewells are the same as greetings, except the clip is played on exit of a discord guild instead of entry.
-- Added new categories: `playhistory` and `uploadhistory`.
-- Various bug fixes and code improvements.
+---
+
+## [Unreleased]
+
+Stay tuned for the next major release!
+
+---
+
+## Historical Releases
+
+### [v1.2.0] - 2024-05-05
+
+**Major Updates:**
+
+- Upgraded to discord.js v14 for better performance and features
+- Added SQL CA SSL support for enhanced database security
+- Major code refactoring for improved maintainability
+
+### [v1.1.1] - 2021-12-21
+
+**Bug Fixes:**
+
+- Fixed issue where greeting files of `type` category were not playing correctly
+
+**Documentation:**
+
+- Updated README with new greeting functionality details
+
+### [v1.1.0] - 2021-12-20
+
+**New Features:**
+
+- Greeting command now supports categories!
+  - Set your greeting to a category and a random file from that category will play when entering a Discord channel
+  - Adds variety and fun to user greetings
+
+### [v1.0.0] - 2021-04-18
+
+**Project Milestone:**
+
+- KevBot is now public on GitHub! 🎉
+- Comprehensive README and documentation added
+
+**New Features:**
+
+- Farewells: Play audio clips when leaving a Discord server (mirrors greeting functionality)
+- New categories: `playhistory` and `uploadhistory` for tracking user activity
+
+**Improvements:**
+
+- Various bug fixes and code quality improvements
+- Enhanced stability and performance
+
+---
+
+## Component Versioning
+
+KevBot uses independent component versioning:
+
+- Each component (api, db, frontend, etc.) has its own version number
+- Components release independently based on changes
+- This document highlights coordinated releases where multiple components come together
+
+**Current Component Versions:**
+
+- API: See [api/CHANGELOG.md](api/CHANGELOG.md)
+- Database: See [db/CHANGELOG.md](db/CHANGELOG.md)
+- Frontend: See [frontend/CHANGELOG.md](frontend/CHANGELOG.md)
+- Tools: See [tools/CHANGELOG.md](tools/CHANGELOG.md)
+- GCloud: See [gcloud/CHANGELOG.md](gcloud/CHANGELOG.md)
+
+---
+
+## Release Process
+
+Releases are managed through our automated release process:
+
+1. Changes are merged to `main` with conventional commit messages
+2. Release PRs are automatically created by release-please
+3. When ready, release PRs are merged to publish new versions
+4. Major coordinated releases are documented here with user-facing highlights
+
+For more information, see [CONTRIBUTING.md](CONTRIBUTING.md).

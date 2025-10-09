@@ -10,9 +10,6 @@ node_modules
 .env*
 !.env.example
 
-# large data
-/large-data
-
 # ignore vscode settings
 .vscode
 
@@ -21,10 +18,6 @@ node_modules
 __pycache__/
 *.py[cod]
 *$py.class
-
-# database dumps and data
-**/dumps/
-**/data/
 
 # logs
 **/logs/
