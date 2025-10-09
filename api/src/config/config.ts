@@ -44,6 +44,11 @@ const configSchema = z.object({
       /^\d+\.\d+\.\d+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$/,
       "expectedDbVersion must be a valid semantic version (e.g., 2.10.0, 1.0.0-beta, etc.)"
     ),
+  maxTracksPerPage: z.number().int().positive(),
+  maxSearchQueryLength: z.number().int().positive(),
+  minContainsQueryLength: z.number().int().positive(),
+  maxSuggestLimit: z.number().int().positive(),
+  hybridRelevanceRatio: z.number().positive(),
 });
 
 export type Secrets = z.infer<typeof secretsSchema>;
@@ -70,9 +75,14 @@ export function configFactory(): AppConfig {
       maxPasswordLength: 64,
       supportedTrackExtensions: [".mp3"],
       jwtTokenExpirationTime: "1h",
-      expectedDbVersion: "2.10.0",
+      expectedDbVersion: "2.11.0",
       acceptableIntegratedLoudnessBand: 2.5,
       acceptableDurationChangeInSeconds: 0.01,
+      maxTracksPerPage: 100,
+      maxSearchQueryLength: 200,
+      minContainsQueryLength: 2,
+      maxSuggestLimit: 10,
+      hybridRelevanceRatio: 0.5,
     };
     const validatedSecrets = secretsSchema.parse(secrets);
     const validatedConfig = configSchema.parse(config);
