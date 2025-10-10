@@ -89,15 +89,18 @@ Your PR title MUST follow [Conventional Commits](https://www.conventionalcommits
 - `ci` - CI/CD changes
 - `refactor` - Code refactoring
 
-**Scope** (required, must be one of):
+**Scope** (optional):
 
-- `project` - Root-level project changes
+When a change affects a specific component, include the scope:
+
 - `api` - Backend API changes
 - `frontend` - Frontend application changes
 - `db` - Database schema or migrations
 - `gcloud` - Google Cloud Storage service
 - `tools` - Development tools and scripts
 - `bot` - Discord bot (planned)
+
+For cross-cutting or infrastructure changes, you can omit the scope entirely
 
 **Breaking Changes:**
 Add `!` after the scope for breaking changes (triggers major version bump):
@@ -108,11 +111,19 @@ feat(api)!: remove legacy authentication endpoint
 
 **Examples:**
 
+Component-specific changes (use scope):
+
 - `feat(api): add track streaming endpoint`
 - `fix(frontend): resolve player controls not responding`
 - `chore(db): update migration scripts`
-- `docs(project): update README with new setup instructions`
 - `feat(api)!: change user authentication to JWT only`
+
+Cross-cutting changes (no scope):
+
+- `chore: update docker compose stack`
+- `ci: add automated backups`
+- `docs: improve architecture documentation`
+- `build: upgrade Node.js to v20`
 
 #### Why This Matters
 
@@ -144,41 +155,47 @@ Our release process is semi-automated using [release-please](https://github.com/
 
 3. **Review the Release PR**: Check the auto-generated changelog and versions
 
-4. **Merge the Release PR**: When ready, merge it to trigger:
-   - GitHub release creation
-   - Git tags (e.g., `api@2.1.0`, `db@1.0.1`)
-   - Deployment workflows (if configured)
+4. **Merge the Release PR**: When ready, merge it to:
+   - Update version files and CHANGELOGs
+   - Create git tags (e.g., `v2.0.0-beta.2` for app, `api-v2.1.0`, `db-v1.0.1` for components)
+   - **Note**: GitHub Releases are NOT created automatically (all components use `skip-github-release`)
 
 ### Component Versioning
 
 Each component is versioned independently:
 
-- `api@2.0.0` - Backend API
-- `db@1.0.0` - Database migrations
-- `frontend@0.1.0` - Frontend application
-- `tools@1.0.0` - Development tools
-- `gcloud@1.0.0` - GCS service
+- `v2.0.0-beta.1` - Overall KevBot app version (prerelease, no component prefix)
+- `api-v2.0.0` - Backend API
+- `db-v1.0.0` - Database migrations
+- `frontend-v0.1.0` - Frontend application
+- `tools-v1.0.0` - Development tools
+- `gcloud-v1.0.0` - GCS service
 
-For major coordinated releases, we also create project-level tags (e.g., `v3.0.0`) and update the root `RELEASE_NOTES.md` with user-facing highlights.
+**Release Strategy:**
+
+- Automatic: Component versions and CHANGELOGs updated via release-please
+- Manual: GitHub Releases created manually via `RELEASE_NOTES.md` when appropriate
+- All components use `skip-github-release: true` to prevent automatic GitHub Releases
 
 ### Documentation
 
 **Component CHANGELOGs** (auto-generated):
 
-- `api/CHANGELOG.md`
-- `db/CHANGELOG.md`
-- `frontend/CHANGELOG.md`
-- `tools/CHANGELOG.md`
-- `gcloud/CHANGELOG.md`
+- `CHANGELOG.md` - Root-level infrastructure changes (technical)
+- `api/CHANGELOG.md` - API technical changes
+- `db/CHANGELOG.md` - Database technical changes
+- `frontend/CHANGELOG.md` - Frontend technical changes
+- `tools/CHANGELOG.md` - Tools technical changes
+- `gcloud/CHANGELOG.md` - GCS service technical changes
 
-These are technical, detailed changelogs generated from PR titles. Don't edit these manually!
+These are technical, detailed changelogs generated from PR titles. Don't edit these manually - release-please updates them!
 
 **RELEASE_NOTES.md** (manual, user-facing):
 
 - Lives at project root
-- High-level highlights for major releases
-- Human-written, focused on user impact
-- Updated manually for coordinated releases
+- High-level highlights for major coordinated releases
+- Human-written, focused on user impact and features
+- Use this for creating manual GitHub Releases
 
 ## Project Structure
 

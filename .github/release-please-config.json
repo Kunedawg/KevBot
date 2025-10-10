@@ -1,12 +1,27 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "packages": {
+    ".": {
+      "release-type": "simple",
+      "package-name": "",
+      "component": "",
+      "changelog-path": "CHANGELOG.md",
+      "include-component-in-tag": false,
+      "version-file": "VERSION.txt",
+      "skip-github-release": true,
+      "prerelease": true,
+      "prerelease-type": "beta",
+      "bootstrap-sha": "615799c9dcc2d89c42b232dc6fecad200825d4d8",
+      "versioning": "prerelease"
+    },
     "api": {
       "release-type": "node",
       "package-name": "api",
       "component": "api",
       "changelog-path": "CHANGELOG.md",
-      "include-component-in-tag": true
+      "include-component-in-tag": true,
+      "skip-github-release": true,
+      "bootstrap-sha": "8a7ec8480183b88b29d06ea6d332ad17f968f5c6"
     },
     "db": {
       "release-type": "simple",
@@ -14,14 +29,18 @@
       "component": "db",
       "changelog-path": "CHANGELOG.md",
       "include-component-in-tag": true,
-      "version-file": "VERSION.txt"
+      "version-file": "VERSION.txt",
+      "skip-github-release": true,
+      "bootstrap-sha": "615799c9dcc2d89c42b232dc6fecad200825d4d8"
     },
     "frontend": {
       "release-type": "node",
       "package-name": "frontend",
       "component": "frontend",
       "changelog-path": "CHANGELOG.md",
-      "include-component-in-tag": true
+      "include-component-in-tag": true,
+      "skip-github-release": true,
+      "bootstrap-sha": "615799c9dcc2d89c42b232dc6fecad200825d4d8"
     },
     "tools": {
       "release-type": "simple",
@@ -29,7 +48,9 @@
       "component": "tools",
       "changelog-path": "CHANGELOG.md",
       "include-component-in-tag": true,
-      "version-file": "VERSION.txt"
+      "version-file": "VERSION.txt",
+      "skip-github-release": true,
+      "bootstrap-sha": "615799c9dcc2d89c42b232dc6fecad200825d4d8"
     },
     "gcloud": {
       "release-type": "simple",
@@ -37,7 +58,9 @@
       "component": "gcloud",
       "changelog-path": "CHANGELOG.md",
       "include-component-in-tag": true,
-      "version-file": "VERSION.txt"
+      "version-file": "VERSION.txt",
+      "skip-github-release": true,
+      "bootstrap-sha": "615799c9dcc2d89c42b232dc6fecad200825d4d8"
     }
   },
   "bootstrap-sha": "main"

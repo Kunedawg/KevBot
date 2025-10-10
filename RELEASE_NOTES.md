@@ -12,6 +12,7 @@ Welcome to KevBot! This document highlights major features and changes for coord
 
 **Technical Details**: For detailed, technical changelogs, see:
 
+- [Infrastructure Changelog](CHANGELOG.md) - Root-level infrastructure changes
 - [API Changelog](api/CHANGELOG.md)
 - [Database Changelog](db/CHANGELOG.md)
 - [Frontend Changelog](frontend/CHANGELOG.md)
@@ -22,7 +23,17 @@ Welcome to KevBot! This document highlights major features and changes for coord
 
 ## [Unreleased]
 
-Stay tuned for the next major release!
+### v2.0 Beta (In Development)
+
+KevBot v2 is a complete rewrite from the original Discord bot to a modern web-based music platform:
+
+- **New**: Web-based UI with Next.js
+- **New**: REST API for programmatic access
+- **New**: Cloud storage integration
+- **New**: Advanced playlist management
+- **Improved**: Modern architecture with independent component versioning
+
+Currently in beta - features and APIs may change before stable release.
 
 ---
 
@@ -93,11 +104,21 @@ KevBot uses independent component versioning:
 
 ## Release Process
 
-Releases are managed through our automated release process:
+### Automated Component Versioning
 
 1. Changes are merged to `main` with conventional commit messages
 2. Release PRs are automatically created by release-please
-3. When ready, release PRs are merged to publish new versions
-4. Major coordinated releases are documented here with user-facing highlights
+3. When ready, release PRs are merged to update versions and component CHANGELOGs
+4. Tags are created automatically (e.g., `api-v2.1.0`, `kevbot-v1.0.1`)
+5. **No automatic GitHub Releases** - all components use `skip-github-release: true`
+
+### Manual User-Facing Releases
+
+Major coordinated releases are published manually:
+
+1. Review component changelogs to identify significant features
+2. Update this document (RELEASE_NOTES.md) with user-facing highlights
+3. Create a manual GitHub Release when appropriate
+4. Link to relevant component tags and changelogs
 
 For more information, see [CONTRIBUTING.md](CONTRIBUTING.md).
