@@ -2,6 +2,10 @@
 
 This document summarizes the release process setup completed for the KevBot repository.
 
+TODO: update docs to allow rebase merging
+
+TODO: update docs to make say that github releases are okay, but they will be manually deleted
+
 ## What Was Implemented
 
 ### ✅ 1. Fixed Commit Linting Strategy

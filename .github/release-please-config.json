@@ -20,7 +20,7 @@
       "component": "api",
       "changelog-path": "CHANGELOG.md",
       "include-component-in-tag": true,
-      "skip-github-release": true,
+      "skip-github-release": false,
       "bootstrap-sha": "8a7ec8480183b88b29d06ea6d332ad17f968f5c6"
     },
     "db": {
@@ -30,7 +30,7 @@
       "changelog-path": "CHANGELOG.md",
       "include-component-in-tag": true,
       "version-file": "VERSION.txt",
-      "skip-github-release": true,
+      "skip-github-release": false,
       "bootstrap-sha": "615799c9dcc2d89c42b232dc6fecad200825d4d8"
     },
     "frontend": {
@@ -39,7 +39,7 @@
       "component": "frontend",
       "changelog-path": "CHANGELOG.md",
       "include-component-in-tag": true,
-      "skip-github-release": true,
+      "skip-github-release": false,
       "bootstrap-sha": "615799c9dcc2d89c42b232dc6fecad200825d4d8"
     },
     "tools": {
@@ -49,7 +49,7 @@
       "changelog-path": "CHANGELOG.md",
       "include-component-in-tag": true,
       "version-file": "VERSION.txt",
-      "skip-github-release": true,
+      "skip-github-release": false,
       "bootstrap-sha": "615799c9dcc2d89c42b232dc6fecad200825d4d8"
     },
     "gcloud": {
@@ -59,9 +59,8 @@
       "changelog-path": "CHANGELOG.md",
       "include-component-in-tag": true,
       "version-file": "VERSION.txt",
-      "skip-github-release": true,
+      "skip-github-release": false,
       "bootstrap-sha": "615799c9dcc2d89c42b232dc6fecad200825d4d8"
     }
-  },
-  "bootstrap-sha": "main"
+  }
 }
