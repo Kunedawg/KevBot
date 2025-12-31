@@ -1,4 +1,4 @@
--- Update users table. Remove username and password hash columns. Add discord_avatar_hash column. Make discord_id not nullable.
+-- Update users table. Remove username and password hash columns. Add discord_avatar_hash column (nullable). Make discord_id not nullable.
 
 ALTER TABLE `users`
     MODIFY COLUMN `discord_id` varchar(20) NOT NULL, 
