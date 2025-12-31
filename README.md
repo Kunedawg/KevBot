@@ -187,6 +187,4 @@ ISC
 
 ## Contact
 
-Kevin Kuney - [kevin.kuney@gmail.com](mailto:kevin.kuney@gmail.com)
-
 GitHub: [@Kunedawg](https://github.com/Kunedawg)

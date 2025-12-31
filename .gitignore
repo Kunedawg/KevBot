@@ -24,3 +24,5 @@ __pycache__/
 
 # temp dir
 tmp/
+
+/.ignore
