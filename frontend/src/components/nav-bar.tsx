@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LoginButton } from "@/components/login-button";
 
 export function NavBar() {
   return (
@@ -10,7 +11,10 @@ export function NavBar() {
         <Link href="/" className="font-bold">
           KevBot
         </Link>
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <LoginButton />
+          <ThemeToggle />
+        </div>
       </div>
     </nav>
   );

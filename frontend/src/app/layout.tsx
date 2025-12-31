@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { ThemeProvider } from "next-themes";
 import { Inter } from "next/font/google";
+import { AuthProvider } from "@/lib/contexts/auth-context";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -14,7 +15,7 @@ export default function RootLayout({ children }: LayoutProps) {
     <html lang="en" suppressHydrationWarning>
       <body className={`min-h-screen bg-background ${inter.className}`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {children}
+          <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>
       </body>
     </html>

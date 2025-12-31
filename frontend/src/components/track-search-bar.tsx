@@ -3,7 +3,7 @@
 import { ChangeEvent, KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fetchTrackSuggestions } from "@/lib/api";
+import { api } from "@/lib/api-browser-client";
 import { TrackSuggestion } from "@/lib/types";
 
 interface TrackSearchBarProps {
@@ -41,7 +41,7 @@ export function TrackSearchBar({ initialQuery = "", onSearch, isSearching = fals
       }
       setIsSuggesting(true);
       try {
-        const { suggestions: hits } = await fetchTrackSuggestions(query);
+        const { suggestions: hits } = await api.tracks.suggest(query);
         setSuggestions(hits);
       } catch (error) {
         console.error(error);

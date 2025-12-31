@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { ApiTrack } from "@/lib/types";
+import { api } from "@/lib/api-browser-client";
 
 interface MusicPlayerState {
   currentTrack: ApiTrack | null;
@@ -119,7 +120,7 @@ export function MusicPlayerProvider({ children }: MusicPlayerProviderProps) {
   const playTrack = (track: ApiTrack) => {
     if (audioRef.current) {
       // Use stream endpoint for better performance
-      audioRef.current.src = `/api/tracks/${track.id}/stream`;
+      audioRef.current.src = api.tracks.streamUrl(track.id);
       setState((prev) => ({
         ...prev,
         currentTrack: track,
