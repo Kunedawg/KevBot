@@ -3,6 +3,12 @@
 ## High Priority
 
 - [ ] implement OAuth2 with discord on all api endpoints [OAuth2 for API](#oauth2-for-api)
+- [ ] add dev-only auth helpers + env docs (AUTH_ALLOW_DEV_LOGIN, DEV_AUTH_SECRET)
+- [ ] is the factory pattern I have established any good? I want to review this
+- [ ] consider storing UUID in mysql as 16 bytes instead of 36 chars. Can us functions `UUID_TO_BIN` and `BIN_TO_UUID`.
+- [ ] consider using `express-session`
+- [ ] review maybe in more detail the tracking of ip address and user-agent in the sessions
+- [ ] is the factory pattern I have good?
 
 ## Medium Priority
 
@@ -47,6 +53,13 @@ Here’s a clean, moderately detailed “do-this” plan you can build against.
 
 - **Notes**: API performs the Discord verification (don’t trust client-provided IDs).
 
+**/auth/dev-exchange (dev-only user login)**
+
+- **Enabled** only when `AUTH_ALLOW_DEV_LOGIN=true` and `DEV_AUTH_SECRET` is configured.
+- **Request**: Header `x-dev-auth-secret: <DEV_AUTH_SECRET>` and body `{ user_id?, discord_user_id?, email?, username? }`.
+- **Server**: Validate header + flag, upsert stubbed user + provider rows, create session, reuse access token issuance from `/auth/exchange`.
+- **Notes**: Log a prominent warning; reject when `NODE_ENV==='production'` regardless of the flag.
+
 **/auth/refresh**
 
 - **Request**: Cookie `refresh_session=<session_id>`
@@ -62,6 +75,10 @@ Here’s a clean, moderately detailed “do-this” plan you can build against.
 - **Auth**: Bearer access token
 - **Server**: Return minimal user summary; good wiring test.
 
+**/auth/login** & **/auth/register**
+
+- Keep legacy username/password endpoints temporarily, but mark as deprecated once OAuth + sessions ship.
+
 #### 4) Bot auth
 
 **/bot/auth**
@@ -69,6 +86,26 @@ Here’s a clean, moderately detailed “do-this” plan you can build against.
 - Option A (simple): header `x-bot-key: <API_KEY>` → issue access JWT with `role='bot'`, TTL 20–30 min.
 - Option B (stronger): header `Authorization: Bearer <bot_service_jwt>` (bot-signed) → verify with bot public key → issue access JWT `role='bot'`.
 - Bot re-calls `/bot/auth` to refresh; no refresh cookie for the bot.
+
+##### Better way to handle the secret.
+
+headers
+
+```
+X-Bot-Id: discord-bot
+X-Timestamp: 2025-10-23T15:05:00Z
+X-Signature: <hex HMAC-SHA256(secret, timestamp + "\n" + body)>
+```
+
+maybe add kevbot to headers to make the scoping clear.
+
+server flow:
+
+```ts
+const botId = req.header("X-Bot-Id");
+const secret = lookupSecret(botId);
+verifyHmac(secret, timestamp, body, signature);
+```
 
 #### 5) Unified media endpoints
 
@@ -109,6 +146,15 @@ Here’s a clean, moderately detailed “do-this” plan you can build against.
 - **requireAuth**: parse `Authorization: Bearer`, verify JWT (HS256), check `aud`, `exp`; attach `req.auth = { userId: sub, role, sessionId: sid }`.
 - **requireRole(...roles)**: 403 if caller role not allowed.
 - Input validation (zod/joi) on every endpoint.
+
+#### 8a) Environment flags & secrets
+
+- `JWT_ACCESS_TTL_MINUTES=15` (configurable short-lived access tokens).
+- `SESSION_TTL_DAYS=90` (sliding, refresh cookie lifetime).
+- `JWT_SECRET` (existing) + `JWT_AUDIENCE=api`, `JWT_ISSUER=kevbot-api`.
+- `AUTH_ALLOW_DEV_LOGIN=false` by default; enable locally only.
+- `DEV_AUTH_SECRET=<random>` required when dev login enabled.
+- `BOT_AUTH_API_KEY=<random>` (for `/bot/auth`).
 
 #### 9) Security & platform settings
 

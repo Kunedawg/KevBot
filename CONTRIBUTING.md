@@ -17,6 +17,26 @@ Thank you for contributing to KevBot! This guide will help you understand our de
 - Docker and Docker Compose
 - Node.js >= 20.17.0 (for local development)
 
+### Seed Data
+
+Seed data is stored in the `kevbot-development-sensitive-data` google cloud bucket.
+
+Rough steps to reseed
+
+1. Stop containers
+2. Delete docker volumes
+3. Delete files in the `gcloud/data/kevbot-local-audio`
+4. Restart main docker compose
+5. Migrate the database up to the baseline version of 1.2.0
+6. Update `.env`
+   ```
+   MYSQL_HOST=host.docker.internal -> localhost
+   GCP_API_ENDPOINT=http://host.docker.internal:4443 -> http://localhost:4443
+   ```
+7. Run the `rename_to_id` script (setup .venv and do a pip install if needed). The script might fail and say the renaming was not successful (known bug).
+8. restore `.env` back to `host.docker.internal`
+9. Run full migration of database up to latest version
+
 ### Starting the Development Environment
 
 ```bash
