@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/Kunedawg/KevBot/compare/tools-v1.1.0...tools-v1.1.1) (2025-12-31)
+
+
+### Bug Fixes
+
+* **tools:** use correct env var names ([a101b4a](https://github.com/Kunedawg/KevBot/commit/a101b4a3aeda8ac791d92a4b9b7984b7f73a896c))
+
 ## [1.1.0](https://github.com/Kunedawg/KevBot/compare/v1.0.0...tools-v1.1.0) (2025-10-10)
 
 
