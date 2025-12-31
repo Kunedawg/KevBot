@@ -3,6 +3,13 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.13.0](https://github.com/Kunedawg/KevBot/compare/db-v2.12.0...db-v2.13.0) (2025-12-31)
+
+
+### Features
+
+* **db:** trigger version bump ([#133](https://github.com/Kunedawg/KevBot/issues/133)) ([49a9e2c](https://github.com/Kunedawg/KevBot/commit/49a9e2c8d50232ad51e1e123fb9a1d81b94653df))
+
 ## [2.12.0](https://github.com/Kunedawg/KevBot/compare/db-v2.11.0...db-v2.12.0) (2025-12-31)
 
 
