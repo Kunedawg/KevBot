@@ -1,41 +1,38 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { TrackList } from "@/components/track-list";
 import { TrackSearchBar } from "@/components/track-search-bar";
-import { ApiTrack, PaginatedResponse } from "@/lib/types";
+import { ApiTrack } from "@/lib/types";
 import { useInfiniteScroll } from "@/lib/hooks/useInfiniteScroll";
-import { fetchTracks } from "@/lib/api";
-
-interface InfiniteTrackListProps {
-  initialTracks: ApiTrack[];
-  initialPagination: PaginatedResponse<ApiTrack>["pagination"];
-  initialQuery?: string;
-}
+import { api } from "@/lib/api-browser-client";
 
 const DEFAULT_LIMIT = 20;
 
-export function InfiniteTrackList({ initialTracks, initialPagination, initialQuery = "" }: InfiniteTrackListProps) {
+export function InfiniteTrackList() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [tracks, setTracks] = useState<ApiTrack[]>(initialTracks);
-  const [hasMore, setHasMore] = useState(initialPagination.hasNext);
+  const queryFromUrl = useMemo(() => (searchParams?.get("q") ?? "").trim(), [searchParams]);
+
+  const [tracks, setTracks] = useState<ApiTrack[]>([]);
+  const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [query, setQuery] = useState(initialQuery);
+  const [query, setQuery] = useState(queryFromUrl);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
 
-  const pageSize = initialPagination.limit ?? DEFAULT_LIMIT;
+  const lastHandledQueryRef = useRef<string | null>(null);
 
   const updateRoute = useCallback(
     (nextQuery: string) => {
       const currentParams = new URLSearchParams(searchParams?.toString() ?? "");
-      if (nextQuery) {
-        currentParams.set("q", nextQuery);
+      const trimmed = nextQuery.trim();
+      if (trimmed) {
+        currentParams.set("q", trimmed);
       } else {
         currentParams.delete("q");
       }
-
       const queryString = currentParams.toString();
       const nextPath = queryString ? `/tracks?${queryString}` : "/tracks";
       router.replace(nextPath, { scroll: false });
@@ -43,65 +40,109 @@ export function InfiniteTrackList({ initialTracks, initialPagination, initialQue
     [router, searchParams]
   );
 
+  const fetchTracksPage = useCallback(async (offset: number, search: string) => {
+    const trimmed = search.trim();
+    const response = await api.tracks.fetch({
+      q: trimmed || undefined,
+      offset,
+      limit: DEFAULT_LIMIT,
+      sort: trimmed ? undefined : "name",
+      search_mode: trimmed ? "hybrid" : undefined,
+      order: trimmed ? undefined : "asc",
+    });
+    return response;
+  }, []);
+
+  useEffect(() => {
+    const normalized = queryFromUrl;
+
+    if (lastHandledQueryRef.current === normalized) {
+      lastHandledQueryRef.current = null;
+      return;
+    }
+
+    let cancelled = false;
+    setIsInitialLoading(true);
+    setError(null);
+
+    (async () => {
+      try {
+        const response = await fetchTracksPage(0, normalized);
+        if (cancelled) return;
+        setTracks(response.data);
+        setHasMore(response.pagination.hasNext);
+        setQuery(normalized);
+      } catch (err) {
+        if (cancelled) return;
+        console.error(err);
+        setError("Failed to fetch tracks");
+        setTracks([]);
+        setHasMore(false);
+      } finally {
+        if (!cancelled) {
+          setIsInitialLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchTracksPage, queryFromUrl]);
+
   const handleSearch = useCallback(
     async (rawQuery: string) => {
       const trimmed = rawQuery.trim();
       setIsSearching(true);
       setError(null);
+
       try {
-        const response = await fetchTracks({
-          q: trimmed || undefined,
-          offset: 0,
-          limit: pageSize,
-          sort: trimmed ? undefined : "name",
-          search_mode: trimmed ? "hybrid" : undefined,
-          order: trimmed ? undefined : "asc",
-        });
+        const response = await fetchTracksPage(0, trimmed);
         setTracks(response.data);
         setHasMore(response.pagination.hasNext);
         setQuery(trimmed);
+        lastHandledQueryRef.current = trimmed;
         updateRoute(trimmed);
       } catch (err) {
         console.error(err);
         setError("Failed to fetch tracks");
+        setHasMore(false);
       } finally {
         setIsSearching(false);
+        setIsInitialLoading(false);
       }
     },
-    [pageSize, updateRoute]
+    [fetchTracksPage, updateRoute]
   );
 
   const loadMoreTracks = useCallback(async () => {
-    if (!hasMore || isSearching) return;
+    if (!hasMore || isInitialLoading || isSearching) return;
     try {
-      const response = await fetchTracks({
-        q: query || undefined,
-        offset: tracks.length,
-        limit: pageSize,
-        sort: query ? undefined : "name",
-        search_mode: query ? "hybrid" : undefined,
-        order: query ? undefined : "asc",
-      });
+      const response = await fetchTracksPage(tracks.length, query);
       setTracks((prev) => [...prev, ...response.data]);
       setHasMore(response.pagination.hasNext);
     } catch (err) {
       console.error(err);
       setError("Failed to load more tracks");
     }
-  }, [hasMore, isSearching, pageSize, query, tracks.length]);
+  }, [fetchTracksPage, hasMore, isInitialLoading, isSearching, query, tracks.length]);
 
   const { targetRef, isLoadingRef } = useInfiniteScroll(loadMoreTracks, {
     threshold: 0.1,
     rootMargin: "200px",
-    disabled: isSearching || !hasMore,
+    disabled: isInitialLoading || isSearching || !hasMore,
   });
+
+  const isLoading = (isInitialLoading && tracks.length === 0) || isSearching;
 
   return (
     <div className="space-y-4">
       <TrackSearchBar initialQuery={query} onSearch={handleSearch} isSearching={isSearching} />
       {error && <div className="text-red-500">{error}</div>}
-      {tracks.length === 0 && !isSearching ? (
-        <div className="py-10 text-center text-muted-foreground">No tracks found</div>
+      {tracks.length === 0 ? (
+        <div className="py-10 text-center text-muted-foreground">
+          {isLoading ? "Loading tracks..." : "No tracks found"}
+        </div>
       ) : (
         <>
           <TrackList tracks={tracks} />

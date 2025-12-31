@@ -35,6 +35,21 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
+## Environment Variables
+
+<!-- TODO(discord-auth): are these ENV VARs correct? -->
+
+Create a `.env.local` file in the frontend directory with the following variables:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000
+NEXT_PUBLIC_DISCORD_OAUTH2_CLIENT_ID=your_discord_client_id
+NEXT_PUBLIC_DISCORD_OAUTH2_AUTH_URL=https://discord.com/api/oauth2/authorize
+```
+
+Note: All frontend environment variables must be prefixed with `NEXT_PUBLIC_` to be accessible in the browser.
+
 ## Project structure
 
 - `/src/components/ui` contain ui elements from shadcn library.
