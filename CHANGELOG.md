@@ -14,6 +14,13 @@ For component-specific technical changes, see:
 
 ---
 
+## [2.0.0-beta.3](https://github.com/Kunedawg/KevBot/compare/v2.0.0-beta.2...v2.0.0-beta.3) (2025-12-31)
+
+
+### Features
+
+* **db:** trigger version bump ([#133](https://github.com/Kunedawg/KevBot/issues/133)) ([49a9e2c](https://github.com/Kunedawg/KevBot/commit/49a9e2c8d50232ad51e1e123fb9a1d81b94653df))
+
 ## [2.0.0-beta.2](https://github.com/Kunedawg/KevBot/compare/v2.0.0-beta.1...v2.0.0-beta.2) (2025-12-31)
 
 
