@@ -8,7 +8,7 @@
       "changelog-path": "CHANGELOG.md",
       "include-component-in-tag": false,
       "version-file": "VERSION.txt",
-      "skip-github-release": true,
+      "skip-github-release": false,
       "prerelease": true,
       "prerelease-type": "beta",
       "bootstrap-sha": "615799c9dcc2d89c42b232dc6fecad200825d4d8",
