@@ -24,11 +24,24 @@ export async function i32IdCheck(requestBuilder: any) {
   expect(res.body?.message).toMatch(/validation error.*less.*2147483647/i);
 }
 
-export async function getLoginTokenAndTestResult(user: { username: string; password: string }, app: Express) {
-  let res = await request(app).post("/v1/auth/login").send(user);
-  expect(res.status).toBe(200);
-  expect(res.body).toEqual({ token: expect.any(String) });
-  return res.body?.token;
+export async function getLoginTokenAndTestResult(
+  user: { user_id?: number; discord_id?: string } | undefined,
+  app: Express
+) {
+  const devAuthSecret = process.env.DEV_AUTH_SECRET ?? "TEST_DEV_AUTH_SECRET";
+  const requestBody = user?.discord_id ? { discord_id: user.discord_id } : { user_id: user?.user_id ?? 1 };
+  const res = await request(app)
+    .post("/v1/dev/sessions")
+    .set("x-dev-auth-secret", devAuthSecret)
+    .send(requestBody);
+  expect(res.status).toBe(201);
+  expect(res.body).toEqual({
+    access_token: expect.any(String),
+    token_type: "Bearer",
+    expires_in: expect.any(Number),
+    user: { id: expect.any(Number) },
+  });
+  return res.body?.access_token;
 }
 
 export const fixturePath = (fileName: string) => path.join(__dirname, "fixtures", fileName);

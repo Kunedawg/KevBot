@@ -12,6 +12,7 @@ export interface Database {
   user_farewells: UserFarewellsTable;
   user_greetings: UserGreetingsTable;
   users: UsersTable;
+  sessions: SessionsTable;
 }
 
 export interface SchemaVersionTable {
@@ -122,14 +123,30 @@ export type UserGreetingUpdate = Updateable<UserGreetingsTable>;
 
 export interface UsersTable {
   id: Generated<number>;
-  discord_id: string | null;
+  discord_id: string;
   discord_username: string | null;
-  username: string | null;
-  password_hash: string | null;
+  discord_avatar_hash: string | null;
   created_at: Generated<Date>;
   updated_at: Generated<Date>;
 }
 export type User = Selectable<UsersTable>;
-export type PublicUser = Omit<User, "password_hash">;
+// NOTE: if sensitive data is added to the user record, we should use Omit<User, "<sensitive_data>"> instead
+export type PublicUser = User;
 export type NewUser = Insertable<UsersTable>;
 export type UserUpdate = Updateable<UsersTable>;
+export type PostUserOptions = Omit<NewUser, "id" | "created_at" | "updated_at">;
+export type PatchUserOptions = Omit<PostUserOptions, "discord_id">;
+
+export interface SessionsTable {
+  id: string;
+  user_id: number;
+  created_at: Generated<Date>;
+  expires_at: Date;
+  is_revoked: ColumnType<0 | 1, 0 | 1 | undefined, 0 | 1>;
+  user_agent: string | null;
+  ip: string | null;
+  updated_at: Generated<Date>;
+}
+export type Session = Selectable<SessionsTable>;
+export type NewSession = Insertable<SessionsTable>;
+export type SessionUpdate = Updateable<SessionsTable>;

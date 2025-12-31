@@ -1,10 +1,16 @@
 import { Request } from "express";
-import { User } from "../models/User";
 import Boom from "@hapi/boom";
+import { AuthRole } from "../services/authService";
 
-export const getAuthenticatedUser = (req: Request): User => {
-  if (!req.user || !req.user.id) {
+interface AuthenticatedUserContext {
+  id: number;
+  role: AuthRole;
+  sessionId?: string;
+}
+
+export const getAuthenticatedUser = (req: Request): AuthenticatedUserContext => {
+  if (!req.auth) {
     throw Boom.unauthorized("User not authenticated");
   }
-  return req.user;
+  return { id: req.auth.userId, role: req.auth.role, sessionId: req.auth.sessionId };
 };

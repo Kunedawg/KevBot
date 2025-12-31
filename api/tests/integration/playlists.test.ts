@@ -16,11 +16,17 @@ let db: Kysely<Database>;
 let app: Express;
 
 beforeAll(async () => {
+  // TODO: improve management of environment variables
   process.env.GCP_TRACKS_BUCKET_NAME = "dummy";
   process.env.KEVBOT_API_ADDRESS = "0.0.0.0";
   process.env.KEVBOT_API_JWT_SECRET = "jwt_secret";
   process.env.KEVBOT_API_PORT = "3000";
   process.env.GCP_API_ENDPOINT = "dummy";
+  process.env.DEV_ROUTES_ALLOWED = "true";
+  process.env.DEV_AUTH_SECRET = "TEST_DEV_AUTH_SECRET";
+  process.env.DISCORD_OAUTH2_REDIRECT_URI = "http://dummy.com";
+  process.env.DISCORD_OAUTH2_CLIENT_ID = "dummy";
+  process.env.DISCORD_OAUTH2_CLIENT_SECRET = "dummy";
   const { config, secrets } = configFactory();
   const dummyTracksBucket = {} as Bucket;
   db = dbFactory(secrets.DB_CONNECTION_STRING);

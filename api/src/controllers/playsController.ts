@@ -6,13 +6,13 @@ import { PlaysService } from "../services/playsService";
 export function playsControllerFactory(playsService: PlaysService) {
   const logTracksPlay = async (req: Request, res: Response) => {
     const { track_id, play_type } = playsSchemas.logTracksPlayBodySchema.parse(req.body);
-    await playsService.logTracksPlay(track_id, play_type, { user_id: req.user?.id });
+    await playsService.logTracksPlay(track_id, play_type, { user_id: req.auth?.userId });
     res.status(StatusCodes.CREATED).end();
   };
 
   const logRandomPlaylistsPlay = async (req: Request, res: Response) => {
     const { playlist_id } = playsSchemas.logRandomPlaylistsPlayBodySchema.parse(req.body);
-    await playsService.logRandomPlaylistPlay(playlist_id, { user_id: req.user?.id });
+    await playsService.logRandomPlaylistPlay(playlist_id, { user_id: req.auth?.userId });
     res.status(StatusCodes.CREATED).end();
   };
 

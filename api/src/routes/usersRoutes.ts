@@ -1,13 +1,12 @@
 import express from "express";
 import setIdFromUser from "../middlewares/setIdFromUser";
 import { usersControllerFactory } from "../controllers/usersController";
-import { Config } from "../config/config";
 import { UsersService } from "../services/usersService";
 import { AuthMiddleware } from "../middlewares/auth";
 
-export function usersRoutesFactory(config: Config, auth: AuthMiddleware, usersService: UsersService) {
+export function usersRoutesFactory(auth: AuthMiddleware, usersService: UsersService) {
   const router = express.Router();
-  const usersController = usersControllerFactory(config, usersService);
+  const usersController = usersControllerFactory(usersService);
   router.get("/", usersController.getUsers);
   router.get("/@me", auth.requireAuth, setIdFromUser, usersController.getUserById);
   router.get("/@me/greeting", auth.requireAuth, setIdFromUser, usersController.getGreeting);

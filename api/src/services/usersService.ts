@@ -1,5 +1,5 @@
 import * as Boom from "@hapi/boom";
-import { PublicUser } from "../db/schema";
+import { PostUserOptions, PatchUserOptions, PublicUser } from "../db/schema";
 import { KevbotDb } from "../db/connection";
 import { TracksService } from "./tracksService";
 import { PlaylistsService } from "./playlistsService";
@@ -8,26 +8,26 @@ const PUBLIC_USER_FIELDS = [
   "users.id",
   "users.discord_id",
   "users.discord_username",
-  "users.username",
+  "users.discord_avatar_hash",
   "users.created_at",
   "users.updated_at",
 ] as const;
 
 interface UserOptions {
-  username?: string;
-  discordId?: string;
-  discordUsername?: string;
+  discord_id?: string;
+  discord_username?: string;
 }
 
+// TODO: should services support injection of execution context? That was it would be easy to do complex transactions.
 export function usersServiceFactory(db: KevbotDb, tracksService: TracksService, playlistsService: PlaylistsService) {
-  const validateUsernameIsUnique = async (username: string, excludeId?: number) => {
-    let query = db.selectFrom("users").select(["username"]).where("username", "=", username);
-    if (excludeId) {
-      query = query.where("id", "!=", excludeId);
-    }
-    const user = await query.executeTakeFirst();
+  const validateDiscordIdIsUnique = async (discordId: string) => {
+    const user = await db
+      .selectFrom("users")
+      .select(["discord_id"])
+      .where("discord_id", "=", discordId)
+      .executeTakeFirst();
     if (user) {
-      throw Boom.conflict("Username is already taken");
+      throw Boom.conflict("Discord ID is already taken");
     }
   };
 
@@ -37,23 +37,19 @@ export function usersServiceFactory(db: KevbotDb, tracksService: TracksService, 
     }
   };
 
-  const postUser = async (username: string, passwordHash: string) => {
-    await validateUsernameIsUnique(username);
-    const { insertId } = await db
-      .insertInto("users")
-      .values({ username, password_hash: passwordHash })
-      .executeTakeFirst();
+  const postUser = async (options: PostUserOptions) => {
+    await validateDiscordIdIsUnique(options.discord_id);
+    const { insertId } = await db.insertInto("users").values(options).executeTakeFirst();
     return await getUserById(Number(insertId));
   };
 
-  const patchUser = async (id: number, username: string, req_user_id: number) => {
+  const patchUser = async (id: number, req_user_id: number, options: PatchUserOptions) => {
     const user = await getUserById(id);
     userPermissionCheck(user, req_user_id);
-    await validateUsernameIsUnique(username, id);
-    if (user.username === username) {
+    if (Object.keys(options).length === 0) {
       return user;
     }
-    await db.updateTable("users").set({ username }).where("id", "=", id).execute();
+    await db.updateTable("users").set(options).where("id", "=", id).execute();
     return await getUserById(id);
   };
 
@@ -114,22 +110,31 @@ export function usersServiceFactory(db: KevbotDb, tracksService: TracksService, 
   };
 
   const getUsers = async (options: UserOptions = {}) => {
-    const { username, discordId, discordUsername } = options;
+    const { discord_id, discord_username } = options;
     let query = db.selectFrom("users").select(PUBLIC_USER_FIELDS);
-    if (username) {
-      query = query.where("users.username", "=", username);
+    if (discord_id) {
+      query = query.where("users.discord_id", "=", discord_id);
     }
-    if (discordId) {
-      query = query.where("users.discord_id", "=", discordId);
-    }
-    if (discordUsername) {
-      query = query.where("users.discord_username", "=", discordUsername);
+    if (discord_username) {
+      query = query.where("users.discord_username", "=", discord_username);
     }
     return await query.execute();
   };
 
   const getUserById = async (id: number) => {
     const user = await db.selectFrom("users").select(PUBLIC_USER_FIELDS).where("users.id", "=", id).executeTakeFirst();
+    if (!user) {
+      throw Boom.notFound("User not found");
+    }
+    return user;
+  };
+
+  const getUserByDiscordId = async (discordId: string) => {
+    const user = await db
+      .selectFrom("users")
+      .select(PUBLIC_USER_FIELDS)
+      .where("users.discord_id", "=", discordId)
+      .executeTakeFirst();
     if (!user) {
       throw Boom.notFound("User not found");
     }
@@ -154,18 +159,6 @@ export function usersServiceFactory(db: KevbotDb, tracksService: TracksService, 
     return farewell ?? { farewell_track_id: null, farewell_playlist_id: null };
   };
 
-  const getUserPasswordHash = async (username: string) => {
-    const user = await db
-      .selectFrom("users")
-      .select(["password_hash"])
-      .where("username", "=", username)
-      .executeTakeFirst();
-    if (!user?.password_hash) {
-      throw Boom.unauthorized("Invalid username or password");
-    }
-    return user.password_hash;
-  };
-
   return {
     postUser,
     patchUser,
@@ -175,7 +168,7 @@ export function usersServiceFactory(db: KevbotDb, tracksService: TracksService, 
     getUserById,
     getGreetingByUserId,
     getFarewellByUserId,
-    getUserPasswordHash,
+    getUserByDiscordId,
   };
 }
 
