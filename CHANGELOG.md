@@ -14,6 +14,20 @@ For component-specific technical changes, see:
 
 ---
 
+## [2.0.0-beta.2](https://github.com/Kunedawg/KevBot/compare/v2.0.0-beta.1...v2.0.0-beta.2) (2025-12-31)
+
+
+### Features
+
+* **api:** discord auth ([5973de6](https://github.com/Kunedawg/KevBot/commit/5973de65f16e1a7bcb719c31458d1efaa0b84460))
+* **db:** add auth sessions and update users table ([77de1bf](https://github.com/Kunedawg/KevBot/commit/77de1bf48cccc8b5dc26e290a99a3f4cd1b7543f))
+* **frontend:** discord auth ([11a019b](https://github.com/Kunedawg/KevBot/commit/11a019b76a46038ad1a0b5526a30b1c0ab639339))
+
+
+### Bug Fixes
+
+* **tools:** use correct env var names ([a101b4a](https://github.com/Kunedawg/KevBot/commit/a101b4a3aeda8ac791d92a4b9b7984b7f73a896c))
+
 ## [2.0.0-beta.1](https://github.com/Kunedawg/KevBot/compare/v2.0.0-beta.0...v2.0.0-beta.1) (2025-10-10)
 
 

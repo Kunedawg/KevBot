@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/Kunedawg/KevBot/compare/frontend-v0.2.0...frontend-v0.3.0) (2025-12-31)
+
+
+### Features
+
+* **frontend:** discord auth ([11a019b](https://github.com/Kunedawg/KevBot/commit/11a019b76a46038ad1a0b5526a30b1c0ab639339))
+
 ## [0.2.0](https://github.com/Kunedawg/KevBot/compare/frontend-v0.1.0...frontend-v0.2.0) (2025-10-10)
 
 

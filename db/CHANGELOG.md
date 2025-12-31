@@ -3,6 +3,13 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.12.0](https://github.com/Kunedawg/KevBot/compare/db-v2.11.0...db-v2.12.0) (2025-12-31)
+
+
+### Features
+
+* **db:** add auth sessions and update users table ([77de1bf](https://github.com/Kunedawg/KevBot/commit/77de1bf48cccc8b5dc26e290a99a3f4cd1b7543f))
+
 ## [2.11.0](https://github.com/Kunedawg/KevBot/compare/db-v2.10.0...db-v2.11.0) (2025-10-10)
 
 

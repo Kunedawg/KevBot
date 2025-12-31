@@ -2,6 +2,13 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0](https://github.com/Kunedawg/KevBot/compare/api-v2.1.0...api-v2.2.0) (2025-12-31)
+
+
+### Features
+
+* **api:** discord auth ([5973de6](https://github.com/Kunedawg/KevBot/commit/5973de65f16e1a7bcb719c31458d1efaa0b84460))
+
 ## [2.1.0](https://github.com/Kunedawg/KevBot/compare/api-v2.0.0...api-v2.1.0) (2025-10-10)
 
 
