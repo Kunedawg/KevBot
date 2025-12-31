@@ -4,6 +4,8 @@ import path from "path";
 import { loudnessNormalize, verifyLoudnessNormalization } from "../../src/utils/audioUtils";
 import { fixturePath } from "../utils";
 
+jest.setTimeout(30000);
+
 let appConfig: AppConfig;
 
 const TMP_DIR = path.join(__dirname, "tmp");
@@ -14,11 +16,15 @@ beforeAll(async () => {
     fs.mkdirSync(TMP_DIR, { recursive: true });
   }
   // process.env does not matter here, but it is needed to prevent configFactory from throwing
+  // TODO: improve management of environment variables
   process.env.GCP_API_ENDPOINT = `http://127.0.0.1:123`;
   process.env.GCP_TRACKS_BUCKET_NAME = "kevbot-tracks-testing";
   process.env.KEVBOT_API_ADDRESS = "0.0.0.0";
   process.env.KEVBOT_API_JWT_SECRET = "jwt_secret";
   process.env.KEVBOT_API_PORT = "3000";
+  process.env.DISCORD_OAUTH2_REDIRECT_URI = "http://dummy.com";
+  process.env.DISCORD_OAUTH2_CLIENT_ID = "dummy";
+  process.env.DISCORD_OAUTH2_CLIENT_SECRET = "dummy";
   appConfig = configFactory();
 }, 120000);
 

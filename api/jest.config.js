@@ -7,6 +7,7 @@ module.exports = {
   transform: {
     "^.+.tsx?$": ["ts-jest", { tsconfig: "tests/tsconfig.json" }],
   },
+  maxWorkers: 2,
   globals: {
     NODE_ENV: "test",
   },

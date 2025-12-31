@@ -26,14 +26,6 @@ export const playlistNameValidationFactory = (config: Config) =>
     "Playlist name must contain only lower-case letters and numbers."
   );
 
-export const usernameValidationFactory = (config: Config) =>
-  nameValidationFactory(
-    "Username",
-    config.maxUsernameLength,
-    /^[a-z\d_]+$/g,
-    "Username must contain only lower-case letters, numbers, and underscores."
-  );
-
 export const i32IdSchema = z.object({
   id: z.coerce.number().int().min(0).max(2_147_483_647),
 });

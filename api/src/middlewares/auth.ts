@@ -9,8 +9,8 @@ export function authMiddlewareFactory(authService: AuthService) {
     if (!token) {
       throw Boom.unauthorized("Access token is missing");
     }
-    const user = await authService.verifyToken(token);
-    req.user = user;
+    const context = await authService.verifyToken(token);
+    req.auth = context;
     next();
   };
 
@@ -19,8 +19,8 @@ export function authMiddlewareFactory(authService: AuthService) {
     const token = authHeader && authHeader.split(" ")[1];
     if (token) {
       try {
-        const user = await authService.verifyToken(token);
-        req.user = user;
+        const context = await authService.verifyToken(token);
+        req.auth = context;
       } catch {
         // No error handling needed; requests can proceed as anonymous user.
       }

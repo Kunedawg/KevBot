@@ -4,10 +4,9 @@ import { StatusCodes } from "http-status-codes";
 import { getAuthenticatedUser } from "../utils/getAuthenticatedUser";
 import { UsersService } from "../services/usersService";
 import { usersSchemasFactory } from "../schemas/usersSchemas";
-import { Config } from "../config/config";
 
-export function usersControllerFactory(config: Config, usersService: UsersService) {
-  const usersSchemas = usersSchemasFactory(config);
+export function usersControllerFactory(usersService: UsersService) {
+  const usersSchemas = usersSchemasFactory();
 
   const getUsers = async (req: Request, res: Response) => {
     const query = usersSchemas.getUsersQuerySchema.parse(req.query);
@@ -35,9 +34,9 @@ export function usersControllerFactory(config: Config, usersService: UsersServic
 
   const patchUser = async (req: Request, res: Response) => {
     const { id } = i32IdSchema.parse(req.params);
-    const { username } = usersSchemas.patchUserBodySchema.parse(req.body);
+    const parsedBody = usersSchemas.patchUserBodySchema.parse(req.body);
     const user = getAuthenticatedUser(req);
-    const updatedUser = await usersService.patchUser(id, username, user.id);
+    const updatedUser = await usersService.patchUser(id, user.id, parsedBody);
     res.status(StatusCodes.OK).json(updatedUser);
   };
 

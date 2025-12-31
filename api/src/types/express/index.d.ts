@@ -1,10 +1,10 @@
 import * as express from "express";
-import { User } from "../../models/User";
+import { AuthContext } from "../../services/authService";
 
 declare global {
   namespace Express {
     interface Request {
-      user?: User;
+      auth?: AuthContext;
     }
   }
 }

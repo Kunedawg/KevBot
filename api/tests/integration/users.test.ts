@@ -12,15 +12,24 @@ import { configFactory } from "../../src/config/config";
 import { Bucket } from "@google-cloud/storage";
 import { i32IdCheck } from "../utils";
 
+const DEV_AUTH_SECRET = "TEST_DEV_AUTH_SECRET";
+const AUTH_USER_ID = 1;
+
 let db: Kysely<Database>;
 let app: Express;
 
 beforeAll(async () => {
+  // TODO: improve management of environment variables
   process.env.GCP_TRACKS_BUCKET_NAME = "dummy";
   process.env.KEVBOT_API_ADDRESS = "0.0.0.0";
   process.env.KEVBOT_API_JWT_SECRET = "jwt_secret";
   process.env.KEVBOT_API_PORT = "3000";
   process.env.GCP_API_ENDPOINT = "dummy";
+  process.env.DEV_ROUTES_ALLOWED = "true";
+  process.env.DEV_AUTH_SECRET = DEV_AUTH_SECRET;
+  process.env.DISCORD_OAUTH2_REDIRECT_URI = "http://dummy.com";
+  process.env.DISCORD_OAUTH2_CLIENT_ID = "dummy";
+  process.env.DISCORD_OAUTH2_CLIENT_SECRET = "dummy";
   const { config, secrets } = configFactory();
   const dummyTracksBucket = {} as Bucket;
   db = dbFactory(secrets.DB_CONNECTION_STRING);
@@ -44,85 +53,68 @@ describe("GET /v1/users", () => {
         id: 1,
         discord_id: "123711472041781240",
         discord_username: "mr_anderson",
+        discord_avatar_hash: null,
         created_at: "2024-11-11T07:21:03.000Z",
         updated_at: "2024-11-11T07:21:03.000Z",
-        username: "mr_anderson",
       },
       {
         id: 1337,
         discord_id: "135319472041781248",
         discord_username: "discord_seed_user",
+        discord_avatar_hash: null,
         created_at: "2024-12-07T04:29:04.000Z",
         updated_at: "2024-12-07T04:29:04.000Z",
-        username: null,
       },
     ]);
   });
 
-  it("should return 200 and a list of filtered list of users based on username.", async () => {
-    const res = await request(app).get("/v1/users?username=mr_anderson");
+  it("should return 200 and a filtered list of users based on discord_id.", async () => {
+    const res = await request(app).get("/v1/users?discord_id=135319472041781248");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([
+      {
+        id: 1337,
+        discord_id: "135319472041781248",
+        discord_username: "discord_seed_user",
+        discord_avatar_hash: null,
+        created_at: "2024-12-07T04:29:04.000Z",
+        updated_at: "2024-12-07T04:29:04.000Z",
+      },
+    ]);
+  });
+
+  it("should return 200 and a filtered list of users based on discord_username.", async () => {
+    const res = await request(app).get("/v1/users?discord_username=discord_seed_user");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([
+      {
+        id: 1337,
+        discord_id: "135319472041781248",
+        discord_username: "discord_seed_user",
+        discord_avatar_hash: null,
+        created_at: "2024-12-07T04:29:04.000Z",
+        updated_at: "2024-12-07T04:29:04.000Z",
+      },
+    ]);
+  });
+
+  it("should return 200 and a filtered list of users when both filters are provided.", async () => {
+    const res = await request(app).get("/v1/users?discord_id=123711472041781240&discord_username=mr_anderson");
     expect(res.status).toBe(200);
     expect(res.body).toEqual([
       {
         id: 1,
         discord_id: "123711472041781240",
         discord_username: "mr_anderson",
+        discord_avatar_hash: null,
         created_at: "2024-11-11T07:21:03.000Z",
         updated_at: "2024-11-11T07:21:03.000Z",
-        username: "mr_anderson",
       },
     ]);
   });
 
-  it("should return 200 and a list of filtered list of users based on discordId.", async () => {
-    const res = await request(app).get("/v1/users?discordId=135319472041781248");
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual([
-      {
-        id: 1337,
-        discord_id: "135319472041781248",
-        discord_username: "discord_seed_user",
-        created_at: "2024-12-07T04:29:04.000Z",
-        updated_at: "2024-12-07T04:29:04.000Z",
-        username: null,
-      },
-    ]);
-  });
-
-  it("should return 200 and a list of filtered list of users based on discordUsername.", async () => {
-    const res = await request(app).get("/v1/users?discordUsername=discord_seed_user");
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual([
-      {
-        id: 1337,
-        discord_id: "135319472041781248",
-        discord_username: "discord_seed_user",
-        created_at: "2024-12-07T04:29:04.000Z",
-        updated_at: "2024-12-07T04:29:04.000Z",
-        username: null,
-      },
-    ]);
-  });
-
-  it("should return 200 and a list of filtered list of users based on all available filters.", async () => {
-    const res = await request(app).get(
-      "/v1/users?username=mr_anderson&discordId=123711472041781240&discordUsername=mr_anderson"
-    );
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual([
-      {
-        id: 1,
-        discord_id: "123711472041781240",
-        discord_username: "mr_anderson",
-        created_at: "2024-11-11T07:21:03.000Z",
-        updated_at: "2024-11-11T07:21:03.000Z",
-        username: "mr_anderson",
-      },
-    ]);
-  });
-
-  it("should return 200 and a empty list of users because username does not exist.", async () => {
-    const res = await request(app).get("/v1/users?username=does_not_exist");
+  it("should return 200 and an empty list of users when the discord_username does not exist.", async () => {
+    const res = await request(app).get("/v1/users?discord_username=does_not_exist");
     expect(res.status).toBe(200);
     expect(res.body).toEqual([]);
   });
@@ -135,27 +127,33 @@ describe("GET /v1/users", () => {
   });
 });
 
-async function getLoginTokenAndTestResult(user: { username: string; password: string }) {
-  let res = await request(app).post("/v1/auth/login").send(user);
-  expect(res.status).toBe(200);
-  expect(res.body).toEqual({ token: expect.any(String) });
-  return res.body?.token;
+async function getDevAccessTokenForUserAndTestResult(userId: number) {
+  const res = await request(app)
+    .post("/v1/dev/sessions")
+    .set("x-dev-auth-secret", DEV_AUTH_SECRET)
+    .send({ user_id: userId });
+  expect(res.status).toBe(201);
+  expect(res.body).toEqual({
+    access_token: expect.any(String),
+    token_type: "Bearer",
+    expires_in: expect.any(Number),
+    user: { id: userId },
+  });
+  return res.body.access_token as string;
 }
-
-const ME_USER = { username: "mr_anderson", password: "Testpw1!" };
 
 describe("GET /v1/users/@me", () => {
   it("should return 200 and the user", async () => {
-    const jwtToken = await getLoginTokenAndTestResult(ME_USER);
+    const jwtToken = await getDevAccessTokenForUserAndTestResult(AUTH_USER_ID);
     const res = await request(app).get("/v1/users/@me").set("Authorization", `Bearer ${jwtToken}`);
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
       id: 1,
       discord_id: "123711472041781240",
       discord_username: "mr_anderson",
+      discord_avatar_hash: null,
       created_at: "2024-11-11T07:21:03.000Z",
       updated_at: "2024-11-11T07:21:03.000Z",
-      username: "mr_anderson",
     });
   });
   // No error conditions require handling at this time
@@ -163,7 +161,7 @@ describe("GET /v1/users/@me", () => {
 
 describe("GET /v1/users/@me/greeting", () => {
   it("should return 200 and the user greeting", async () => {
-    const jwtToken = await getLoginTokenAndTestResult(ME_USER);
+    const jwtToken = await getDevAccessTokenForUserAndTestResult(AUTH_USER_ID);
     const res = await request(app).get("/v1/users/@me/greeting").set("Authorization", `Bearer ${jwtToken}`);
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
@@ -176,7 +174,7 @@ describe("GET /v1/users/@me/greeting", () => {
 
 describe("GET /v1/users/@me/farewell", () => {
   it("should return 200 and the user farewell", async () => {
-    const jwtToken = await getLoginTokenAndTestResult(ME_USER);
+    const jwtToken = await getDevAccessTokenForUserAndTestResult(AUTH_USER_ID);
     const res = await request(app).get("/v1/users/@me/farewell").set("Authorization", `Bearer ${jwtToken}`);
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
@@ -195,9 +193,9 @@ describe("GET /v1/users/:id", () => {
       id: 1,
       discord_id: "123711472041781240",
       discord_username: "mr_anderson",
+      discord_avatar_hash: null,
       created_at: "2024-11-11T07:21:03.000Z",
       updated_at: "2024-11-11T07:21:03.000Z",
-      username: "mr_anderson",
     });
   });
 
@@ -249,89 +247,100 @@ describe("GET /v1/users/:id/farewell", () => {
   });
 });
 
-async function usernameCheck(requestStarter: any) {
-  let res = await requestStarter.send({ username: "neoA" });
-  expect(res.status).toBe(400);
-  expect(res.body).toEqual({ statusCode: 400, error: "Bad Request", message: expect.any(String) });
-  expect(res.body?.message).toMatch(/validation error.*username/i);
-
-  res = await requestStarter.send({ username: "neo%" });
-  expect(res.status).toBe(400);
-  expect(res.body).toEqual({ statusCode: 400, error: "Bad Request", message: expect.any(String) });
-  expect(res.body?.message).toMatch(/validation error.*username/i);
-}
-
 describe("PATCH /v1/users/@me", () => {
-  it("should update username", async () => {
-    const jwtToken = await getLoginTokenAndTestResult(ME_USER);
+  it("updates the discord_username", async () => {
+    const jwtToken = await getDevAccessTokenForUserAndTestResult(AUTH_USER_ID);
     let res = await request(app)
       .patch("/v1/users/@me")
-      .send({ username: "neo" })
+      .send({ discord_username: "neo" })
       .set("Authorization", `Bearer ${jwtToken}`);
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
       id: 1,
       discord_id: "123711472041781240",
-      discord_username: "mr_anderson",
+      discord_username: "neo",
+      discord_avatar_hash: null,
       created_at: "2024-11-11T07:21:03.000Z",
       updated_at: expect.any(String),
-      username: "neo",
     });
+
     res = await request(app)
       .patch("/v1/users/@me")
-      .send({ username: "mr_anderson" })
+      .send({ discord_username: "mr_anderson" })
       .set("Authorization", `Bearer ${jwtToken}`);
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
       id: 1,
       discord_id: "123711472041781240",
       discord_username: "mr_anderson",
+      discord_avatar_hash: null,
       created_at: "2024-11-11T07:21:03.000Z",
       updated_at: expect.any(String),
-      username: "mr_anderson",
     });
   });
 
-  it("does not allow invalid usernames", async () => {
-    const jwtToken = await getLoginTokenAndTestResult(ME_USER);
-    await usernameCheck(request(app).patch("/v1/users/@me").set("Authorization", `Bearer ${jwtToken}`));
+  it("updates the discord_avatar_hash", async () => {
+    const jwtToken = await getDevAccessTokenForUserAndTestResult(AUTH_USER_ID);
+    let res = await request(app)
+      .patch("/v1/users/@me")
+      .send({ discord_avatar_hash: "hash123" })
+      .set("Authorization", `Bearer ${jwtToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      id: 1,
+      discord_id: "123711472041781240",
+      discord_username: "mr_anderson",
+      discord_avatar_hash: "hash123",
+      created_at: "2024-11-11T07:21:03.000Z",
+      updated_at: expect.any(String),
+    });
+
+    res = await request(app)
+      .patch("/v1/users/@me")
+      .send({ discord_avatar_hash: null })
+      .set("Authorization", `Bearer ${jwtToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      id: 1,
+      discord_id: "123711472041781240",
+      discord_username: "mr_anderson",
+      discord_avatar_hash: null,
+      created_at: "2024-11-11T07:21:03.000Z",
+      updated_at: expect.any(String),
+    });
   });
 });
 
 describe("PATCH /v1/users/:id", () => {
-  it("should update username", async () => {
-    const jwtToken = await getLoginTokenAndTestResult(ME_USER);
+  it("updates discord_username for the specified user", async () => {
+    const jwtToken = await getDevAccessTokenForUserAndTestResult(AUTH_USER_ID);
     let res = await request(app)
       .patch("/v1/users/1")
-      .send({ username: "neo" })
+      .send({ discord_username: "neo" })
       .set("Authorization", `Bearer ${jwtToken}`);
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
       id: 1,
       discord_id: "123711472041781240",
-      discord_username: "mr_anderson",
+      discord_username: "neo",
+      discord_avatar_hash: null,
       created_at: "2024-11-11T07:21:03.000Z",
       updated_at: expect.any(String),
-      username: "neo",
     });
+
     res = await request(app)
       .patch("/v1/users/1")
-      .send({ username: "mr_anderson" })
+      .send({ discord_username: "mr_anderson" })
       .set("Authorization", `Bearer ${jwtToken}`);
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
       id: 1,
       discord_id: "123711472041781240",
       discord_username: "mr_anderson",
+      discord_avatar_hash: null,
       created_at: "2024-11-11T07:21:03.000Z",
       updated_at: expect.any(String),
-      username: "mr_anderson",
     });
-  });
-
-  it("does not allow invalid usernames", async () => {
-    const jwtToken = await getLoginTokenAndTestResult(ME_USER);
-    await usernameCheck(request(app).patch("/v1/users/1").set("Authorization", `Bearer ${jwtToken}`));
   });
 });
 
@@ -343,7 +352,7 @@ async function greetingFarewellChecks(type: "greeting" | "farewell", endpoint: s
   };
 
   const sendAndCheckValidSalutationPutRequest = async (salutation: { track_id: any; playlist_id: any }) => {
-    const jwtToken = await getLoginTokenAndTestResult(ME_USER);
+    const jwtToken = await getDevAccessTokenForUserAndTestResult(AUTH_USER_ID);
     const res = await request(app)
       .put(endpoint)
       .send(castSalutation(salutation))
@@ -357,7 +366,7 @@ async function greetingFarewellChecks(type: "greeting" | "farewell", endpoint: s
     statusCode: 400 | 404,
     errorRegex: RegExp
   ) => {
-    const jwtToken = await getLoginTokenAndTestResult(ME_USER);
+    const jwtToken = await getDevAccessTokenForUserAndTestResult(AUTH_USER_ID);
     let res = await request(app)
       .put(endpoint)
       .send(castSalutation(salutation))

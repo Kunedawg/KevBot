@@ -1,19 +1,19 @@
 import { z } from "zod";
-import { usernameValidationFactory } from "./sharedSchemas";
-import { Config } from "../config/config";
 
-export function usersSchemasFactory(config: Config) {
+export function usersSchemasFactory() {
   const getUsersQuerySchema = z
     .object({
-      username: z.string().optional(),
-      discordId: z.string().optional(),
-      discordUsername: z.string().optional(),
+      discord_id: z.string().optional(),
+      discord_username: z.string().optional(),
     })
     .strict();
 
-  const patchUserBodySchema = z.object({
-    username: usernameValidationFactory(config),
-  });
+  const patchUserBodySchema = z
+    .object({
+      discord_username: z.string().nullable().optional(),
+      discord_avatar_hash: z.string().nullable().optional(),
+    })
+    .strict();
 
   const putGreetingBodySchema = z
     .object({

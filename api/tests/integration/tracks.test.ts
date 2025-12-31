@@ -46,9 +46,15 @@ beforeAll(async () => {
   process.env.GCP_TRACKS_BUCKET_NAME = "kevbot-tracks-testing";
   await storage.createBucket(process.env.GCP_TRACKS_BUCKET_NAME);
 
+  // TODO: improve management of environment variables
   process.env.KEVBOT_API_ADDRESS = "0.0.0.0";
   process.env.KEVBOT_API_JWT_SECRET = "jwt_secret";
   process.env.KEVBOT_API_PORT = "3000";
+  process.env.DEV_ROUTES_ALLOWED = "true";
+  process.env.DEV_AUTH_SECRET = "TEST_DEV_AUTH_SECRET";
+  process.env.DISCORD_OAUTH2_REDIRECT_URI = "http://dummy.com";
+  process.env.DISCORD_OAUTH2_CLIENT_ID = "dummy";
+  process.env.DISCORD_OAUTH2_CLIENT_SECRET = "dummy";
   appConfig = configFactory();
   const { config, secrets } = appConfig;
   const tracksBucket = tracksBucketFactory(secrets.GCP_API_ENDPOINT, secrets.GCP_TRACKS_BUCKET_NAME);
