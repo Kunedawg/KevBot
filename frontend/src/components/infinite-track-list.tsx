@@ -1,4 +1,5 @@
 "use client";
+// TODO: delete this component
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";

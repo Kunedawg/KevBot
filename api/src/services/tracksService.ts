@@ -18,6 +18,11 @@ const trackBaseSelect = [
   sql<number>`COUNT(*) OVER ()`.as("total_rows"),
 ] as const;
 
+type TrackFilters = {
+  playlist_id?: number;
+  user_id?: number;
+};
+
 export const getTrackBaseQuery = (dbTrx: Kysely<Database> | Transaction<Database>) => {
   return dbTrx
     .selectFrom("tracks as t")
@@ -35,7 +40,13 @@ export const getTrackBaseQuery = (dbTrx: Kysely<Database> | Transaction<Database
     ]);
 };
 
-const hybridQueryBase = (db: Kysely<Database>, q: string, include_deleted: boolean, config: Config) => {
+const hybridQueryBase = (
+  db: Kysely<Database>,
+  q: string,
+  include_deleted: boolean,
+  config: Config,
+  filters: TrackFilters = {}
+) => {
   return db
     .with("scored", (db) =>
       db
@@ -46,6 +57,18 @@ const hybridQueryBase = (db: Kysely<Database>, q: string, include_deleted: boole
           sql<boolean>`t.name LIKE CONCAT(${q}, '%')`.as("is_prefix"),
         ])
         .$if(!include_deleted, (q) => q.where("t.deleted_at", "is", null))
+        .$if(filters.user_id !== undefined, (qb) => qb.where("t.user_id", "=", filters.user_id!))
+        .$if(filters.playlist_id !== undefined, (qb) =>
+          qb.where((eb) =>
+            eb.exists(
+              eb
+                .selectFrom("playlist_tracks as pt")
+                .select("pt.track_id")
+                .where("pt.playlist_id", "=", filters.playlist_id!)
+                .whereRef("pt.track_id", "=", "t.id")
+            )
+          )
+        )
         .where((eb) =>
           eb.or([
             sql<boolean>`t.name LIKE CONCAT(${q}, '%')`,
@@ -70,7 +93,19 @@ const hybridQueryBase = (db: Kysely<Database>, q: string, include_deleted: boole
           ])
         )
     )
-    .selectFrom("kept as s");
+    .selectFrom("kept as s")
+    .$if(filters.user_id !== undefined, (qb) => qb.where("s.user_id", "=", filters.user_id!))
+    .$if(filters.playlist_id !== undefined, (qb) =>
+      qb.where((eb) =>
+        eb.exists(
+          eb
+            .selectFrom("playlist_tracks as pt")
+            .select("pt.track_id")
+            .where("pt.playlist_id", "=", filters.playlist_id!)
+            .whereRef("pt.track_id", "=", "s.id")
+        )
+      )
+    );
 };
 
 export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config: Config) {
@@ -91,11 +126,23 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
     }
   };
 
-  const getTracks = async ({ search, include_deleted, limit, offset }: GetTracksQuerySchema) => {
+  const getTracks = async ({
+    search,
+    include_deleted,
+    limit,
+    offset,
+    playlist_id,
+    user_id,
+  }: GetTracksQuerySchema) => {
+    const filters: TrackFilters = {
+      playlist_id,
+      user_id,
+    };
+
     const getRows = async () => {
       switch (search.kind) {
         case "hybrid":
-          return await hybridQueryBase(db, search.q, include_deleted, config)
+          return await hybridQueryBase(db, search.q, include_deleted, config, filters)
             .leftJoin("track_play_counts as tpc", "s.id", "tpc.track_id")
             .select(({ fn }) => [
               "s.id",
@@ -124,6 +171,18 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
                 .selectFrom("tracks as t")
                 .select(["t.id", sql<number>`MATCH(t.name) AGAINST (${search.q} IN NATURAL LANGUAGE MODE)`.as("rel")])
                 .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
+                .$if(filters.user_id !== undefined, (qb) => qb.where("t.user_id", "=", filters.user_id!))
+                .$if(filters.playlist_id !== undefined, (qb) =>
+                  qb.where((eb) =>
+                    eb.exists(
+                      eb
+                        .selectFrom("playlist_tracks as pt")
+                        .select("pt.track_id")
+                        .where("pt.playlist_id", "=", filters.playlist_id!)
+                        .whereRef("pt.track_id", "=", "t.id")
+                    )
+                  )
+                )
                 .where(sql<boolean>`MATCH(t.name) AGAINST (${search.q} IN NATURAL LANGUAGE MODE)`)
             )
             .selectFrom("filtered as f")
@@ -146,6 +205,18 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
                 .selectFrom("tracks as t")
                 .select(["t.id"])
                 .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
+                .$if(filters.user_id !== undefined, (qb) => qb.where("t.user_id", "=", filters.user_id!))
+                .$if(filters.playlist_id !== undefined, (qb) =>
+                  qb.where((eb) =>
+                    eb.exists(
+                      eb
+                        .selectFrom("playlist_tracks as pt")
+                        .select("pt.track_id")
+                        .where("pt.playlist_id", "=", filters.playlist_id!)
+                        .whereRef("pt.track_id", "=", "t.id")
+                    )
+                  )
+                )
                 .where(sql<boolean>`t.name LIKE ${`%${search.q}%`}`)
             )
             .selectFrom("filtered as f")
@@ -168,6 +239,18 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
                 .selectFrom("tracks as t")
                 .select(["t.id"])
                 .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
+                .$if(filters.user_id !== undefined, (qb) => qb.where("t.user_id", "=", filters.user_id!))
+                .$if(filters.playlist_id !== undefined, (qb) =>
+                  qb.where((eb) =>
+                    eb.exists(
+                      eb
+                        .selectFrom("playlist_tracks as pt")
+                        .select("pt.track_id")
+                        .where("pt.playlist_id", "=", filters.playlist_id!)
+                        .whereRef("pt.track_id", "=", "t.id")
+                    )
+                  )
+                )
                 .where(sql<boolean>`t.name = ${search.q}`)
             )
             .selectFrom("filtered as f")
@@ -190,6 +273,18 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
                 .selectFrom("tracks as t")
                 .select(["t.id"])
                 .$if(!include_deleted, (qb) => qb.where("t.deleted_at", "is", null))
+                .$if(filters.user_id !== undefined, (qb) => qb.where("t.user_id", "=", filters.user_id!))
+                .$if(filters.playlist_id !== undefined, (qb) =>
+                  qb.where((eb) =>
+                    eb.exists(
+                      eb
+                        .selectFrom("playlist_tracks as pt")
+                        .select("pt.track_id")
+                        .where("pt.playlist_id", "=", filters.playlist_id!)
+                        .whereRef("pt.track_id", "=", "t.id")
+                    )
+                  )
+                )
             )
             .selectFrom("filtered as f")
             .leftJoin("tracks as t", "t.id", "f.id")
