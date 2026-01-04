@@ -16,6 +16,8 @@ const trackBaseSelect = [
   "t.created_at",
   "t.updated_at",
   sql<number>`COUNT(*) OVER ()`.as("total_rows"),
+  sql<string | null>`u.discord_username`.as("user_display_name"),
+  sql<string | null>`u.discord_id`.as("user_discord_id"),
 ] as const;
 
 type TrackFilters = {
@@ -26,6 +28,7 @@ type TrackFilters = {
 export const getTrackBaseQuery = (dbTrx: Kysely<Database> | Transaction<Database>) => {
   return dbTrx
     .selectFrom("tracks as t")
+    .leftJoin("users as u", "t.user_id", "u.id")
     .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
     .select(({ fn }) => [
       "t.id",
@@ -37,6 +40,8 @@ export const getTrackBaseQuery = (dbTrx: Kysely<Database> | Transaction<Database
       "t.updated_at",
       fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
       fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+      sql<string | null>`u.discord_username`.as("user_display_name"),
+      sql<string | null>`u.discord_id`.as("user_discord_id"),
     ]);
 };
 
@@ -126,14 +131,7 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
     }
   };
 
-  const getTracks = async ({
-    search,
-    include_deleted,
-    limit,
-    offset,
-    playlist_id,
-    user_id,
-  }: GetTracksQuerySchema) => {
+  const getTracks = async ({ search, include_deleted, limit, offset, playlist_id, user_id }: GetTracksQuerySchema) => {
     const filters: TrackFilters = {
       playlist_id,
       user_id,
@@ -144,6 +142,7 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
         case "hybrid":
           return await hybridQueryBase(db, search.q, include_deleted, config, filters)
             .leftJoin("track_play_counts as tpc", "s.id", "tpc.track_id")
+            .leftJoin("users as u", "s.user_id", "u.id")
             .select(({ fn }) => [
               "s.id",
               "s.name",
@@ -155,6 +154,10 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
               sql<number>`COUNT(*) OVER ()`.as("total_rows"),
               fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
               fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+              sql<number>`s.rel`.as("relevance"),
+              sql<number>`s.is_prefix`.as("is_prefix"),
+              sql<string | null>`u.discord_username`.as("user_display_name"),
+              sql<string | null>`u.discord_id`.as("user_discord_id"),
             ])
             .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN 0 ELSE 1 END`, "asc")
             .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN s.name ELSE NULL END`, "asc")
@@ -187,11 +190,14 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
             )
             .selectFrom("filtered as f")
             .leftJoin("tracks as t", "t.id", "f.id")
+            .leftJoin("users as u", "t.user_id", "u.id")
             .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
             .select(({ fn }) => [
               ...trackBaseSelect,
               fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
               fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+              sql<number>`f.rel`.as("relevance"),
+              sql<number>`0`.as("is_prefix"),
             ])
             .orderBy("f.rel", "desc")
             .limit(limit)
@@ -221,11 +227,14 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
             )
             .selectFrom("filtered as f")
             .leftJoin("tracks as t", "t.id", "f.id")
+            .leftJoin("users as u", "t.user_id", "u.id")
             .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
             .select(({ fn }) => [
               ...trackBaseSelect,
               fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
               fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+              sql<number>`0`.as("relevance"),
+              sql<number>`0`.as("is_prefix"),
             ])
             .orderBy(search.sort, search.order)
             .limit(limit)
@@ -255,11 +264,14 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
             )
             .selectFrom("filtered as f")
             .leftJoin("tracks as t", "t.id", "f.id")
+            .leftJoin("users as u", "t.user_id", "u.id")
             .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
             .select(({ fn }) => [
               ...trackBaseSelect,
               fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
               fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+              sql<number>`0`.as("relevance"),
+              sql<number>`0`.as("is_prefix"),
             ])
             .orderBy("t.created_at", "desc")
             .limit(limit)
@@ -288,11 +300,14 @@ export function tracksServiceFactory(db: KevbotDb, tracksBucket: Bucket, config:
             )
             .selectFrom("filtered as f")
             .leftJoin("tracks as t", "t.id", "f.id")
+            .leftJoin("users as u", "t.user_id", "u.id")
             .leftJoin("track_play_counts as tpc", "t.id", "tpc.track_id")
             .select(({ fn }) => [
               ...trackBaseSelect,
               fn.coalesce("tpc.total_play_count", sql<number>`0`).as("total_play_count"),
               fn.coalesce("tpc.raw_total_play_count", sql<number>`0`).as("raw_total_play_count"),
+              sql<number>`0`.as("relevance"),
+              sql<number>`0`.as("is_prefix"),
             ])
             .orderBy(search.sort, search.order)
             .limit(limit)

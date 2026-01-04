@@ -212,6 +212,8 @@ export function playlistsServiceFactory(db: KevbotDb, config: Config) {
           "p.updated_at",
           "p.deleted_at",
           sql<number>`COUNT(*) OVER ()`.as("total_rows"),
+          sql<number>`0`.as("relevance"),
+          sql<number>`0`.as("is_prefix"),
         ])
         .$if(!include_deleted, (qb) => qb.where("p.deleted_at", "is", null))
         .orderBy("p.name", "asc")
@@ -243,7 +245,10 @@ export function playlistsServiceFactory(db: KevbotDb, config: Config) {
           )
       )
       .with("aug", (db) =>
-        db.selectFrom("scored as s").selectAll().select(sql<number>`MAX(s.rel) OVER ()`.as("max_rel"))
+        db
+          .selectFrom("scored as s")
+          .selectAll()
+          .select(sql<number>`MAX(s.rel) OVER ()`.as("max_rel"))
       )
       .with("kept", (db) =>
         db
@@ -257,8 +262,18 @@ export function playlistsServiceFactory(db: KevbotDb, config: Config) {
           )
       )
       .selectFrom("kept as s")
-      .selectAll()
-      .select(sql<number>`COUNT(*) OVER ()`.as("total_rows"))
+      // .selectAll()
+      .select([
+        "s.id",
+        "s.name",
+        "s.user_id",
+        "s.created_at",
+        "s.updated_at",
+        "s.deleted_at",
+        sql<number>`COUNT(*) OVER ()`.as("total_rows"),
+        sql<number>`s.rel`.as("relevance"),
+        sql<number>`s.is_prefix`.as("is_prefix"),
+      ])
       .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN 0 ELSE 1 END`, "asc")
       .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN s.name ELSE NULL END`, "asc")
       .orderBy("s.rel", "desc")

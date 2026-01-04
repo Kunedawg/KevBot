@@ -185,17 +185,20 @@ export function usersServiceFactory(
     const trimmed = q?.trim() ?? "";
 
     if (!trimmed) {
-      const rows = await db
-        .selectFrom("users as u")
-        .select([
-          "u.id",
-          "u.discord_id",
-          "u.discord_username",
-          "u.discord_avatar_hash",
-          "u.created_at",
-          "u.updated_at",
-          sql<number>`COUNT(*) OVER ()`.as("total_rows"),
-        ])
+    const rows = await db
+      .selectFrom("users as u")
+      .select([
+        "u.id",
+        "u.discord_id",
+        "u.discord_username",
+        "u.discord_avatar_hash",
+        "u.created_at",
+        "u.updated_at",
+        sql<number>`COUNT(*) OVER ()`.as("total_rows"),
+        sql<number>`0`.as("relevance"),
+        sql<number>`0`.as("is_prefix"),
+        sql<number>`0`.as("is_id_prefix"),
+      ])
         .orderBy(sql`u.discord_username IS NULL`, "asc")
         .orderBy("u.discord_username", "asc")
         .orderBy("u.discord_id", "asc")
@@ -256,6 +259,9 @@ export function usersServiceFactory(
         "s.created_at",
         "s.updated_at",
         sql<number>`COUNT(*) OVER ()`.as("total_rows"),
+        sql<number>`s.rel`.as("relevance"),
+        sql<number>`s.is_prefix`.as("is_prefix"),
+        sql<number>`s.is_id_prefix`.as("is_id_prefix"),
       ])
       .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN 0 ELSE 1 END`, "asc")
       .orderBy(sql`CASE WHEN s.is_prefix = 1 THEN s.discord_username ELSE NULL END`, "asc")

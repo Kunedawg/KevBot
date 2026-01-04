@@ -4,34 +4,37 @@ import { ChangeEvent, KeyboardEvent } from "react";
 import { Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { SearchEntity } from "@/lib/types";
+import { SearchFilter } from "@/lib/types";
 
 interface LibrarySearchBarProps {
   query: string;
   onQueryChange: (value: string) => void;
   onSubmit: () => void;
-  selectedTypes: Set<SearchEntity>;
-  onToggleType: (type: SearchEntity) => void;
+  selectedFilter: SearchFilter;
+  onFilterChange: (filter: SearchFilter) => void;
   isSearching?: boolean;
+  lockedFilter?: SearchFilter | null;
   activePlaylistLabel?: string | null;
   onClearPlaylist?: () => void;
   activeUserLabel?: string | null;
   onClearUser?: () => void;
 }
 
-const SEARCH_TYPE_LABELS: Record<SearchEntity, string> = {
-  tracks: "Tracks",
-  playlists: "Playlists",
-  users: "Users",
-};
+const FILTER_OPTIONS: Array<{ value: SearchFilter; label: string }> = [
+  { value: "all", label: "All" },
+  { value: "tracks", label: "Tracks" },
+  { value: "playlists", label: "Playlists" },
+  { value: "users", label: "Users" },
+];
 
 export function LibrarySearchBar({
   query,
   onQueryChange,
   onSubmit,
-  selectedTypes,
-  onToggleType,
+  selectedFilter,
+  onFilterChange,
   isSearching = false,
+  lockedFilter = null,
   activePlaylistLabel,
   onClearPlaylist,
   activeUserLabel,
@@ -47,6 +50,8 @@ export function LibrarySearchBar({
       onSubmit();
     }
   };
+
+  const isFilterLocked = lockedFilter !== null && lockedFilter !== undefined;
 
   return (
     <div className="space-y-3">
@@ -69,18 +74,19 @@ export function LibrarySearchBar({
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {(["tracks", "playlists", "users"] as SearchEntity[]).map((type) => {
-            const isActive = selectedTypes.has(type);
+          {FILTER_OPTIONS.map((option) => {
+            const isActive = selectedFilter === option.value;
+            const disabled = isSearching || (isFilterLocked && lockedFilter !== option.value);
             return (
               <Button
-                key={type}
+                key={option.value}
                 type="button"
                 variant={isActive ? "default" : "outline"}
                 size="sm"
-                onClick={() => onToggleType(type)}
-                disabled={isSearching}
+                onClick={() => !disabled && onFilterChange(option.value)}
+                disabled={disabled}
               >
-                {SEARCH_TYPE_LABELS[type]}
+                {option.label}
               </Button>
             );
           })}
@@ -89,31 +95,35 @@ export function LibrarySearchBar({
             Search
           </Button>
         </div>
+        {(activePlaylistLabel || activeUserLabel) && (
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            {activePlaylistLabel && (
+              <Badge variant="secondary" className="flex items-center gap-2">
+                Playlist: {activePlaylistLabel}
+                {onClearPlaylist && (
+                  <button
+                    type="button"
+                    onClick={onClearPlaylist}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    ×
+                  </button>
+                )}
+              </Badge>
+            )}
+            {activeUserLabel && (
+              <Badge variant="secondary" className="flex items-center gap-2">
+                User: {activeUserLabel}
+                {onClearUser && (
+                  <button type="button" onClick={onClearUser} className="text-muted-foreground hover:text-foreground">
+                    ×
+                  </button>
+                )}
+              </Badge>
+            )}
+          </div>
+        )}
       </div>
-      {(activePlaylistLabel || activeUserLabel) && (
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          {activePlaylistLabel && (
-            <Badge variant="secondary" className="flex items-center gap-2">
-              Playlist: {activePlaylistLabel}
-              {onClearPlaylist && (
-                <button type="button" onClick={onClearPlaylist} className="text-muted-foreground hover:text-foreground">
-                  ×
-                </button>
-              )}
-            </Badge>
-          )}
-          {activeUserLabel && (
-            <Badge variant="secondary" className="flex items-center gap-2">
-              User: {activeUserLabel}
-              {onClearUser && (
-                <button type="button" onClick={onClearUser} className="text-muted-foreground hover:text-foreground">
-                  ×
-                </button>
-              )}
-            </Badge>
-          )}
-        </div>
-      )}
     </div>
   );
 }

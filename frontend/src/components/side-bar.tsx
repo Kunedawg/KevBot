@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { api } from "@/lib/api-browser-client";
 import { ApiPlaylist } from "@/lib/types";
@@ -12,9 +13,17 @@ export function SideBar() {
   const [playlists, setPlaylists] = useState<ApiPlaylist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { selectedPlaylist, setSelectedPlaylist, clearSelectedPlaylist, selectedUser, setSelectedUser, clearSelectedUser, resetAll } =
-    useLibraryFilters();
+  const {
+    selectedPlaylist,
+    setSelectedPlaylist,
+    clearSelectedPlaylist,
+    selectedUser,
+    setSelectedUser,
+    clearSelectedUser,
+    resetAll,
+  } = useLibraryFilters();
   const { user } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     let cancelled = false;
@@ -42,13 +51,21 @@ export function SideBar() {
     };
   }, []);
 
+  const filteredPlaylists = useMemo(() => {
+    if (!user) {
+      return playlists;
+    }
+    return playlists.filter((playlist) => playlist.user_id === user.id);
+  }, [playlists, user]);
+
   const sortedPlaylists = useMemo(
-    () => playlists.slice().sort((a, b) => a.name.localeCompare(b.name)),
-    [playlists]
+    () => filteredPlaylists.slice().sort((a, b) => a.name.localeCompare(b.name)),
+    [filteredPlaylists]
   );
 
   const handleSelectPlaylist = (playlist: ApiPlaylist) => {
     setSelectedPlaylist({ id: playlist.id, name: playlist.name });
+    router.push(`/playlist/${playlist.id}`);
   };
 
   const isMyUploadsSelected = user ? selectedUser?.id === user.id : false;
@@ -62,7 +79,10 @@ export function SideBar() {
         <div className="px-4 py-3 space-y-2 border-b">
           <button
             type="button"
-            onClick={resetAll}
+            onClick={() => {
+              resetAll();
+              router.push("/search");
+            }}
             className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
               !selectedPlaylist && !selectedUser ? "bg-accent text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground"
             }`}
@@ -73,15 +93,12 @@ export function SideBar() {
             <button
               type="button"
               onClick={() => {
-                if (isMyUploadsSelected) {
-                  clearSelectedUser();
-                } else {
-                  setSelectedUser({
-                    id: user.id,
-                    discordId: user.discordId,
-                    displayName: user.discordUsername ?? null,
-                  });
-                }
+                setSelectedUser({
+                  id: user.id,
+                  discordId: user.discordId,
+                  displayName: user.discordUsername ?? null,
+                });
+                router.push("/myuploads");
               }}
               className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                 isMyUploadsSelected ? "bg-accent text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground"

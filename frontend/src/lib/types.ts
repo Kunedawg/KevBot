@@ -11,6 +11,8 @@ export interface ApiTrack {
   total_play_count: number;
   raw_total_play_count: number;
   relevance?: number;
+  user_display_name?: string | null;
+  user_discord_id?: string | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -54,31 +56,56 @@ export interface ApiUser {
 
 export type SearchEntity = "tracks" | "playlists" | "users";
 
+export type SearchFilter = "all" | SearchEntity;
+
+export interface UnifiedSearchResultTrack {
+  type: "track";
+  track: ApiTrack;
+  relevance: number | null;
+}
+
+export interface UnifiedSearchResultPlaylist {
+  type: "playlist";
+  playlist: ApiPlaylist;
+  relevance: number | null;
+}
+
+export interface UnifiedSearchResultUser {
+  type: "user";
+  user: ApiUser;
+  relevance: number | null;
+}
+
+export type UnifiedSearchResult = UnifiedSearchResultTrack | UnifiedSearchResultPlaylist | UnifiedSearchResultUser;
+
 export interface UnifiedSearchResponse {
   query: string | null;
+  filter: SearchFilter;
   filters: {
     playlist_id: number | null;
     user_id: number | null;
   };
   took_ms: number;
-  tracks: {
-    items: ApiTrack[];
-    pagination: PaginatedResponse<ApiTrack>["pagination"];
-  };
-  playlists: {
-    items: ApiPlaylist[];
+  pagination: {
     total: number;
+    limit: number;
+    offset: number;
+    hasNext: boolean;
+    hasPrev: boolean;
   };
-  users: {
-    items: ApiUser[];
-    total: number;
+  results: UnifiedSearchResult[];
+  totals: {
+    tracks: number;
+    playlists: number;
+    users: number;
   };
 }
 
 export interface UnifiedSearchRequest {
   q?: string;
-  types?: SearchEntity[];
+  filter?: SearchFilter;
   playlistId?: number | null;
   userId?: number | null;
-  limits?: Partial<Record<SearchEntity, number>>;
+  limit?: number;
+  offset?: number;
 }

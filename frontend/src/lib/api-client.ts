@@ -151,7 +151,7 @@ export function createApiClient(opts: { baseUrl: string }) {
         authEventsEmitter.emit({ type: "authenticated" });
       }
       return true;
-    } catch (error) {
+    } catch {
       auth.setToken(null);
       return false;
     }
@@ -270,12 +270,11 @@ export function createApiClient(opts: { baseUrl: string }) {
         sp.set("q", trimmed);
       }
     }
-    if (params.types && params.types.length > 0) sp.set("types", params.types.join(","));
+    if (params.filter && params.filter !== "all") sp.set("filter", params.filter);
+    if (params.limit !== undefined) sp.set("limit", String(params.limit));
+    if (params.offset !== undefined) sp.set("offset", String(params.offset));
     if (params.playlistId) sp.set("playlist_id", String(params.playlistId));
     if (params.userId) sp.set("user_id", String(params.userId));
-    if (params.limits?.tracks) sp.set("limit_tracks", String(params.limits.tracks));
-    if (params.limits?.playlists) sp.set("limit_playlists", String(params.limits.playlists));
-    if (params.limits?.users) sp.set("limit_users", String(params.limits.users));
 
     const res = await doFetch(`/v1/search${sp.toString() ? `?${sp}` : ""}`);
     if (!res.ok) throw new Error("Failed to perform search");
