@@ -14,6 +14,8 @@ export type GetTracksQuerySchema = {
   include_deleted: boolean;
   limit: number;
   offset: number;
+  playlist_id?: number;
+  user_id?: number;
 };
 
 // TODO: delete eventually, probably not needed
@@ -33,6 +35,8 @@ export function tracksSchemasFactory(config: Config) {
       include_deleted: z.coerce.boolean().default(false),
       limit: z.coerce.number().int().min(1).max(config.maxTracksPerPage).default(20),
       offset: z.coerce.number().int().min(0).default(0),
+      playlist_id: z.coerce.number().int().min(1).optional(),
+      user_id: z.coerce.number().int().min(1).optional(),
     })
     .strict();
 
@@ -45,6 +49,8 @@ export function tracksSchemasFactory(config: Config) {
       include_deleted: raw.include_deleted,
       limit: raw.limit,
       offset: raw.offset,
+      playlist_id: raw.playlist_id,
+      user_id: raw.user_id,
     };
 
     // No q => browse mode (list view)

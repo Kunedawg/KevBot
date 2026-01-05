@@ -1,4 +1,11 @@
-import { ApiTrack, PaginatedResponse, TrackSuggestionResponse } from "./types";
+import {
+  ApiPlaylist,
+  ApiTrack,
+  PaginatedResponse,
+  TrackSuggestionResponse,
+  UnifiedSearchRequest,
+  UnifiedSearchResponse,
+} from "./types";
 
 export type FetchLike = (input: RequestInfo, init?: RequestInit) => Promise<Response>;
 
@@ -144,7 +151,7 @@ export function createApiClient(opts: { baseUrl: string }) {
         authEventsEmitter.emit({ type: "authenticated" });
       }
       return true;
-    } catch (error) {
+    } catch {
       auth.setToken(null);
       return false;
     }
@@ -245,11 +252,42 @@ export function createApiClient(opts: { baseUrl: string }) {
 
   const getStreamUrl = (trackId: number | string) => `${baseUrl}/v1/tracks/${encodeURIComponent(trackId)}/stream`;
 
+  async function fetchPlaylists(params: { include_deleted?: boolean } = {}): Promise<ApiPlaylist[]> {
+    const sp = new URLSearchParams();
+    if (params.include_deleted !== undefined) {
+      sp.set("include_deleted", String(params.include_deleted));
+    }
+    const res = await doFetch(`/v1/playlists${sp.toString() ? `?${sp}` : ""}`);
+    if (!res.ok) throw new Error("Failed to fetch playlists");
+    return res.json();
+  }
+
+  async function unifiedSearch(params: UnifiedSearchRequest): Promise<UnifiedSearchResponse> {
+    const sp = new URLSearchParams();
+    if (params.q) {
+      const trimmed = params.q.trim();
+      if (trimmed) {
+        sp.set("q", trimmed);
+      }
+    }
+    if (params.filter && params.filter !== "all") sp.set("filter", params.filter);
+    if (params.limit !== undefined) sp.set("limit", String(params.limit));
+    if (params.offset !== undefined) sp.set("offset", String(params.offset));
+    if (params.playlistId) sp.set("playlist_id", String(params.playlistId));
+    if (params.userId) sp.set("user_id", String(params.userId));
+
+    const res = await doFetch(`/v1/search${sp.toString() ? `?${sp}` : ""}`);
+    if (!res.ok) throw new Error("Failed to perform search");
+    return res.json();
+  }
+
   return {
     baseUrl,
     authEvents,
     auth: { exchangeDiscordCode, logout, fetchMe },
     tracks: { fetch: fetchTracks, suggest: suggestTracks, streamUrl: getStreamUrl },
+    playlists: { fetch: fetchPlaylists },
+    search: { unified: unifiedSearch },
     fetch: doFetch,
   };
 }
